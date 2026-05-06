@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+/* Ini cara baru Tailwind v4 menyimpan warna khusus MARISKO */
+@theme {
+  --color-sidebarBg: #0B1120;
+  --color-primary: #0F172A;
+  --color-primaryBlue: #1A73E8;
+  --color-lightBlue: #E8F0FE;
+  --color-success: #10B981;
+  --font-inter: 'Inter', sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-slate-50);
+    color: var(--color-slate-800);
+    font-family: var(--font-inter);
+    -webkit-font-smoothing: antialiased;
+  }
+}

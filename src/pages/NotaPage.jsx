@@ -484,7 +484,7 @@ export default function NotaPage() {
           
           <div className="overflow-x-auto max-h-[420px] scrollbar-thin">
             {/* SAKTI: Tambahan whitespace-nowrap pada tag table */}
-            <table className="w-full text-sm text-left border-collapse whitespace-nowrap">
+            <table className="w-full text-sm text-left border-collapse min-w-[900px] lg:min-w-full">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
                 <tr className="border-b border-slate-200">
                   <th className="px-6 py-4 font-bold tracking-wider">No. Invoice & Waktu</th>

@@ -57,7 +57,7 @@ export default function Layout({ children }) {
           width: 6px;
         }
         .sidebar-scroll::-webkit-scrollbar-track {
-          background: transparent;A
+          background: transparent;
         }
         .sidebar-scroll::-webkit-scrollbar-thumb {
           background: transparent;
@@ -99,28 +99,29 @@ export default function Layout({ children }) {
         />
       )}
 
-      {/* STRUKTUR SIDEBAR - Menggunakan lg:static dan lg:translate-x-0 agar selalu tampil di monitor */}
+      {/* STRUKTUR SIDEBAR BARU */}
       <div className={`fixed inset-y-0 left-0 z-[100] w-72 h-screen bg-white border-r border-slate-200 flex flex-col flex-shrink-0 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 shadow-2xl lg:shadow-sm ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         
-        {/* Tombol Tutup (X) khusus di HP */}
-        <button 
-          onClick={() => setIsMobileMenuOpen(false)}
-          className="lg:hidden absolute top-5 right-4 p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-xl transition-colors z-50"
-        >
-          <X className="w-6 h-6" />
-        </button>
-
-        <div className="flex-1 overflow-y-auto sidebar-scroll pb-6">
-          
-          {/* Logo & Header */}
-          <div className="h-24 flex items-center px-8 mb-4 flex-shrink-0">
+        {/* HEADER SIDEBAR (Fixed/Diam di Atas) */}
+        <div className="h-24 px-8 flex items-center justify-between flex-shrink-0 bg-white border-b border-slate-100 z-10">
+          <div className="flex items-center">
             <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/20 mr-3.5 text-white font-black text-2xl tracking-tighter">M</div>
             <div>
               <h1 className="text-[17px] font-black text-slate-900 tracking-tight leading-tight">MARISKO.APP</h1>
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">CV. Marisko Perkasa</p>
             </div>
           </div>
+          {/* Tombol Tutup (X) khusus di HP */}
+          <button 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="lg:hidden p-2 -mr-3 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-xl transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
 
+        {/* BODY SIDEBAR (Bisa di-scroll) */}
+        <div className="flex-1 overflow-y-auto sidebar-scroll py-4">
           <nav className="flex flex-col flex-shrink-0">
             {menuSections.map((section, idx) => (
               <div key={idx}>
@@ -161,7 +162,7 @@ export default function Layout({ children }) {
           </nav>
         </div>
 
-        {/* AREA BAWAH */}
+        {/* FOOTER SIDEBAR (Fixed/Diam di Bawah) */}
         <div className="flex-shrink-0 p-5 border-t border-slate-100 bg-white flex flex-col gap-3">
           <button onClick={() => setShowLogoutModal(true)} className="group relative w-full flex items-center justify-center gap-2.5 py-3.5 bg-rose-50 text-rose-600 rounded-xl font-bold text-[15px] transition-all duration-300 hover:bg-rose-100 hover:shadow-lg hover:shadow-rose-100/50 hover:-translate-y-0.5 active:scale-95 overflow-hidden border border-transparent hover:border-rose-200">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-rose-500/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out z-0"></div>

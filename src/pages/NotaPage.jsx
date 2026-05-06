@@ -483,9 +483,9 @@ export default function NotaPage() {
                         <div className="font-extrabold text-slate-900">{row.no_invoice}</div>
                         <div className="flex items-center mt-1">
                           <span className="text-[11px] font-bold text-slate-700 mr-2">{date}</span>
-                          <span className="flex items-center text-[10px] text-slate-400 font-medium bg-slate-100/70 px-2 py-0.5 rounded">
-                            <Clock className="w-3 h-3 mr-1" /> Jam: {time}
-                          </span>
+                            <div className="flex items-center text-[11px] font-medium text-slate-400 mt-1">
+                              <Clock className="w-3.5 h-3.5 mr-1" /> Jam: {time}
+                            </div>
                         </div>
                       </td>
                       <td className="px-6 py-5 font-bold text-slate-700 uppercase">

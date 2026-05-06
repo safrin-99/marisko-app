@@ -430,7 +430,7 @@ export default function KwitansiPage() {
             <table className="w-full text-sm text-left border-collapse">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
                 <tr className="border-b border-slate-200">
-                  <th className="px-6 py-4 font-bold tracking-wider">No. Invoice</th>
+                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">No. Invoice</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Tanggal</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Diterima Dari</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Tipe Kendaraan</th>

@@ -326,7 +326,7 @@ export default function KwitansiPage() {
             {modal.type === 'success' ? <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6 text-indigo-600 shadow-inner"><CheckCircle2 className="w-10 h-10" /></div> : <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-6 text-rose-600 shadow-inner"><AlertCircle className="w-10 h-10" /></div>}
             <h3 className="text-2xl font-extrabold text-slate-900 mb-2">{modal.title}</h3>
             <p className="text-slate-500 font-medium mb-8">{modal.message}</p>
-            <div className="flex w-full gap-3 justify-center">
+            <div className="flex w-full gap-3 justify-center flex-col sm:flex-row">
               {modal.type === 'confirm_delete' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="flex-1 py-3.5 bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Ya, Hapus!</button></> : modal.type === 'success' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">Tutup</button><button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="flex-1 py-3.5 bg-indigo-600 text-white font-bold rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-all"><Printer className="w-4 h-4 mr-2" /> Cetak PDF</button></> : <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-slate-950 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Mengerti</button>}
             </div>
           </div>
@@ -412,12 +412,19 @@ export default function KwitansiPage() {
                 </div>
               </section>
               
-              <div className="flex justify-center gap-4 pt-4 border-t border-slate-100">
-                {isEditing && <button type="button" onClick={resetForm} className="px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold active:scale-95 flex items-center shadow-sm">Batal</button>}
-                {/* SAKTI: Icon Receipt ditambahkan di tombol Simpan */}
-                <button type="submit" className="px-12 py-3.5 bg-slate-950 text-white rounded-xl font-bold active:scale-95 shadow-lg tracking-wide flex items-center hover:bg-slate-800 transition-colors">
-                  <Receipt className="w-5 h-5 mr-2" />
-                  {isEditing ? 'Update Invoice' : 'Simpan & Cetak Kwitansi'}
+              {/* SAKTI: Tombol aksi diformat menggunakan flex-col sm:flex-row agar turun rapi di HP */}
+              <div className="flex justify-center gap-3 sm:gap-4 pt-4 sm:pt-6 border-t border-slate-100 flex-col sm:flex-row">
+                {isEditing && (
+                  <button type="button" onClick={resetForm} className="px-6 sm:px-8 py-3 sm:py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold active:scale-95 flex items-center shadow-sm w-full sm:w-auto justify-center">
+                    <X className="w-4 h-4 mr-2" /> Batal
+                  </button>
+                )}
+                <button type="submit" disabled={isSubmitting} className={`px-8 sm:px-12 py-3 sm:py-3.5 text-white rounded-xl text-sm font-bold active:scale-95 shadow-lg tracking-wide flex items-center justify-center w-full sm:w-auto ${isSubmitting ? 'bg-slate-400 cursor-not-allowed' : 'bg-slate-950 hover:bg-slate-800 transition-colors'}`}>
+                  {isSubmitting ? (
+                    <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Memproses...</>
+                  ) : (
+                    <><Receipt className="w-5 h-5 mr-2" /> {isEditing ? 'Update Invoice' : 'Simpan & Cetak Kwitansi'}</>
+                  )}
                 </button>
               </div>
             </form>
@@ -425,12 +432,21 @@ export default function KwitansiPage() {
         </div>
         
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="bg-slate-50/80 border-b border-slate-200 p-5 px-6 flex justify-between items-center"><h3 className="text-lg font-bold text-slate-800 flex items-center"><Receipt className="w-5 h-5 mr-2 text-indigo-600" /> Riwayat Kwitansi Kredit</h3><button onClick={fetchHistory} className="flex items-center text-xs font-bold text-slate-700 bg-white border border-slate-300 px-4 py-2 rounded-xl active:scale-95 shadow-sm hover:bg-slate-100"><RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh</button></div>
+          
+          {/* SAKTI: Bagian Judul dan Tombol Segarkan Data disesuaikan untuk layar HP dan Desktop */}
+          <div className="bg-slate-50/80 border-b border-slate-200 p-4 md:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5">
+            <h3 className="text-lg font-bold text-slate-800 flex items-center"><Receipt className="w-5 h-5 mr-2 text-indigo-600" /> Riwayat Kwitansi Kredit</h3>
+            <button onClick={fetchHistory} className="w-full sm:w-auto flex items-center justify-center text-xs font-bold text-slate-700 bg-white border border-slate-300 px-4 py-2.5 rounded-xl active:scale-95 shadow-sm hover:bg-slate-100 transition-all duration-200">
+              <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+            </button>
+          </div>
+
           <div className="overflow-x-auto max-h-[420px] scrollbar-thin">
-            <table className="w-full text-sm text-left border-collapse">
+            {/* SAKTI: Tambahan whitespace-nowrap pada tag table */}
+            <table className="w-full text-sm text-left border-collapse whitespace-nowrap">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
                 <tr className="border-b border-slate-200">
-                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">No. Invoice</th>
+                  <th className="px-6 py-4 font-bold tracking-wider">No. Invoice</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Tanggal</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Diterima Dari</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Tipe Kendaraan</th>
@@ -445,7 +461,6 @@ export default function KwitansiPage() {
                       <td className="px-6 py-5 font-extrabold text-slate-900">{row?.noInvoice || '-'}</td>
                       <td className="px-6 py-5">
                         <div className="font-bold text-slate-700">{date}</div>
-                        {/* SAKTI: Class di bawah ini diubah agar sejajar dan bersih dari kotak abu-abu tebal */}
                         <div className="flex items-center text-[11px] font-medium text-slate-400 mt-1">
                           <Clock className="w-3.5 h-3.5 mr-1" /> Jam: {time}
                         </div>

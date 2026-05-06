@@ -234,16 +234,16 @@ export default function KwitansiCashPage() {
         curY += 8; 
         
         const col1 = 15, col2 = 25, col3 = 145, col4 = 200;
-        const headerH = 11; 
-        const rowH = 6.5;    
+        const headerH = 12; 
+        const rowH = 7;    
         
         doc.setFillColor(210, 230, 250); doc.setLineWidth(0.2); 
         doc.rect(col1, curY, col4 - col1, headerH, 'FD'); 
         doc.line(col2, curY, col2, curY + headerH); doc.line(col3, curY, col3, curY + headerH);
         doc.setFontSize(10); doc.setFont("helvetica", "bold");
-        doc.text("No.", col1 + 5, curY + 7, {align: "center"}); 
-        doc.text("Nama Barang", col2 + 3, curY + 7); 
-        doc.text("Total Harga", col3 + 27, curY + 7, {align: "center"});
+        doc.text("No.", col1 + 5, curY + 8, {align: "center"}); 
+        doc.text("Nama Barang", col2 + 3, curY + 8); 
+        doc.text("Total Harga", col3 + 27, curY + 8, {align: "center"});
         curY += headerH;
         
         const motor = data.tipeMotor ? `(${data.tipeMotor})` : '';
@@ -263,11 +263,11 @@ export default function KwitansiCashPage() {
         rows.forEach((r) => {
             doc.setFontSize(9); doc.setFont("helvetica", "normal"); 
             doc.line(col1, curY, col4, curY);
-            doc.text(r.no.toString(), col1 + 5, curY + 4.5, {align: "center"}); 
-            doc.text(r.name, col2 + 3, curY + 4.5);
-            doc.text("Rp", col3 + 3, curY + 4.5); 
+            doc.text(r.no.toString(), col1 + 5, curY + 5, {align: "center"}); 
+            doc.text(r.name, col2 + 3, curY + 5);
+            doc.text("Rp", col3 + 3, curY + 5); 
             const valStr = r.val === 0 ? "-" : formatRupiah(r.val);
-            doc.text(valStr, col4 - 3, curY + 4.5, { align: "right" });
+            doc.text(valStr, col4 - 3, curY + 5, { align: "right" });
             curY += rowH;
         });
         
@@ -313,14 +313,31 @@ export default function KwitansiCashPage() {
   const renderModal = () => {
     if (!modal.isOpen) return null;
     return createPortal(
-      <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
-        <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md p-8 animate-in zoom-in-95 duration-300 border border-slate-100">
+      <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3">
+        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })}></div>
+        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[calc(100%-2rem)] sm:max-w-md p-5 sm:p-8 relative z-10 animate-in zoom-in-95 fade-in duration-300 border border-slate-100">
           <div className="flex flex-col items-center text-center mt-2">
-            {modal.type === 'success' ? <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6 text-emerald-600 shadow-inner"><CheckCircle2 className="w-10 h-10" /></div> : <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-6 text-rose-600 shadow-inner"><AlertCircle className="w-10 h-10" /></div>}
-            <h3 className="text-2xl font-extrabold text-slate-900 mb-2">{modal.title}</h3>
-            <p className="text-slate-500 font-medium mb-8">{modal.message}</p>
-            <div className="flex w-full gap-3 justify-center">
-              {modal.type === 'confirm_delete' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="flex-1 py-3.5 bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Ya, Hapus!</button></> : modal.type === 'success' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">Tutup</button><button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="flex-1 py-3.5 bg-emerald-600 text-white font-bold rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-all"><Printer className="w-4 h-4 mr-2" /> Cetak PDF</button></> : <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-slate-950 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Mengerti</button>}
+            {modal.type === 'success' ? (
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-4 sm:mb-6 text-emerald-600 shadow-inner"><CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10" /></div>
+            ) : (
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-rose-50 rounded-full flex items-center justify-center mb-4 sm:mb-6 text-rose-600 shadow-inner"><AlertCircle className="w-8 h-8 sm:w-10 sm:h-10" /></div>
+            )}
+            <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">{modal.title}</h3>
+            <p className="text-slate-500 font-medium text-sm sm:text-[15px] leading-relaxed mb-6 sm:mb-8 px-1 sm:px-2">{modal.message}</p>
+            <div className="flex w-full gap-3 justify-center flex-col sm:flex-row">
+              {modal.type === 'confirm_delete' ? (
+                <>
+                  <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3 sm:py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">Batal</button>
+                  <button onClick={() => executeDelete(modal.actionData)} className="flex-1 py-3 sm:py-3.5 bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Ya, Hapus!</button>
+                </>
+              ) : modal.type === 'success' ? (
+                <>
+                  <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3 sm:py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">Tutup</button>
+                  <button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="flex-1 py-3 sm:py-3.5 bg-emerald-600 text-white font-bold rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-all"><Printer className="w-4 h-4 mr-2" /> Cetak PDF</button>
+                </>
+              ) : (
+                <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3 sm:py-3.5 bg-slate-950 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Mengerti</button>
+              )}
             </div>
           </div>
         </div>
@@ -328,48 +345,48 @@ export default function KwitansiCashPage() {
     );
   };
 
-  const inputClass = "w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none";
-  const numInputClass = "w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-lg font-black text-emerald-700 text-right outline-none";
+  const inputClass = "w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none transition-all focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10";
+  const numInputClass = "w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-base sm:text-lg font-black text-emerald-700 text-right outline-none transition-all focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10";
 
   return (
     <>
       {renderModal()}
       {isSubmitting && createPortal(
         <div className="fixed inset-0 z-[99998] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-300 border border-slate-100 max-w-sm w-full mx-4">
-            <div className="w-20 h-20 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-xl shadow-emerald-600/30 mb-6 animate-bounce">
-              <Banknote className="w-10 h-10 text-white animate-pulse" />
+          <div className="bg-white rounded-3xl p-5 sm:p-8 shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-300 border border-slate-100 max-w-sm w-full mx-4">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-xl shadow-emerald-600/30 mb-4 sm:mb-6 animate-bounce">
+              <Banknote className="w-8 h-8 sm:w-10 sm:h-10 text-white animate-pulse" />
             </div>
-            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight mb-2">Memproses CASH...</h3>
-            <p className="text-sm font-medium text-slate-500 text-center">Menyimpan data dan menyiapkan PDF.</p>
+            <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight mb-2">Memproses CASH...</h3>
+            <p className="text-xs sm:text-sm font-medium text-slate-500 text-center">Menyimpan data dan menyiapkan PDF.</p>
           </div>
         </div>, document.body
       )}
 
-      <div className="max-w-5xl mx-auto pb-12 space-y-8 relative">
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-6 md:p-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-8 flex items-center"><Banknote className="w-7 h-7 mr-3 text-emerald-500" /> {isEditing ? 'Edit Kwitansi Cash' : 'Form Kwitansi Cash'}</h2>
-            <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="max-w-5xl mx-auto pb-12 px-3 sm:px-4 space-y-6 sm:space-y-8 relative">
+        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-4 sm:p-6 md:p-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-6 sm:mb-8 flex items-center"><Banknote className="w-6 h-6 sm:w-7 sm:h-7 mr-2 sm:mr-3 text-emerald-500" /> {isEditing ? 'Edit Kwitansi Cash' : 'Form Kwitansi Cash'}</h2>
+            <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
               {!isEditing && (
-                <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100 relative">
-                  <label className="block text-xs font-extrabold text-emerald-800 mb-3 uppercase tracking-wider flex items-center"><Search className="w-3.5 h-3.5 mr-1.5" /> Helper BASTK :</label>
+                <div className="bg-emerald-50/50 p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-emerald-100">
+                  <label className="block text-[10px] sm:text-xs font-extrabold text-emerald-800 mb-3 uppercase tracking-wider flex items-center"><Search className="w-3.5 h-3.5 mr-1.5" /> Helper BASTK :</label>
                   <div className="relative w-full">
-                    <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-full h-12 px-4 bg-white border border-emerald-200 hover:border-emerald-400 rounded-xl text-sm font-bold text-slate-800 flex items-center justify-between cursor-pointer transition-all shadow-sm">
+                    <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-full h-10 sm:h-12 px-4 bg-white border border-emerald-200 hover:border-emerald-400 rounded-xl text-xs sm:text-sm font-bold text-slate-800 flex items-center justify-between cursor-pointer transition-all shadow-sm">
                       <span className="truncate">{pilihBastk ? `${bastkList.find(b => b?.noSurat === pilihBastk)?.namaKonsumen || ''} - ${pilihBastk}` : '-- Cari BASTK --'}</span>
-                      <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`w-4 h-4 sm:w-5 sm:h-5 text-slate-400 transition-transform flex-shrink-0 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </div>
                     {isDropdownOpen && (
                       <div className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-72 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div className="p-3 border-b border-slate-100 bg-slate-50">
-                          <input autoFocus type="text" className="w-full h-10 px-4 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-emerald-500 font-medium" placeholder="Ketik Nama/No BASTK..." value={dropdownSearch} onChange={(e) => setDropdownSearch(e.target.value)} />
+                        <div className="p-2 sm:p-3 border-b border-slate-100 bg-slate-50">
+                          <input autoFocus type="text" className="w-full h-9 sm:h-10 px-4 bg-white border border-slate-200 rounded-lg text-xs sm:text-sm outline-none focus:border-emerald-500 font-medium" placeholder="Ketik Nama/No BASTK..." value={dropdownSearch} onChange={(e) => setDropdownSearch(e.target.value)} />
                         </div>
                         <div className="overflow-y-auto p-2">
-                          <div className="px-4 py-3 text-sm font-bold text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors" onClick={() => handleSelectBastk('')}><X className="w-4 h-4 inline mr-2" /> Batal / Kosongkan Pilihan</div>
+                          <div className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-bold text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors" onClick={() => handleSelectBastk('')}><X className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline mr-2" /> Batal / Kosongkan Pilihan</div>
                           {filteredBastk.map((b, idx) => (
-                            <div key={`${b?.noSurat}-${idx}`} className="px-4 py-3 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg cursor-pointer transition-colors" onClick={() => handleSelectBastk(b?.noSurat)}>
-                              <span className="font-extrabold block text-slate-900">{b?.namaKonsumen}</span>
-                              <span className="text-xs text-slate-500 block">{b?.noSurat}</span>
+                            <div key={`${b?.noSurat}-${idx}`} className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg cursor-pointer transition-colors" onClick={() => handleSelectBastk(b?.noSurat)}>
+                              <span className="font-extrabold block text-slate-900 text-xs sm:text-sm">{b?.namaKonsumen}</span>
+                              <span className="text-[10px] sm:text-xs text-slate-500 block">{b?.noSurat}</span>
                             </div>
                           ))}
                         </div>
@@ -378,32 +395,33 @@ export default function KwitansiCashPage() {
                   </div>
                 </div>
               )}
-              <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">No. Invoice</label><input type="text" value={noInvoice} onChange={(e)=>setNoInvoice(e.target.value)} required placeholder="CSH-001" className={inputClass} /></div>
-                <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">No. BASTK</label><input type="text" value={noBastk} onChange={(e)=>setNoBastk(e.target.value)} placeholder="001/..." className={inputClass} /></div>
-                <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">Tanggal</label><input type="date" value={tanggal} onChange={(e)=>setTanggal(e.target.value)} required className={inputClass} /></div>
-                <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">Nama Kasir</label><input type="text" value={kasir} onChange={(e)=>setKasir(e.target.value)} required placeholder="STELY ARSYAD" className={inputClass} /></div>
-                <div className="md:col-span-2"><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">Di Terima Dari</label><input type="text" value={diterimaDari} onChange={(e)=>setDiterimaDari(e.target.value)} required placeholder="NAMA LENGKAP" className={inputClass} /></div>
-                <div className="md:col-span-2"><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">Nama Motor & Warna</label><input type="text" value={tipeMotor} onChange={(e)=>setTipeMotor(e.target.value)} required placeholder="(PCX160 ABS / BLUE)" className={inputClass} /></div>
+              
+              <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                <div className="col-span-1 sm:col-span-2 md:col-span-1"><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">No. Invoice</label><input type="text" value={noInvoice} onChange={(e)=>setNoInvoice(e.target.value)} required placeholder="CSH-001" className={inputClass} /></div>
+                <div className="col-span-1 sm:col-span-2 md:col-span-1"><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">No. BASTK</label><input type="text" value={noBastk} onChange={(e)=>setNoBastk(e.target.value)} placeholder="001/..." className={inputClass} /></div>
+                <div className="col-span-1 sm:col-span-1"><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">Tanggal</label><input type="date" value={tanggal} onChange={(e)=>setTanggal(e.target.value)} required className={inputClass} /></div>
+                <div className="col-span-1 sm:col-span-1"><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">Nama Kasir</label><input type="text" value={kasir} onChange={(e)=>setKasir(e.target.value)} required placeholder="STELY ARSYAD" className={inputClass} /></div>
+                <div className="md:col-span-2"><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">Di Terima Dari</label><input type="text" value={diterimaDari} onChange={(e)=>setDiterimaDari(e.target.value)} required placeholder="NAMA LENGKAP" className={inputClass} /></div>
+                <div className="md:col-span-2"><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">Nama Motor & Warna</label><input type="text" value={tipeMotor} onChange={(e)=>setTipeMotor(e.target.value)} required placeholder="(PCX160 ABS / BLUE)" className={inputClass} /></div>
               </section>
-              <section className="bg-slate-50 p-6 rounded-2xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                    <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">3. OTR</label><input type="text" value={otr === 0 ? '' : formatRupiah(otr)} onChange={handleInputChange(setOtr)} className={numInputClass} placeholder="0" /></div>
-                    <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">2. BBN</label><input type="text" value={bbn === 0 ? '' : formatRupiah(bbn)} onChange={handleInputChange(setBbn)} className={numInputClass} placeholder="0" /></div>
-                    <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">1. Off The Road (Auto)</label><input type="text" value={offTheRoad === 0 ? '' : formatRupiah(offTheRoad)} readOnly className="w-full h-12 px-4 bg-emerald-50 border border-emerald-200 rounded-xl text-lg font-black text-emerald-900 text-right cursor-not-allowed outline-none" /></div>
-                    <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">7. Accesoris</label><input type="text" value={accesoris === 0 ? '' : formatRupiah(accesoris)} onChange={handleInputChange(setAccesoris)} className={numInputClass} placeholder="0" /></div>
-                    <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">8. Potongan Lecet</label><input type="text" value={potonganLecet === 0 ? '' : formatRupiah(potonganLecet)} onChange={handleInputChange(setPotonganLecet)} className={numInputClass} placeholder="0" /></div>
+              
+              <section className="bg-slate-50 p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-3 sm:space-y-4">
+                    <div><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">3. OTR</label><input type="text" value={otr === 0 ? '' : formatRupiah(otr)} onChange={handleInputChange(setOtr)} className={numInputClass} placeholder="0" /></div>
+                    <div><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">2. BBN</label><input type="text" value={bbn === 0 ? '' : formatRupiah(bbn)} onChange={handleInputChange(setBbn)} className={numInputClass} placeholder="0" /></div>
+                    <div><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">1. Off The Road (Auto)</label><input type="text" value={offTheRoad === 0 ? '' : formatRupiah(offTheRoad)} readOnly className="w-full h-12 px-4 bg-emerald-50 border border-emerald-200 rounded-xl text-base sm:text-lg font-black text-emerald-900 text-right cursor-not-allowed outline-none" /></div>
+                    <div><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">7. Accesoris</label><input type="text" value={accesoris === 0 ? '' : formatRupiah(accesoris)} onChange={handleInputChange(setAccesoris)} className={numInputClass} placeholder="0" /></div>
+                    <div><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">8. Potongan Lecet</label><input type="text" value={potonganLecet === 0 ? '' : formatRupiah(potonganLecet)} onChange={handleInputChange(setPotonganLecet)} className={numInputClass} placeholder="0" /></div>
                 </div>
-                <div className="space-y-4">
-                    <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">4. Indent</label><input type="text" value={indent === 0 ? '' : formatRupiah(indent)} onChange={handleInputChange(setIndent)} className={numInputClass} placeholder="0" /></div>
-                    <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">5. Diskon</label><input type="text" value={diskon === 0 ? '' : formatRupiah(diskon)} onChange={handleInputChange(setDiskon)} className={numInputClass} placeholder="0" /></div>
-                    <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">6. Transfer</label><input type="text" value={transfer === 0 ? '' : formatRupiah(transfer)} onChange={handleInputChange(setTransfer)} className={numInputClass} placeholder="0" /></div>
+                <div className="space-y-3 sm:space-y-4">
+                    <div><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">4. Indent</label><input type="text" value={indent === 0 ? '' : formatRupiah(indent)} onChange={handleInputChange(setIndent)} className={numInputClass} placeholder="0" /></div>
+                    <div><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">5. Diskon</label><input type="text" value={diskon === 0 ? '' : formatRupiah(diskon)} onChange={handleInputChange(setDiskon)} className={numInputClass} placeholder="0" /></div>
+                    <div><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">6. Transfer</label><input type="text" value={transfer === 0 ? '' : formatRupiah(transfer)} onChange={handleInputChange(setTransfer)} className={numInputClass} placeholder="0" /></div>
                 </div>
               </section>
-              <div className="flex justify-center gap-4 pt-4 border-t border-slate-100">
-                {isEditing && <button type="button" onClick={resetForm} className="px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold active:scale-95 flex items-center shadow-sm">Batal</button>}
-                {/* SAKTI: Icon Banknote ditambahkan di tombol Simpan */}
-                <button type="submit" className="px-12 py-3.5 bg-slate-950 text-white rounded-xl font-bold active:scale-95 shadow-lg tracking-wide flex items-center hover:bg-slate-800 transition-colors">
+              <div className="flex justify-center gap-3 sm:gap-4 pt-4 sm:pt-6 border-t border-slate-100 flex-col sm:flex-row">
+                {isEditing && <button type="button" onClick={resetForm} className="px-6 sm:px-8 py-3 sm:py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold active:scale-95 flex items-center shadow-sm w-full sm:w-auto justify-center"><X className="w-4 h-4 mr-2" /> Batal</button>}
+                <button type="submit" className="px-8 sm:px-12 py-3 sm:py-3.5 bg-slate-950 text-white rounded-xl font-bold active:scale-95 shadow-lg tracking-wide flex items-center hover:bg-slate-800 transition-colors w-full sm:w-auto justify-center">
                   <Banknote className="w-5 h-5 mr-2" />
                   {isEditing ? 'Update Cash' : 'Simpan & Cetak Kwitansi Cash'}
                 </button>
@@ -412,50 +430,57 @@ export default function KwitansiCashPage() {
           </div>
         </div>
         
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="bg-slate-50/80 border-b border-slate-200 p-5 px-6 flex justify-between items-center"><h3 className="text-lg font-bold text-slate-800 flex items-center"><Banknote className="w-5 h-5 mr-2 text-emerald-600" /> Riwayat Kwitansi Cash</h3><button onClick={fetchHistory} className="flex items-center text-xs font-bold text-slate-700 bg-white border border-slate-300 px-4 py-2 rounded-xl active:scale-95 shadow-sm hover:bg-slate-100"><RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh</button></div>
-          <div className="overflow-x-auto max-h-[420px] scrollbar-thin">
-            <table className="w-full text-sm text-left border-collapse">
-              <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
-                <tr className="border-b border-slate-200">
-                  <th className="px-6 py-4 font-bold tracking-wider">No. Invoice</th>
-                  <th className="px-6 py-4 font-bold tracking-wider">Tanggal</th>
-                  <th className="px-6 py-4 font-bold tracking-wider">Diterima Dari</th>
-                  <th className="px-6 py-4 font-bold tracking-wider">Tipe Kendaraan</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {historyData.map((row, idx) => {
-                    const { date, time } = formatDateTime(row.created_at, row.tanggal);
-                    return (
-                    <tr key={`${row?.noInvoice || idx}-${idx}`} className="hover:bg-emerald-50/40 transition-colors">
-                      <td className="px-6 py-5 font-extrabold text-slate-900">{row?.noInvoice || '-'}</td>
-                      <td className="px-6 py-5">
-                        <div className="font-bold text-slate-700">{date}</div>
-                          <div className="flex items-center text-[11px] font-medium text-slate-400 mt-1">
-                            <Clock className="w-3.5 h-3.5 mr-1" /> Jam: {time}
+        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-slate-50/80 border-b border-slate-200 p-4 sm:p-5 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
+            <h3 className="text-base sm:text-lg font-bold text-slate-800 flex items-center"><Banknote className="w-5 h-5 mr-2 text-emerald-600" /> Riwayat Kwitansi Cash</h3>
+            <button onClick={fetchHistory} className="flex items-center text-xs font-bold text-slate-700 bg-white border border-slate-300 px-3 sm:px-4 py-2 rounded-xl active:scale-95 shadow-sm hover:bg-slate-100 w-full sm:w-auto justify-center"><RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh</button>
+          </div>
+          
+          {/* PERBAIKAN: Tabel Responsif */}
+          <div className="max-h-[420px] overflow-y-auto">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left border-collapse min-w-[700px] sm:min-w-full">
+                <thead className="text-[10px] sm:text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
+                  <tr className="border-b border-slate-200">
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 font-bold tracking-wider">No. Invoice</th>
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 font-bold tracking-wider">Tanggal</th>
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 font-bold tracking-wider">Diterima Dari</th>
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 font-bold tracking-wider">Tipe Kendaraan</th>
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 font-bold tracking-wider text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {historyData.map((row, idx) => {
+                      const { date, time } = formatDateTime(row.created_at, row.tanggal);
+                      return (
+                      <tr key={`${row?.noInvoice || idx}-${idx}`} className="hover:bg-emerald-50/40 transition-colors">
+                        <td className="px-4 sm:px-6 py-4 sm:py-5 font-extrabold text-slate-900 whitespace-nowrap text-xs sm:text-sm">{row?.noInvoice || '-'}</td>
+                        <td className="px-4 sm:px-6 py-4 sm:py-5 whitespace-nowrap">
+                          <div className="font-bold text-slate-700 text-xs sm:text-sm">{date}</div>
+                          <div className="flex items-center text-[10px] sm:text-[11px] font-medium text-slate-400 mt-1">
+                            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1" /> Jam: {time}
                           </div>
-                      </td>
-                      <td className="px-6 py-5 font-bold text-slate-700 uppercase">{row?.diterimaDari || '-'}</td>
-                      <td className="px-6 py-5 text-xs font-bold text-slate-500 uppercase">{row?.tipeMotor || '-'}</td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center justify-end gap-2.5">
-                          <button onClick={() => generatePDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm">
-                            <FileText className="w-3.5 h-3.5" /> PDF
-                          </button>
-                          <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm">
-                            <Edit className="w-3.5 h-3.5" /> Edit
-                          </button>
-                          <button onClick={() => handleDeleteRequest(row.noInvoice)} className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm">
-                            <Trash2 className="w-3.5 h-3.5" /> Del
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                )})}
-              </tbody>
-            </table>
+                         </td>
+                        <td className="px-4 sm:px-6 py-4 sm:py-5 font-bold text-slate-700 uppercase text-xs sm:text-sm truncate max-w-[150px]">{row?.diterimaDari || '-'}</td>
+                        <td className="px-4 sm:px-6 py-4 sm:py-5 text-[10px] sm:text-xs font-bold text-slate-500 uppercase truncate max-w-[150px]">{row?.tipeMotor || '-'}</td>
+                        <td className="px-4 sm:px-6 py-4 sm:py-5">
+                          <div className="flex items-center justify-end gap-1.5 sm:gap-2.5 flex-wrap">
+                            <button onClick={() => generatePDF(row)} className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-[10px] sm:text-xs border border-emerald-200 shadow-sm">
+                              <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> PDF
+                            </button>
+                            <button onClick={() => handleEdit(row)} className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-[10px] sm:text-xs border border-indigo-200 shadow-sm">
+                              <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Edit
+                            </button>
+                            <button onClick={() => handleDeleteRequest(row.noInvoice)} className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-[10px] sm:text-xs border border-rose-200 shadow-sm">
+                              <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Del
+                            </button>
+                          </div>
+                         </td>
+                       </tr>
+                    )})}
+                </tbody>
+               </table>
+            </div>
           </div>
         </div>
       </div>

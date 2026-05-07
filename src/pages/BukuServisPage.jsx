@@ -56,11 +56,32 @@ export default function BukuServisPage() {
       }
     }
 
+    // ====================================================================
+    // SAKTI 1: LOGIKA PEMOTONGAN NAMA (PEMOHON / STNK)
+    // ====================================================================
+    let namaCetak = data.namaKonsumen || '-';
+    if (namaCetak.includes('/')) {
+      // Jika ada tanda "/", pecah namanya, lalu ambil bagian paling belakang (Nama STNK), lalu bersihkan spasinya.
+      const namaParts = namaCetak.split('/');
+      namaCetak = namaParts[namaParts.length - 1].trim(); 
+    }
+
+    // ====================================================================
+    // SAKTI 2: LOGIKA UKURAN FONT OTOMATIS (Mengecil jika kepanjangan)
+    // ====================================================================
+    // Normal = 10pt. Jika lebih dari 20 karakter = 8pt. Jika lebih dari 25 karakter = 7pt.
+    let fontClassNama = "font-normal"; // bawaan 10pt
+    if (namaCetak.length > 25) {
+      fontClassNama = "font-sangat-kecil"; // 7pt
+    } else if (namaCetak.length > 18) {
+      fontClassNama = "font-agak-kecil"; // 8.5pt
+    }
+
     // HTML MURNI MENIRU SEL EXCEL PRESISI TINGGI
     const htmlContent = `
       <html>
         <head>
-          <title>Cetak Buku Servis - ${data.namaKonsumen}</title>
+          <title>Cetak Buku Servis - ${namaCetak}</title>
           <style>
             @media screen {
               body { display: none; }
@@ -100,6 +121,10 @@ export default function BukuServisPage() {
             .font-normal { font-size: 10pt; } /* Teks biasa & Label */
             .font-kecil { font-size: 9pt; }   /* Khusus Teks isian Kupon KPB */
             
+            /* SAKTI: Class khusus untuk nama yang kepanjangan */
+            .font-agak-kecil { font-size: 8.5pt; font-weight: bold; } 
+            .font-sangat-kecil { font-size: 7.5pt; font-weight: bold; letter-spacing: -0.5px; } 
+
             td { 
               padding: 0 4px; 
               vertical-align: middle; 
@@ -113,7 +138,6 @@ export default function BukuServisPage() {
         </head>
         <body onload="window.print(); window.onafterprint = function(){ window.close(); }">
           
-          <!-- BLOK 1: IDENTITAS BUKU SERVIS (Semua font ukuran 10pt) -->
           <table class="table-1 font-normal">
             <tr class="row-sm">
               <td class="col-label">Tipe/Jenis</td><td class="col-value">${kodeTipeJenis}</td>
@@ -121,7 +145,6 @@ export default function BukuServisPage() {
               <td class="col-label">Tipe/Jenis</td><td class="col-value">${kodeTipeJenis}</td>
             </tr>
             <tr class="row-sm">
-              <!-- SAKTI: Menggunakan data.warna yang benar sesuai database -->
               <td class="col-label">Warna</td><td class="col-value">${data.warna || '-'}</td>
               <td class="col-gap"></td>
               <td class="col-label">Warna</td><td class="col-value">${data.warna || '-'}</td>
@@ -142,9 +165,9 @@ export default function BukuServisPage() {
               <td class="col-label">No. Polisi</td><td class="col-value">DN</td>
             </tr>
             <tr class="row-sm">
-              <td class="col-label">Nama Pemilik</td><td class="col-value">${data.namaKonsumen || '-'}</td>
+              <td class="col-label">Nama Pemilik</td><td class="col-value ${fontClassNama}">${namaCetak}</td>
               <td class="col-gap"></td>
-              <td class="col-label">Nama Pemilik</td><td class="col-value">${data.namaKonsumen || '-'}</td>
+              <td class="col-label">Nama Pemilik</td><td class="col-value ${fontClassNama}">${namaCetak}</td>
             </tr>
             <tr class="row-sm">
               <td class="col-label">Alamat</td><td class="col-value">${alamatCetak}</td>
@@ -153,7 +176,6 @@ export default function BukuServisPage() {
             </tr>
           </table>
 
-          <!-- BLOK 2: KUPON PERAWATAN 1 & 2 (Isian menggunakan font 9pt) -->
           <table class="table-2">
             <tr class="row-lg">
               <td class="col-label font-normal">No. Polisi</td><td class="col-value font-kecil">DN</td>
@@ -177,7 +199,6 @@ export default function BukuServisPage() {
             </tr>
           </table>
 
-          <!-- BLOK 3: KUPON PERAWATAN 3 & 4 (Isian menggunakan font 9pt) -->
           <table class="table-3">
             <tr class="row-lg">
               <td class="col-label font-normal">No. Polisi</td><td class="col-value font-kecil">DN</td>
@@ -234,13 +255,13 @@ export default function BukuServisPage() {
 
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden antialiased">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[900px] lg:min-w-full">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-widest">
-                <th className="p-5 font-extrabold">No. BASTK</th>
-                <th className="p-5 font-extrabold">Konsumen & Kendaraan</th>
-                <th className="p-5 font-extrabold">Tanggal BASTK</th>
-                <th className="p-5 font-extrabold text-center">Aksi</th>
+                <th className="p-5 font-extrabold whitespace-nowrap">No. BASTK</th>
+                <th className="p-5 font-extrabold whitespace-nowrap">Konsumen & Kendaraan</th>
+                <th className="p-5 font-extrabold whitespace-nowrap">Tanggal BASTK</th>
+                <th className="p-5 font-extrabold text-center whitespace-nowrap">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -251,14 +272,14 @@ export default function BukuServisPage() {
               ) : (
                 filteredData.map((item, idx) => (
                   <tr key={idx} className="hover:bg-slate-50/80 transition-colors group">
-                    <td className="p-5 font-black text-sm text-slate-900">{item.noSurat}</td>
-                    <td className="p-5">
+                    <td className="p-5 font-black text-sm text-slate-900 whitespace-nowrap">{item.noSurat}</td>
+                    <td className="p-5 whitespace-nowrap">
                       <div className="font-extrabold text-sm text-slate-900">{item.namaKonsumen}</div>
                       {/* SAKTI: Di sini juga diperbaiki agar warnanya muncul di tabel layar monitor */}
                       <div className="font-bold text-xs text-indigo-600 mt-1">{item.tipeKendaraan} • {item.warna}</div>
                     </td>
-                    <td className="p-5 font-bold text-sm text-slate-600">{item.tglSerah}</td>
-                    <td className="p-5 text-center">
+                    <td className="p-5 font-bold text-sm text-slate-600 whitespace-nowrap">{item.tglSerah}</td>
+                    <td className="p-5 text-center whitespace-nowrap">
                       <button onClick={() => handlePrint(item)} className="inline-flex items-center justify-center px-4 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-xl font-bold text-xs transition-all active:scale-95 shadow-sm">
                         <Printer className="w-4 h-4 mr-2" /> Cetak Stiker
                       </button>

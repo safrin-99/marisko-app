@@ -160,8 +160,8 @@ export default function CutiPage() {
     const formatTgl = (tgl) => tgl.split('-').reverse().join('/');
     const jenis = opsiCuti.find(o => o.value === data.jenisCuti)?.label || data.jenisCuti;
     
-    // SAKTI: Merakit Magic Link (otomatis mendeteksi alamat website Vercel Anda saat ini)
-    const magicLink = `${window.location.origin}/cuti?approve=${encodeURIComponent(data.noCuti)}`;
+    // SAKTI: Menggunakan URL Live Vercel agar link biru di WA dan bisa dibuka dari HP Kacab!
+    const magicLink = `https://marisko-app.vercel.app/cuti?approve=${encodeURIComponent(data.noCuti)}`;
 
     const teksWA = `Halo Bapak/Ibu Kepala Cabang,\n\nSaya mengajukan permohonan persetujuan:\n\n*No. Registrasi:* ${data.noCuti}\n*Nama Pegawai:* ${data.namaPegawai}\n*Jabatan:* ${data.jabatan}\n*Jenis Cuti:* ${jenis}\n*Tanggal:* ${formatTgl(data.tglMulai)} s/d ${formatTgl(data.tglSelesai)}\n*Alasan:* ${data.alasan || '-'}\n\n✅ *KLIK LINK DI BAWAH INI UNTUK MENYETUJUI OTOMATIS:*\n${magicLink}\n\nTerima kasih. 🙏`;
 

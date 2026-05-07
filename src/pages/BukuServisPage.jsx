@@ -254,10 +254,12 @@ export default function BukuServisPage() {
       </div>
 
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden antialiased">
-        <div className="overflow-x-auto">
+        {/* SAKTI: Penambahan max-h-[600px] dan overflow-y-auto untuk mengaktifkan scroll */}
+        <div className="overflow-y-auto overflow-x-auto max-h-[600px] scrollbar-thin">
           <table className="w-full text-left border-collapse min-w-[900px] lg:min-w-full">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-widest">
+            {/* SAKTI: Penambahan sticky top-0 dan bg-slate-50 agar baris ini tidak ikut tergulung */}
+            <thead className="sticky top-0 z-10 bg-slate-50 shadow-sm">
+              <tr className="border-b border-slate-200 text-slate-500 text-xs uppercase tracking-widest">
                 <th className="p-5 font-extrabold whitespace-nowrap">No. BASTK</th>
                 <th className="p-5 font-extrabold whitespace-nowrap">Konsumen & Kendaraan</th>
                 <th className="p-5 font-extrabold whitespace-nowrap">Tanggal BASTK</th>
@@ -275,7 +277,6 @@ export default function BukuServisPage() {
                     <td className="p-5 font-black text-sm text-slate-900 whitespace-nowrap">{item.noSurat}</td>
                     <td className="p-5 whitespace-nowrap">
                       <div className="font-extrabold text-sm text-slate-900">{item.namaKonsumen}</div>
-                      {/* SAKTI: Di sini juga diperbaiki agar warnanya muncul di tabel layar monitor */}
                       <div className="font-bold text-xs text-indigo-600 mt-1">{item.tipeKendaraan} • {item.warna}</div>
                     </td>
                     <td className="p-5 font-bold text-sm text-slate-600 whitespace-nowrap">{item.tglSerah}</td>

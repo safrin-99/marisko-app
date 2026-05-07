@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FileText, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer } from 'lucide-react';
+// SAKTI: Menambahkan Search pada import lucide-react
+import { FileText, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from "jspdf";
 
@@ -30,6 +31,9 @@ export default function BastkPage() {
   const [hadiah, setHadiah] = useState('');
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // SAKTI: State baru untuk fitur pencarian
+  const [searchTerm, setSearchTerm] = useState('');
 
   const opsiPembiayaan = [
     { value: 'CASH', label: 'CASH (MARISKO PERKASA)' },
@@ -246,7 +250,7 @@ export default function BastkPage() {
     return { date: `${tglSplit[2]}/${tglSplit[1]}/${tglSplit[0]}`, time };
   };
 
-  const inputClass = "w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder:text-slate-400";
+  const inputClass = "w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-slate-400";
   const labelClass = "block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider";
 
   const renderModal = () => {
@@ -314,9 +318,9 @@ export default function BastkPage() {
                   
                   <div className="relative">
                     <label className={labelClass}>Jenis Pembiayaan</label>
-                    <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className={`${inputClass} flex items-center justify-between cursor-pointer select-none transition-all duration-200 ${isDropdownOpen ? 'bg-white border-blue-500 ring-4 ring-blue-500/10' : ''}`}>
+                    <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className={`${inputClass} flex items-center justify-between cursor-pointer select-none transition-all duration-200 ${isDropdownOpen ? 'bg-white border-indigo-500 ring-4 ring-indigo-500/10' : ''}`}>
                       <span className={jenisPembiayaan ? 'text-slate-900 font-bold' : 'text-slate-400 font-normal truncate pr-2'}>{jenisPembiayaan ? opsiPembiayaan.find(o => o.value === jenisPembiayaan)?.label : '-- Pilih Pembiayaan --'}</span>
-                      <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 flex-shrink-0 ${isDropdownOpen ? 'rotate-180 text-blue-500' : ''}`} />
+                      <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 flex-shrink-0 ${isDropdownOpen ? 'rotate-180 text-indigo-500' : ''}`} />
                     </div>
                     {isDropdownOpen && (
                       <>
@@ -370,18 +374,29 @@ export default function BastkPage() {
 
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
           
-          {/* SAKTI: Bagian Judul dan Tombol Segarkan Data sudah di-custom untuk layar HP dan Desktop */}
+          {/* SAKTI: Bagian Judul dan Tombol Segarkan Data disesuaikan untuk layar HP dan Desktop + FITUR SEARCH */}
           <div className="bg-slate-50/80 border-b border-slate-200 p-4 md:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5">
             <h3 className="text-lg font-bold text-slate-800">Riwayat {kategori}</h3>
-            <button onClick={fetchHistory} className="w-full sm:w-auto flex items-center justify-center text-xs font-bold text-slate-700 bg-white border border-slate-300 px-4 py-2.5 rounded-xl active:scale-95 shadow-sm hover:bg-slate-100 transition-all duration-200">
-              <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Segarkan Data
-            </button>
+            
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+              <div className="relative w-full sm:w-64">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Cari Nama / No. Surat..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 sm:py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm"
+                />
+              </div>
+              <button onClick={fetchHistory} className="w-full sm:w-auto flex items-center justify-center text-xs font-bold text-slate-700 bg-white border border-slate-300 px-4 py-2.5 rounded-xl active:scale-95 shadow-sm hover:bg-slate-100 transition-all duration-200">
+                <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+              </button>
+            </div>
           </div>
           
           <div className="overflow-y-auto overflow-x-auto max-h-[420px] scrollbar-thin">
-            
-            {/* SAKTI: Tambahan whitespace-nowrap pada tag table */}
-            <table className="w-full text-sm text-left border-collapse whitespace-nowrap">
+            <table className="w-full text-sm text-left border-collapse min-w-[900px] lg:min-w-full">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10">
                 <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
                   <th className="px-6 py-4 font-bold tracking-wider">No. BASTK</th>
@@ -391,10 +406,14 @@ export default function BastkPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {historyData.length === 0 ? (
-                  <tr><td colSpan="4" className="text-center py-12 text-slate-400 font-medium">Belum ada data BASTK di kategori ini.</td></tr>
-                ) : (
-                  historyData.map((row, index) => {
+                {historyData
+                  .filter((row) => {
+                    if (!searchTerm) return true;
+                    const keyword = searchTerm.toLowerCase();
+                    const searchString = `${row?.noSurat || ''} ${row?.namaKonsumen || ''}`.toLowerCase();
+                    return searchString.includes(keyword);
+                  })
+                  .map((row, index) => {
                     const { date, time } = formatDateTime(row.created_at, row.tglSerah);
                     return (
                       <tr key={index} className="hover:bg-indigo-50/40 transition-colors">
@@ -422,7 +441,7 @@ export default function BastkPage() {
                       </tr>
                     )
                   })
-                )}
+                }
               </tbody>
             </table>
           </div>

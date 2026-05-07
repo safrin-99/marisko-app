@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-// SAKTI: Tambahkan ikon Search pada import lucide-react
-import { FileSignature, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, CalendarDays, Search } from 'lucide-react';
+import { FileSignature, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, CalendarDays, Search, MessageCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from "jspdf";
 
@@ -24,8 +23,6 @@ export default function CutiPage() {
   const [alasan, setAlasan] = useState('');
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  // SAKTI: State baru untuk fitur pencarian
   const [searchTerm, setSearchTerm] = useState('');
 
   const opsiCuti = [
@@ -37,7 +34,40 @@ export default function CutiPage() {
     { value: 'LAINNYA', label: 'Keperluan Lainnya' }
   ];
 
+  // =========================================================================
+  // SAKTI: MESIN PENDETEKSI MAGIC LINK APPROVAL (DARI WA KACAB)
+  // =========================================================================
   useEffect(() => {
+    const checkMagicLink = async () => {
+      // Mendeteksi apakah ada kata "?approve=..." di alamat URL (Browser)
+      const params = new URLSearchParams(window.location.search);
+      const approveId = params.get('approve');
+      
+      if (approveId) {
+        setIsLoading(true);
+        try {
+          // Sistem menembak database untuk mengubah status jadi DISETUJUI
+          const { error } = await supabase
+            .from('cuti_history')
+            .update({ status: 'DISETUJUI' })
+            .eq('noCuti', approveId);
+
+          if (!error) {
+            setModal({ isOpen: true, type: 'success', title: 'Cuti Disetujui!', message: `Surat izin/cuti dengan No. Registrasi ${approveId} telah berhasil DISETUJUI.`, actionData: 'MAGIC_LINK' });
+            // Membersihkan link agar tidak terus-terusan dieksekusi saat direfresh
+            window.history.replaceState({}, document.title, window.location.pathname);
+            fetchHistory();
+          } else {
+            throw error;
+          }
+        } catch (err) {
+          setModal({ isOpen: true, type: 'error', title: 'Gagal Menyetujui', message: 'Terjadi kesalahan sistem atau kolom "status" belum ditambahkan di Supabase.' });
+        }
+        setIsLoading(false);
+      }
+    };
+    
+    checkMagicLink();
     fetchHistory();
   }, []);
 
@@ -85,14 +115,15 @@ export default function CutiPage() {
           setModal({ isOpen: true, type: 'error', title: 'Peringatan Duplikasi!', message: `Nomor Registrasi "${cleanNoCuti}" sudah digunakan. Data tidak boleh kembar!` });
           return;
         }
-
-        await supabase.from('cuti_history').insert([formData]);
+        
+        // SAKTI: Tambahkan status default saat insert
+        await supabase.from('cuti_history').insert([{ ...formData, status: 'DIPROSES' }]);
         setModal({ isOpen: true, type: 'success', title: 'Berhasil Disimpan!', message: 'Surat Permohonan Cuti berhasil dibuat dan siap dicetak.', actionData: formData });
       }
       resetForm();
       fetchHistory();
     } catch (err) {
-      setModal({ isOpen: true, type: 'error', title: 'Kesalahan Sistem', message: 'Gagal menghubungi database. Cek koneksi Anda.' });
+      setModal({ isOpen: true, type: 'error', title: 'Kesalahan Sistem', message: 'Gagal menghubungi database. Pastikan kolom "status" sudah dibuat di Supabase.' });
     }
     setIsSubmitting(false);
   };
@@ -122,30 +153,39 @@ export default function CutiPage() {
     setIsEditing(false); setOriginalNoCuti('');
   };
 
+  const handleSendWA = (data) => {
+    // GANTI DENGAN NOMOR WA KACAB (AWALAN 62)
+    const nomorWAKacab = "6281234567890"; 
+    
+    const formatTgl = (tgl) => tgl.split('-').reverse().join('/');
+    const jenis = opsiCuti.find(o => o.value === data.jenisCuti)?.label || data.jenisCuti;
+    
+    // SAKTI: Merakit Magic Link (otomatis mendeteksi alamat website Vercel Anda saat ini)
+    const magicLink = `${window.location.origin}/cuti?approve=${encodeURIComponent(data.noCuti)}`;
+
+    const teksWA = `Halo Bapak/Ibu Kepala Cabang,\n\nSaya mengajukan permohonan persetujuan:\n\n*No. Registrasi:* ${data.noCuti}\n*Nama Pegawai:* ${data.namaPegawai}\n*Jabatan:* ${data.jabatan}\n*Jenis Cuti:* ${jenis}\n*Tanggal:* ${formatTgl(data.tglMulai)} s/d ${formatTgl(data.tglSelesai)}\n*Alasan:* ${data.alasan || '-'}\n\n✅ *KLIK LINK DI BAWAH INI UNTUK MENYETUJUI OTOMATIS:*\n${magicLink}\n\nTerima kasih. 🙏`;
+
+    const waUrl = `https://wa.me/${nomorWAKacab}?text=${encodeURIComponent(teksWA)}`;
+    window.open(waUrl, '_blank');
+  };
+
   // =========================================================================
-  // MESIN CETAK PDF (100% IDENTIK DENGAN FILE "CUTI FIX.docx")
+  // MESIN CETAK PDF 
   // =========================================================================
   const generateCutiPDF = (data) => {
     const doc = new jsPDF();
-    
-    // Setting murni Helvetica (setara Arial) ukuran 12
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
-    
-    const leftMargin = 25; 
-    const rightMargin = 25; 
+    const leftMargin = 25; const rightMargin = 25; 
     const pageWidth = doc.internal.pageSize.getWidth();
     const contentWidth = pageWidth - leftMargin - rightMargin; 
-
     let currentY = 30; 
 
-    // Tanggal Cetak (Disamakan dengan tanggal input data)
     const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
     const createdDate = data.created_at ? new Date(data.created_at) : new Date();
     const todayStr = `Buol, ${createdDate.getDate()} ${months[createdDate.getMonth()]} ${createdDate.getFullYear()}`;
 
-    let perihalStr = "";
-    let jenisKata = "";
+    let perihalStr = ""; let jenisKata = "";
     if (data.jenisCuti === 'TAHUNAN') { perihalStr = "cuti tahunan"; jenisKata = "CUTI"; }
     else if (data.jenisCuti === 'MENIKAH') { perihalStr = "cuti menikah"; jenisKata = "CUTI"; }
     else if (data.jenisCuti === 'MELAHIRKAN') { perihalStr = "cuti melahirkan"; jenisKata = "CUTI"; }
@@ -153,24 +193,18 @@ export default function CutiPage() {
     else if (data.jenisCuti === 'DUKA') { perihalStr = "izin kedukaan"; jenisKata = "IZIN"; }
     else { perihalStr = "izin keperluan lainnya"; jenisKata = "IZIN"; }
 
-    // Bagian Kepala Surat (Kiri Atas Persis Docx)
     doc.text(todayStr, leftMargin, currentY); currentY += 6;
-    doc.text("Perihal", leftMargin, currentY); doc.text(`: Permohonan ${perihalStr}`, leftMargin + 20, currentY);
-    currentY += 12;
-
+    doc.text("Perihal", leftMargin, currentY); doc.text(`: Permohonan ${perihalStr}`, leftMargin + 20, currentY); currentY += 12;
     doc.text("Kepada Yth", leftMargin, currentY); currentY += 6;
     doc.text("Kacab/Owner", leftMargin, currentY); currentY += 12;
-
     doc.text("Dengan Hormat,", leftMargin, currentY); currentY += 8;
     doc.text("Saya yang bertanda tangan dibawah ini :", leftMargin, currentY); currentY += 12;
 
-    // Identitas
     doc.text("No Regis", leftMargin, currentY); doc.text(`: ${data.noCuti}`, leftMargin + 25, currentY); currentY += 7;
     doc.text("Nama", leftMargin, currentY); doc.text(`: ${data.namaPegawai}`, leftMargin + 25, currentY); currentY += 7;
     doc.text("Jabatan", leftMargin, currentY); doc.text(`: ${data.jabatan}`, leftMargin + 25, currentY); currentY += 7;
     doc.text("Pekerjaan", leftMargin, currentY); doc.text(`: Karyawan Dealer Honda Marisko Perkasa`, leftMargin + 25, currentY); currentY += 15;
 
-    // Kalkulasi Hari & Tanggal Murni Otomatis
     const d1 = new Date(data.tglMulai);
     const d2 = new Date(data.tglSelesai);
     const diffTime = Math.abs(d2 - d1);
@@ -187,16 +221,12 @@ export default function CutiPage() {
     const endMonthYear = `${monthsLower[d2.getMonth()]} ${d2.getFullYear()}`;
     
     let tglRangeStr = "";
-    if(d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear()) {
-        tglRangeStr = `${startNum} s/d ${endNum} ${endMonthYear}`;
-    } else {
-        tglRangeStr = `${startNum} ${monthsLower[d1.getMonth()]} s/d ${endNum} ${endMonthYear}`;
-    }
+    if(d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear()) { tglRangeStr = `${startNum} s/d ${endNum} ${endMonthYear}`; } 
+    else { tglRangeStr = `${startNum} ${monthsLower[d1.getMonth()]} s/d ${endNum} ${endMonthYear}`; }
     
     const hariKembaliStr = daysLower[dKembali.getDay()];
     const tglKembaliFullStr = `${hariKembaliStr} ${dKembali.getDate()} ${monthsLower[dKembali.getMonth()]} ${dKembali.getFullYear()}`;
 
-    // Paragraf Justify Rapi
     const textParagraf1 = `Melalui surat ini saya mengajukan permohonan ${jenisKata} untuk tidak masuk kerja selama ${diffDays} hari pada tanggal ${tglRangeStr}, saya akan memulai bekerja kembali pada hari ${tglKembaliFullStr}.`;
     doc.text(textParagraf1, leftMargin, currentY, { maxWidth: contentWidth, align: "justify", lineHeightFactor: 1.5 });
     currentY += (doc.splitTextToSize(textParagraf1, contentWidth).length * 6.5) + 4;
@@ -205,20 +235,16 @@ export default function CutiPage() {
     doc.text(textParagraf2, leftMargin, currentY, { maxWidth: contentWidth, align: "justify", lineHeightFactor: 1.5 });
     currentY += 25;
 
-    // Titik Tanda Tangan
     const centerKiri = leftMargin + 25;
     const centerKanan = pageWidth - rightMargin - 25;
 
     doc.text("Mengetahui,", centerKiri, currentY, { align: "center" });
-    doc.text("Hormat saya,", centerKanan, currentY, { align: "center" });
-    currentY += 6;
+    doc.text("Hormat saya,", centerKanan, currentY, { align: "center" }); currentY += 6;
     doc.text("Kepala Cabang", centerKiri, currentY, { align: "center" });
 
-    currentY += 35; // Jarak untuk TTD Manual
-
+    currentY += 35; 
     doc.setFont("helvetica", "bold"); 
     
-    // Garis bawah tegas untuk nama
     doc.text("BACHTIAR LATIEF", centerKiri, currentY, { align: "center" });
     const wKacab = doc.getTextWidth("BACHTIAR LATIEF");
     doc.setLineWidth(0.4);
@@ -256,6 +282,8 @@ export default function CutiPage() {
             <div className="flex w-full gap-3 justify-center">
               {modal.type === 'confirm_delete' ? (
                 <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all duration-200 active:scale-95">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="flex-1 py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-lg shadow-rose-600/20 transition-all duration-200 active:scale-95">Ya, Hapus!</button></>
+              ) : modal.actionData === 'MAGIC_LINK' ? (
+                <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg transition-all duration-200 active:scale-95">Tutup & Lanjutkan</button>
               ) : modal.type === 'success' ? (
                 <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all duration-200 active:scale-95">Tutup</button><button onClick={() => { generateCutiPDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="flex-1 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all duration-200 active:scale-95 flex items-center justify-center"><Printer className="w-4 h-4 mr-2" /> Buka PDF</button></>
               ) : (
@@ -289,12 +317,10 @@ export default function CutiPage() {
               <section>
                 <h3 className="flex items-center text-base font-bold text-slate-800 mb-5"><span className="bg-indigo-100 text-indigo-700 w-7 h-7 rounded-lg flex items-center justify-center mr-3 text-xs shadow-sm">1</span>Data Pegawai & Cuti</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  
                   <div>
                     <label className={labelClass}>No. Registrasi / Cuti</label>
                     <input type="text" value={noCuti} onChange={(e)=>setNoCuti(e.target.value)} required placeholder="Contoh: CT/101/2026" className={inputClass} />
                   </div>
-                  
                   <div className="relative">
                     <label className={labelClass}>Jenis Cuti / Izin</label>
                     <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className={`${inputClass} flex items-center justify-between cursor-pointer select-none transition-all duration-200 active:scale-95 ${isDropdownOpen ? 'bg-white border-indigo-500 ring-4 ring-indigo-500/10' : ''}`}>
@@ -310,7 +336,6 @@ export default function CutiPage() {
                       </div></>
                     )}
                   </div>
-
                   <div><label className={labelClass}>Nama Pegawai</label><input type="text" value={namaPegawai} onChange={(e)=>setNamaPegawai(e.target.value)} required placeholder="Contoh: AUFAR" className={inputClass} /></div>
                   <div><label className={labelClass}>Posisi / Jabatan</label><input type="text" value={jabatan} onChange={(e)=>setJabatan(e.target.value)} required placeholder="Contoh: STAFF ADMIN" className={inputClass} /></div>
                 </div>
@@ -338,8 +363,6 @@ export default function CutiPage() {
         </div>
 
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
-          
-          {/* SAKTI: Bagian Judul dan Tombol Segarkan Data disesuaikan untuk layar HP dan Desktop + FITUR SEARCH */}
           <div className="bg-slate-50/80 border-b border-slate-200 p-4 md:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5">
             <h3 className="text-lg font-bold text-slate-800 flex items-center"><CalendarDays className="w-5 h-5 mr-2 text-indigo-600" /> Riwayat Permohonan</h3>
             
@@ -361,13 +384,12 @@ export default function CutiPage() {
           </div>
           
           <div className="overflow-y-auto overflow-x-auto max-h-[420px] scrollbar-thin">
-            
             <table className="w-full text-sm text-left border-collapse whitespace-nowrap">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10">
                 <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
                   <th className="px-6 py-4 font-bold tracking-wider">No. Registrasi</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Nama & Jabatan</th>
-                  <th className="px-6 py-4 font-bold tracking-wider">Jenis Cuti</th>
+                  <th className="px-6 py-4 font-bold tracking-wider">Jenis & Status</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Tanggal Pelaksanaan</th>
                   <th className="px-6 py-4 font-bold tracking-wider text-right">Aksi</th>
                 </tr>
@@ -387,6 +409,11 @@ export default function CutiPage() {
                       const mulai = formatDateTime(null, row.tglMulai).date;
                       const selesai = formatDateTime(null, row.tglSelesai).date;
                       const jenis = opsiCuti.find(o => o.value === row.jenisCuti)?.label || row.jenisCuti;
+                      
+                      // SAKTI: Menampilkan badge status warna kuning (DIPROSES) atau hijau (DISETUJUI)
+                      const statusCuti = row.status || 'DIPROSES';
+                      const statusColor = statusCuti === 'DISETUJUI' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-amber-50 text-amber-600 border border-amber-200';
+
                       return (
                         <tr key={index} className="hover:bg-indigo-50/40 transition-colors">
                           <td className="px-6 py-5 font-bold text-slate-950 whitespace-nowrap">{row.noCuti}</td>
@@ -394,12 +421,21 @@ export default function CutiPage() {
                               <div className="font-bold text-slate-950 uppercase">{row.namaPegawai}</div>
                               <div className="text-[11px] text-slate-500 font-bold mt-0.5">{row.jabatan}</div>
                           </td>
-                          <td className="px-6 py-5 font-bold text-indigo-700 whitespace-nowrap">{jenis}</td>
+                          <td className="px-6 py-5 whitespace-nowrap">
+                              <div className="font-bold text-indigo-700">{jenis}</div>
+                              <div className={`mt-1.5 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded flex items-center w-fit shadow-sm ${statusColor}`}>
+                                 {statusCuti === 'DISETUJUI' ? <CheckCircle className="w-3 h-3 mr-1" /> : <Clock className="w-3 h-3 mr-1" />}
+                                 {statusCuti}
+                              </div>
+                          </td>
                           <td className="px-6 py-5 whitespace-nowrap">
                             <div className="font-bold text-slate-700">{mulai} - {selesai}</div>
                           </td>
                           <td className="px-6 py-5 whitespace-nowrap">
                             <div className="flex items-center justify-end gap-2.5">
+                              {/* SAKTI: Tombol Kirim WA diletakkan tepat di sebelah kiri tombol Cetak PDF */}
+                              <button onClick={() => handleSendWA(row)} className="flex items-center gap-1.5 px-3 py-2 bg-[#25D366]/10 text-[#075E54] hover:bg-[#25D366]/20 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-[#25D366]/30 shadow-sm"><MessageCircle className="w-3.5 h-3.5" /> Kirim WA</button>
+
                               <button onClick={() => generateCutiPDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm"><Printer className="w-3.5 h-3.5" /> PDF</button>
                               <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm"><Edit className="w-3.5 h-3.5" /> Edit</button>
                               <button onClick={() => handleDeleteRequest(row.noCuti)} className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm"><Trash2 className="w-3.5 h-3.5" /> Del</button>

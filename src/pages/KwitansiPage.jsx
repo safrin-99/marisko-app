@@ -34,21 +34,27 @@ export default function KwitansiPage() {
   const [accesoris, setAccesoris] = useState(0);
   const [potonganLecet, setPotonganLecet] = useState(0);
 
+  // SAKTI: State baru untuk Sisa Uang Muka agar bisa diedit manual
+  const [sisaUangMuka, setSisaUangMuka] = useState(0);
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownSearch, setDropdownSearch] = useState('');
 
-  // SAKTI: State baru untuk fitur pencarian
   const [searchTerm, setSearchTerm] = useState('');
 
   const [logoBase64, setLogoBase64] = useState('');
 
-  // RUMUS SISA UANG MUKA: Sesuai struktur data pembayaran Kwitansi
-  const sisaUangMuka = Math.max(0, dpGross - diskon - indent + accesoris - transfer - potonganLecet);
+  // SAKTI: Sisa Uang Muka otomatis berhitung (Kredit menggunakan DP Gross), tapi tetap bisa diedit manual!
+  useEffect(() => {
+    if (!isEditing) {
+      const calculatedSisa = Math.max(0, dpGross - diskon - indent + accesoris - transfer - potonganLecet);
+      setSisaUangMuka(calculatedSisa);
+    }
+  }, [dpGross, diskon, indent, accesoris, transfer, potonganLecet, isEditing]);
 
-  // PERBAIKAN LOGIKA EXCEL: Rumus Off The Road khusus Kredit
+  // RUMUS OFF THE ROAD KREDIT: (OTR / 1.11) - BBN - DP Gross
   useEffect(() => {
     if (otr > 0 && bbn > 0 && !isEditing) {
-      // Mengikuti rumus mutlak dari Excel: (OTR / 1.11) - BBN - DP Gross
       const calculatedOffTheRoad = (otr / 1.11) - bbn - dpGross;
       setOffTheRoad(Math.round(calculatedOffTheRoad));
     }
@@ -176,6 +182,7 @@ export default function KwitansiPage() {
     setOffTheRoad(data.offTheRoad); setBbn(data.bbn); setIndent(data.indent); setOtr(data.otr);
     setDpGross(data.dpGross); setDiskon(data.diskon); setTransfer(data.transfer);
     setAccesoris(data.accesoris || 0); setPotonganLecet(data.potonganLecet || 0);
+    setSisaUangMuka(data.sisaUangMuka || 0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -192,7 +199,7 @@ export default function KwitansiPage() {
   const resetForm = () => {
     setNoInvoice(''); setNoBastk(''); setTanggal(''); setDiterimaDari(''); setLeasing(''); setTipeMotor(''); setKasir(''); setPilihBastk('');
     setOffTheRoad(0); setBbn(0); setIndent(0); setOtr(0); setDpGross(0); setDiskon(0); setTransfer(0);
-    setAccesoris(0); setPotonganLecet(0);
+    setAccesoris(0); setPotonganLecet(0); setSisaUangMuka(0);
     setIsEditing(false); setOriginalNo('');
   };
 
@@ -415,6 +422,9 @@ export default function KwitansiPage() {
                     <div><label className={labelClass}>5. Diskon</label><input type="text" value={diskon === 0 ? '' : formatRupiah(diskon)} onChange={handleInputChange(setDiskon)} className={numInputClass} placeholder="0" /></div>
                     <div><label className={labelClass}>6. Indent</label><input type="text" value={indent === 0 ? '' : formatRupiah(indent)} onChange={handleInputChange(setIndent)} className={numInputClass} placeholder="0" /></div>
                     <div><label className={labelClass}>8. Transfer</label><input type="text" value={transfer === 0 ? '' : formatRupiah(transfer)} onChange={handleInputChange(setTransfer)} className={numInputClass} placeholder="0" /></div>
+                    
+                    {/* SAKTI: Input Manual/Auto Sisa Uang Muka ditambahkan di Kwitansi Kredit! */}
+                    <div><label className={labelClass}>10. Sisa Uang Muka (Auto / Manual)</label><input type="text" value={sisaUangMuka === 0 ? '' : formatRupiah(sisaUangMuka)} onChange={handleInputChange(setSisaUangMuka)} className="w-full h-12 px-4 bg-white border-2 border-indigo-400 rounded-xl text-base sm:text-lg font-black text-indigo-800 text-right outline-none transition-all focus:ring-4 focus:ring-indigo-500/20" placeholder="0" /></div>
                 </div>
               </section>
               
@@ -431,7 +441,6 @@ export default function KwitansiPage() {
         
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
           
-          {/* SAKTI: Bagian Judul dan Tombol Segarkan Data disesuaikan untuk layar HP dan Desktop + FITUR SEARCH */}
           <div className="bg-slate-50/80 border-b border-slate-200 p-4 md:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5">
             <h3 className="text-lg font-bold text-slate-800 flex items-center"><Receipt className="w-5 h-5 mr-2 text-indigo-600" /> Riwayat Kwitansi Kredit</h3>
             

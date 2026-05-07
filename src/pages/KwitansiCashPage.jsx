@@ -32,15 +32,23 @@ export default function KwitansiCashPage() {
   const [accesoris, setAccesoris] = useState(0);
   const [potonganLecet, setPotonganLecet] = useState(0);
 
+  // SAKTI: State baru untuk Sisa Uang Muka agar bisa diedit manual ke 0
+  const [sisaUangMuka, setSisaUangMuka] = useState(0);
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownSearch, setDropdownSearch] = useState('');
   
-  // SAKTI: State baru untuk fitur pencarian
   const [searchTerm, setSearchTerm] = useState('');
 
   const [logoBase64, setLogoBase64] = useState('');
 
-  const sisaUangMuka = Math.max(0, otr - diskon - indent + accesoris - transfer - potonganLecet);
+  // SAKTI: Sisa Uang Muka otomatis berhitung, tapi tetap bisa diedit manual!
+  useEffect(() => {
+    if (!isEditing) {
+      const calculatedSisa = Math.max(0, otr - diskon - indent + accesoris - transfer - potonganLecet);
+      setSisaUangMuka(calculatedSisa);
+    }
+  }, [otr, diskon, indent, accesoris, transfer, potonganLecet, isEditing]);
 
   useEffect(() => {
     if (otr > 0 && bbn > 0 && !isEditing) {
@@ -169,6 +177,7 @@ export default function KwitansiCashPage() {
     setOffTheRoad(data.offTheRoad); setBbn(data.bbn); setIndent(data.indent); setOtr(data.otr);
     setDiskon(data.diskon); setTransfer(data.transfer);
     setAccesoris(data.accesoris || 0); setPotonganLecet(data.potonganLecet || 0);
+    setSisaUangMuka(data.sisaUangMuka || 0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -185,7 +194,7 @@ export default function KwitansiCashPage() {
   const resetForm = () => {
     setNoInvoice(''); setNoBastk(''); setTanggal(''); setDiterimaDari(''); setTipeMotor(''); setKasir(''); setPilihBastk('');
     setOffTheRoad(0); setBbn(0); setIndent(0); setOtr(0); setDiskon(0); setTransfer(0);
-    setAccesoris(0); setPotonganLecet(0);
+    setAccesoris(0); setPotonganLecet(0); setSisaUangMuka(0);
     setIsEditing(false); setOriginalNo('');
   };
 
@@ -350,6 +359,7 @@ export default function KwitansiCashPage() {
 
   const inputClass = "w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none transition-all focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10";
   const numInputClass = "w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-base sm:text-lg font-black text-emerald-700 text-right outline-none transition-all focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10";
+  const labelClass = "block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider";
 
   return (
     <>
@@ -410,16 +420,18 @@ export default function KwitansiCashPage() {
               
               <section className="bg-slate-50 p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-3 sm:space-y-4">
-                    <div><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">3. OTR</label><input type="text" value={otr === 0 ? '' : formatRupiah(otr)} onChange={handleInputChange(setOtr)} className={numInputClass} placeholder="0" /></div>
-                    <div><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">2. BBN</label><input type="text" value={bbn === 0 ? '' : formatRupiah(bbn)} onChange={handleInputChange(setBbn)} className={numInputClass} placeholder="0" /></div>
-                    <div><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">1. Off The Road (Auto)</label><input type="text" value={offTheRoad === 0 ? '' : formatRupiah(offTheRoad)} readOnly className="w-full h-12 px-4 bg-emerald-50 border border-emerald-200 rounded-xl text-base sm:text-lg font-black text-emerald-900 text-right cursor-not-allowed outline-none" /></div>
-                    <div><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">7. Accesoris</label><input type="text" value={accesoris === 0 ? '' : formatRupiah(accesoris)} onChange={handleInputChange(setAccesoris)} className={numInputClass} placeholder="0" /></div>
-                    <div><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">8. Potongan Lecet</label><input type="text" value={potonganLecet === 0 ? '' : formatRupiah(potonganLecet)} onChange={handleInputChange(setPotonganLecet)} className={numInputClass} placeholder="0" /></div>
+                    <div><label className={labelClass}>3. OTR</label><input type="text" value={otr === 0 ? '' : formatRupiah(otr)} onChange={handleInputChange(setOtr)} className={numInputClass} placeholder="0" /></div>
+                    <div><label className={labelClass}>2. BBN</label><input type="text" value={bbn === 0 ? '' : formatRupiah(bbn)} onChange={handleInputChange(setBbn)} className={numInputClass} placeholder="0" /></div>
+                    <div><label className={labelClass}>1. Off The Road (Auto)</label><input type="text" value={offTheRoad === 0 ? '' : formatRupiah(offTheRoad)} readOnly className="w-full h-12 px-4 bg-emerald-50 border border-emerald-200 rounded-xl text-base sm:text-lg font-black text-emerald-900 text-right cursor-not-allowed outline-none" /></div>
+                    <div><label className={labelClass}>7. Accesoris</label><input type="text" value={accesoris === 0 ? '' : formatRupiah(accesoris)} onChange={handleInputChange(setAccesoris)} className={numInputClass} placeholder="0" /></div>
+                    <div><label className={labelClass}>8. Potongan Lecet</label><input type="text" value={potonganLecet === 0 ? '' : formatRupiah(potonganLecet)} onChange={handleInputChange(setPotonganLecet)} className={numInputClass} placeholder="0" /></div>
                 </div>
                 <div className="space-y-3 sm:space-y-4">
-                    <div><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">4. Indent</label><input type="text" value={indent === 0 ? '' : formatRupiah(indent)} onChange={handleInputChange(setIndent)} className={numInputClass} placeholder="0" /></div>
-                    <div><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">5. Diskon</label><input type="text" value={diskon === 0 ? '' : formatRupiah(diskon)} onChange={handleInputChange(setDiskon)} className={numInputClass} placeholder="0" /></div>
-                    <div><label className="block text-[10px] sm:text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider">6. Transfer</label><input type="text" value={transfer === 0 ? '' : formatRupiah(transfer)} onChange={handleInputChange(setTransfer)} className={numInputClass} placeholder="0" /></div>
+                    <div><label className={labelClass}>4. Indent</label><input type="text" value={indent === 0 ? '' : formatRupiah(indent)} onChange={handleInputChange(setIndent)} className={numInputClass} placeholder="0" /></div>
+                    <div><label className={labelClass}>5. Diskon</label><input type="text" value={diskon === 0 ? '' : formatRupiah(diskon)} onChange={handleInputChange(setDiskon)} className={numInputClass} placeholder="0" /></div>
+                    <div><label className={labelClass}>6. Transfer</label><input type="text" value={transfer === 0 ? '' : formatRupiah(transfer)} onChange={handleInputChange(setTransfer)} className={numInputClass} placeholder="0" /></div>
+                    {/* SAKTI: Input Manual/Auto Sisa Uang Muka ditambahkan di sini! */}
+                    <div><label className={labelClass}>9. Sisa Uang Muka (Auto / Manual)</label><input type="text" value={sisaUangMuka === 0 ? '' : formatRupiah(sisaUangMuka)} onChange={handleInputChange(setSisaUangMuka)} className="w-full h-12 px-4 bg-white border-2 border-emerald-400 rounded-xl text-base sm:text-lg font-black text-emerald-800 text-right outline-none transition-all focus:ring-4 focus:ring-emerald-500/20" placeholder="0" /></div>
                 </div>
               </section>
               <div className="flex justify-center gap-3 sm:gap-4 pt-4 sm:pt-6 border-t border-slate-100 flex-col sm:flex-row">
@@ -434,8 +446,6 @@ export default function KwitansiCashPage() {
         </div>
         
         <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          
-          {/* SAKTI: Bagian Judul dan Tombol Segarkan Data disesuaikan untuk layar HP dan Desktop + FITUR SEARCH */}
           <div className="bg-slate-50/80 border-b border-slate-200 p-4 md:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5">
             <h3 className="text-lg font-bold text-slate-800 flex items-center"><Banknote className="w-5 h-5 mr-2 text-emerald-600" /> Riwayat Kwitansi Cash</h3>
             

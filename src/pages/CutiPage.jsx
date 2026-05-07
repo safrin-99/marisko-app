@@ -155,7 +155,7 @@ export default function CutiPage() {
 
   const handleSendWA = (data) => {
     // GANTI DENGAN NOMOR WA KACAB (AWALAN 62)
-    const nomorWAKacab = "6281234567890"; 
+    const nomorWAKacab = "6282271470883"; 
     
     const formatTgl = (tgl) => tgl.split('-').reverse().join('/');
     const jenis = opsiCuti.find(o => o.value === data.jenisCuti)?.label || data.jenisCuti;

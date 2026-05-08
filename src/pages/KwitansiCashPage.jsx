@@ -194,7 +194,7 @@ export default function KwitansiCashPage() {
     setIsEditing(false); setOriginalNo('');
   };
 
-const generatePDF = (data) => {
+  const generatePDF = (data) => {
     const doc = new jsPDF({ format: [215, 330], unit: 'mm' }); 
     const pageWidth = doc.internal.pageSize.width;
     
@@ -210,7 +210,7 @@ const generatePDF = (data) => {
             try {
                 let imgFormat = 'PNG';
                 if (logoBase64.toLowerCase().includes('jpeg') || logoBase64.toLowerCase().includes('jpg')) imgFormat = 'JPEG';
-                // SAKTI: Logo dikembalikan ke 17x17
+                // SAKTI: Logo 17x17 murni!
                 doc.addImage(logoBase64, imgFormat, startX - 25, curY - 10, 17, 17); 
             } catch (e) {}
         }
@@ -243,16 +243,18 @@ const generatePDF = (data) => {
         curY += 8; 
         
         const col1 = 15, col2 = 25, col3 = 145, col4 = 200;
-        const headerH = 12; 
-        const rowH = 7;     
+        
+        // SAKTI: UKURAN TABEL DIKUNCI MATI SAMA DENGAN KREDIT
+        const headerH = 10; 
+        const rowH = 6;     
         
         doc.setFillColor(210, 230, 250); doc.setLineWidth(0.2); 
         doc.rect(col1, curY, col4 - col1, headerH, 'FD'); 
         doc.line(col2, curY, col2, curY + headerH); doc.line(col3, curY, col3, curY + headerH);
         doc.setFontSize(10); doc.setFont("helvetica", "bold");
-        doc.text("No.", col1 + 5, curY + 8, {align: "center"}); 
-        doc.text("Nama Barang", col2 + 3, curY + 8); 
-        doc.text("Total Harga", col3 + 27, curY + 8, {align: "center"});
+        doc.text("No.", col1 + 5, curY + 6.5, {align: "center"}); 
+        doc.text("Nama Barang", col2 + 3, curY + 6.5); 
+        doc.text("Total Harga", col3 + 27, curY + 6.5, {align: "center"});
         curY += headerH;
         
         const motor = data.tipeMotor ? `(${data.tipeMotor})` : '';
@@ -272,11 +274,11 @@ const generatePDF = (data) => {
         rows.forEach((r) => {
             doc.setFontSize(9); doc.setFont("helvetica", "normal"); 
             doc.line(col1, curY, col4, curY);
-            doc.text(r.no.toString(), col1 + 5, curY + 5, {align: "center"}); 
-            doc.text(r.name, col2 + 3, curY + 5);
-            doc.text("Rp", col3 + 3, curY + 5); 
+            doc.text(r.no.toString(), col1 + 5, curY + 4, {align: "center"}); 
+            doc.text(r.name, col2 + 3, curY + 4);
+            doc.text("Rp", col3 + 3, curY + 4); 
             const valStr = r.val === 0 ? "-" : formatRupiah(r.val);
-            doc.text(valStr, col4 - 3, curY + 5, { align: "right" });
+            doc.text(valStr, col4 - 3, curY + 4, { align: "right" });
             curY += rowH;
         });
         
@@ -304,7 +306,7 @@ const generatePDF = (data) => {
         return curY; 
     };
     
-    // SAKTI: Diturunkan JADI 15 (Hanya turun 3 milimeter)
+    // SAKTI: StartY = 15 (Turun sedikit saja)
     let yAkhirAtas = drawReceipt(15); 
     const yGarisPembatas = yAkhirAtas + 12; 
     doc.setLineDashPattern([3, 3], 0); doc.setLineWidth(0.3);
@@ -432,7 +434,6 @@ const generatePDF = (data) => {
                 </div>
               </section>
 
-              {/* SAKTI: Ini kode rahasianya! Dibuat 100% KEMBAR IDENTIK dengan BASTK */}
               <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-center items-center gap-4 transition-all duration-300">
                 {isEditing && (
                   <button type="button" onClick={resetForm} className="px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-center w-full sm:w-auto">
@@ -475,7 +476,8 @@ const generatePDF = (data) => {
           </div>
           
           <div className="overflow-y-auto overflow-x-auto max-h-[420px] scrollbar-thin">
-            <table className="w-full text-sm text-left border-collapse min-w-[900px] lg:min-w-full">
+            {/* SAKTI: TABEL DIKEMBALIKAN TANPA MIN-W AGAR TIDAK ADA SCROLLBAR JELEK */}
+            <table className="w-full text-sm text-left border-collapse whitespace-nowrap">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
                 <tr className="border-b border-slate-200">
                   <th className="px-6 py-4 font-bold tracking-wider">No. Invoice</th>

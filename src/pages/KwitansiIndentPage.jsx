@@ -26,7 +26,7 @@ export default function KwitansiIndentPage() {
   const [nominalIndent, setNominalIndent] = useState(0);
   
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isDropdownJenisOpen, setIsDropdownJenisOpen] = useState(false); // SAKTI: State untuk dropdown mewah
+  const [isDropdownJenisOpen, setIsDropdownJenisOpen] = useState(false);
   const [dropdownSearch, setDropdownSearch] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [logoBase64, setLogoBase64] = useState('');
@@ -115,7 +115,7 @@ export default function KwitansiIndentPage() {
     await new Promise(resolve => setTimeout(resolve, 1200)); 
     const cleanNo = noInvoice.trim();
     
-    // SAKTI: Payload DB murni tanpa OTR/BBN dll dari UI
+    // SAKTI: Bug Fixed! Variabel sekarang pakai nominalIndent, bukan indent.
     const formData = {
       noInvoice: cleanNo, noBastk: noBastk.trim(), tanggal, diterimaDari: diterimaDari.toUpperCase(), 
       tipeMotor: tipeMotor.toUpperCase(), kasir: kasir.toUpperCase(), 
@@ -380,7 +380,7 @@ export default function KwitansiIndentPage() {
                 <div className="md:col-span-2"><label className={labelClass}>Nama Motor & Warna</label><input type="text" value={tipeMotor} onChange={(e)=>setTipeMotor(e.target.value)} required placeholder="(BEAT SPORTY CBS / BLACK)" className={inputClass} /></div>
               </section>
               
-              {/* SAKTI: UI Dropdown Mewah Dikembalikan! */}
+              {/* SAKTI: UI Dropdown Mewah Dikembalikan & Bug NominalIndent Teratasi */}
               <section className="bg-slate-50 p-6 rounded-2xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="relative">
                   <label className={labelClass}>Jenis Indent</label>
@@ -405,7 +405,7 @@ export default function KwitansiIndentPage() {
                 </div>
                 <div>
                     <label className={labelClass}>Nominal Uang Indent</label>
-                    <input type="text" value={indent === 0 ? '' : formatRupiah(indent)} onChange={handleInputChange(setIndent)} className="w-full h-12 px-4 bg-white border-2 border-amber-400 rounded-xl text-base sm:text-lg font-black text-amber-800 text-right outline-none transition-all focus:ring-4 focus:ring-amber-500/20" placeholder="0" required />
+                    <input type="text" value={nominalIndent === 0 ? '' : formatRupiah(nominalIndent)} onChange={handleInputChange(setNominalIndent)} className="w-full h-12 px-4 bg-white border-2 border-amber-400 rounded-xl text-base sm:text-lg font-black text-amber-800 text-right outline-none transition-all focus:ring-4 focus:ring-amber-500/20" placeholder="0" required />
                 </div>
               </section>
               
@@ -451,7 +451,6 @@ export default function KwitansiIndentPage() {
           </div>
 
           <div className="overflow-x-auto max-h-[420px] scrollbar-thin">
-            {/* SAKTI: TABEL DIKEMBALIKAN TANPA MIN-W AGAR TIDAK ADA SCROLLBAR JELEK */}
             <table className="w-full text-sm text-left border-collapse whitespace-nowrap">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
                 <tr className="border-b border-slate-200">

@@ -115,18 +115,21 @@ export default function KwitansiIndentPage() {
     await new Promise(resolve => setTimeout(resolve, 1200)); 
     const cleanNo = noInvoice.trim();
     
-    // SAKTI: Bug Fixed! Variabel sekarang pakai nominalIndent, bukan indent.
+    // SAKTI: Ini obat anti 400 Bad Request! 
+    // Kita mengirim format DB persis seperti versi lama agar Supabase tidak menolak, 
+    // jenisIndent tidak disave ke DB karena kolomnya belum ada, tapi tetap dioper ke PDF nanti.
     const formData = {
       noInvoice: cleanNo, noBastk: noBastk.trim(), tanggal, diterimaDari: diterimaDari.toUpperCase(), 
       tipeMotor: tipeMotor.toUpperCase(), kasir: kasir.toUpperCase(), 
-      nominalIndent, jenisIndent, otr: 0, bbn: 0, offTheRoad: 0
+      nominalIndent, offTheRoad: 0, bbn: 0, otr: 0 
     };
 
     try {
       if (isEditing) {
         const { error } = await supabase.from('kwitansi_indent_history').update(formData).eq('noInvoice', originalNo);
         if (error) throw error;
-        setModal({ isOpen: true, type: 'success', title: 'Diperbarui!', message: 'Data Invoice Indent berhasil diupdate.', actionData: formData });
+        // SAKTI: Kita sisipkan jenisIndent secara rahasia untuk dilempar ke PDF
+        setModal({ isOpen: true, type: 'success', title: 'Diperbarui!', message: 'Data Invoice Indent berhasil diupdate.', actionData: { ...formData, jenisIndent } });
         setIsEditing(false);
       } else {
         const { data: existing } = await supabase.from('kwitansi_indent_history').select('noInvoice').ilike('noInvoice', cleanNo);
@@ -137,7 +140,8 @@ export default function KwitansiIndentPage() {
         }
         const { error } = await supabase.from('kwitansi_indent_history').insert([formData]);
         if (error) throw error;
-        setModal({ isOpen: true, type: 'success', title: 'Tersimpan!', message: 'Kwitansi Indent berhasil dibuat.', actionData: formData });
+        // SAKTI: Kita sisipkan jenisIndent secara rahasia untuk dilempar ke PDF
+        setModal({ isOpen: true, type: 'success', title: 'Tersimpan!', message: 'Kwitansi Indent berhasil dibuat.', actionData: { ...formData, jenisIndent } });
       }
       resetForm();
       fetchHistory();
@@ -152,7 +156,8 @@ export default function KwitansiIndentPage() {
     setOriginalNo(data.noInvoice);
     setNoInvoice(data.noInvoice); setNoBastk(data.noBastk || ''); setTanggal(data.tanggal); setDiterimaDari(data.diterimaDari);
     setTipeMotor(data.tipeMotor); setKasir(data.kasir);
-    setNominalIndent(data.nominalIndent || 0); setJenisIndent(data.jenisIndent || '');
+    setNominalIndent(data.nominalIndent || 0); 
+    setJenisIndent('INDENT REGULER'); // Fallback saat edit
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -380,7 +385,6 @@ export default function KwitansiIndentPage() {
                 <div className="md:col-span-2"><label className={labelClass}>Nama Motor & Warna</label><input type="text" value={tipeMotor} onChange={(e)=>setTipeMotor(e.target.value)} required placeholder="(BEAT SPORTY CBS / BLACK)" className={inputClass} /></div>
               </section>
               
-              {/* SAKTI: UI Dropdown Mewah Dikembalikan & Bug NominalIndent Teratasi */}
               <section className="bg-slate-50 p-6 rounded-2xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="relative">
                   <label className={labelClass}>Jenis Indent</label>
@@ -451,14 +455,14 @@ export default function KwitansiIndentPage() {
           </div>
 
           <div className="overflow-x-auto max-h-[420px] scrollbar-thin">
-            <table className="w-full text-sm text-left border-collapse whitespace-nowrap">
+            <table className="w-full text-sm text-left border-collapse">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
                 <tr className="border-b border-slate-200">
-                  <th className="px-6 py-4 font-bold tracking-wider">No. Invoice</th>
-                  <th className="px-6 py-4 font-bold tracking-wider">Tanggal</th>
+                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">No. Invoice</th>
+                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">Tanggal</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Diterima Dari</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Tipe Kendaraan</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-right">Aksi</th>
+                  <th className="px-6 py-4 font-bold tracking-wider text-right whitespace-nowrap">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

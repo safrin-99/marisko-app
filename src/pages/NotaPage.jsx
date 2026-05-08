@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-// SAKTI: Tambahkan Search pada import lucide-react
 import { ScrollText, Edit, Trash2, RefreshCw, Clock, X, CheckCircle2, AlertCircle, Printer, FileText, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from "jspdf";
@@ -26,7 +25,6 @@ export default function NotaPage() {
   const getInitialItems = () => Array.from({ length: 5 }, () => ({ nama: '', jumlah: '', warna: '', leasing: '', harga: 0 }));
   const [items, setItems] = useState(getInitialItems());
 
-  // SAKTI: State baru untuk fitur pencarian
   const [searchTerm, setSearchTerm] = useState('');
 
   const tabs = ['PEMASUKAN', 'PENGELUARAN', 'INSENTIF', 'MATERAI'];
@@ -198,7 +196,8 @@ export default function NotaPage() {
       try {
         let imgFormat = 'PNG';
         if (logoBase64.toLowerCase().includes('jpeg') || logoBase64.toLowerCase().includes('jpg')) imgFormat = 'JPEG';
-        doc.addImage(logoBase64, imgFormat, startX - 25, curY - 10, 17, 17); 
+        // SAKTI: Skala logo diubah menjadi 26x18 agar proporsional dan tidak terpotong!
+        doc.addImage(logoBase64, imgFormat, startX - 32, curY - 12, 26, 18); 
       } catch (e) {}
     }
 
@@ -412,7 +411,6 @@ export default function NotaPage() {
               <div className="mt-8">
                 <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Rincian Barang / Transaksi</h3>
                 <div className="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-inner">
-                    {/* SAKTI: Tambahan overflow agar tabel input tidak menyusut di HP */}
                     <div className="overflow-x-auto scrollbar-thin">
                       <table className="w-full text-sm text-left min-w-[600px] whitespace-nowrap">
                          <thead className="bg-slate-100 text-[11px] uppercase text-slate-500 font-extrabold border-b border-slate-200">
@@ -458,18 +456,18 @@ export default function NotaPage() {
                 </div>
               </div>
 
-              {/* SAKTI: Tombol aksi disesuaikan memanjang rapi di HP */}
-              <div className="flex justify-center gap-3 sm:gap-4 pt-6 border-t border-slate-100 flex-col sm:flex-row">
+              {/* SAKTI: Ini kode rahasianya! Dibuat 100% KEMBAR IDENTIK dengan BASTK untuk layar HP */}
+              <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-center items-center gap-4 transition-all duration-300">
                 {isEditing && (
-                  <button type="button" onClick={resetForm} className="px-6 sm:px-8 py-3 sm:py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-center w-full sm:w-auto">
+                  <button type="button" onClick={resetForm} className="px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-center w-full sm:w-auto">
                     <X className="w-4 h-4 mr-2" /> Batal Edit
                   </button>
                 )}
-                <button type="submit" disabled={isSubmitting} className={`px-8 sm:px-12 py-3 sm:py-3.5 text-white rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 shadow-lg tracking-wide flex items-center justify-center w-full sm:w-auto ${isSubmitting ? 'bg-slate-400 cursor-not-allowed' : 'bg-slate-950 hover:bg-slate-800'}`}>
+                <button type="submit" disabled={isSubmitting} className={`px-12 py-3.5 text-white rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 shadow-lg tracking-wide flex items-center justify-center w-full sm:w-auto ${isSubmitting ? 'bg-slate-400 cursor-not-allowed' : 'bg-slate-950 hover:bg-slate-800'}`}>
                   {isSubmitting ? (
                     <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Memproses...</>
                   ) : (
-                    <><ScrollText className="w-5 h-5 mr-2" /> {isEditing ? `Update Nota` : `Simpan & Cetak Nota ${kategoriNota}`}</>
+                    <><ScrollText className="w-4 h-4 mr-2" /> {isEditing ? `Update Nota` : `Simpan & Cetak Nota ${kategoriNota}`}</>
                   )}
                 </button>
               </div>
@@ -478,7 +476,6 @@ export default function NotaPage() {
         </div>
         
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          {/* SAKTI: Bagian Judul dan Tombol Segarkan Data disesuaikan untuk layar HP dan Desktop + FITUR SEARCH */}
           <div className="bg-slate-50/80 border-b border-slate-200 p-4 md:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5">
             <h3 className="text-lg font-bold text-slate-800 flex items-center"><ScrollText className="w-5 h-5 mr-2 text-indigo-600" /> Riwayat Nota {kategoriNota}</h3>
             
@@ -500,7 +497,6 @@ export default function NotaPage() {
           </div>
           
           <div className="overflow-x-auto max-h-[420px] scrollbar-thin">
-            {/* SAKTI: Tambahan whitespace-nowrap pada tag table */}
             <table className="w-full text-sm text-left border-collapse min-w-[900px] lg:min-w-full">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
                 <tr className="border-b border-slate-200">
@@ -535,11 +531,12 @@ export default function NotaPage() {
                         {row.kasir} {row.penerima && <><br/><span className="text-xs text-slate-400">Penerima: {row.penerima}</span></>}
                       </td>
                       <td className="px-6 py-5 text-sm font-black text-indigo-700 whitespace-nowrap">Rp {formatRupiah(row.total)}</td>
-                      <td className="px-6 py-5 whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-2.5">
-                          <button onClick={() => generatePDF(row)} className="flex items-center px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg active:scale-95 font-bold text-xs border border-emerald-200 transition-all duration-200"><FileText className="w-3.5 h-3.5 mr-1" /> PDF</button>
-                          <button onClick={() => handleEdit(row)} className="flex items-center px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg active:scale-95 font-bold text-xs border border-indigo-200 transition-all duration-200"><Edit className="w-3.5 h-3.5 mr-1" /> Edit</button>
-                          <button onClick={() => handleDeleteRequest(row.id)} className="flex items-center px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg active:scale-95 font-bold text-xs border border-rose-200 transition-all duration-200"><Trash2 className="w-3.5 h-3.5 mr-1" /> Del</button>
+                      <td className="px-4 py-4 md:px-6 md:py-5 whitespace-nowrap">
+                        {/* SAKTI: Tambahkan w-max dan flex-nowrap agar tombol tabel memanjang rapi di layar HP */}
+                        <div className="flex items-center justify-end gap-2 flex-nowrap w-max">
+                          <button onClick={() => generatePDF(row)} className="flex items-center gap-1.5 px-2.5 py-2 sm:px-3 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm whitespace-nowrap flex-shrink-0"><FileText className="w-3.5 h-3.5" /> PDF</button>
+                          <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-2.5 py-2 sm:px-3 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm whitespace-nowrap flex-shrink-0"><Edit className="w-3.5 h-3.5" /> Edit</button>
+                          <button onClick={() => handleDeleteRequest(row.id)} className="flex items-center gap-1.5 px-2.5 py-2 sm:px-3 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm whitespace-nowrap flex-shrink-0"><Trash2 className="w-3.5 h-3.5" /> Del</button>
                         </div>
                       </td>
                     </tr>

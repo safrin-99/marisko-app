@@ -33,18 +33,13 @@ export default function KwitansiPage() {
   
   const [accesoris, setAccesoris] = useState(0);
   const [potonganLecet, setPotonganLecet] = useState(0);
-
-  // SAKTI: State baru untuk Sisa Uang Muka agar bisa diedit manual
   const [sisaUangMuka, setSisaUangMuka] = useState(0);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownSearch, setDropdownSearch] = useState('');
-
   const [searchTerm, setSearchTerm] = useState('');
-
   const [logoBase64, setLogoBase64] = useState('');
 
-  // SAKTI: Sisa Uang Muka otomatis berhitung (Kredit menggunakan DP Gross), tapi tetap bisa diedit manual!
   useEffect(() => {
     if (!isEditing) {
       const calculatedSisa = Math.max(0, dpGross - diskon - indent + accesoris - transfer - potonganLecet);
@@ -52,7 +47,6 @@ export default function KwitansiPage() {
     }
   }, [dpGross, diskon, indent, accesoris, transfer, potonganLecet, isEditing]);
 
-  // RUMUS OFF THE ROAD KREDIT: (OTR / 1.11) - BBN - DP Gross
   useEffect(() => {
     if (otr > 0 && bbn > 0 && !isEditing) {
       const calculatedOffTheRoad = (otr / 1.11) - bbn - dpGross;
@@ -422,17 +416,25 @@ export default function KwitansiPage() {
                     <div><label className={labelClass}>5. Diskon</label><input type="text" value={diskon === 0 ? '' : formatRupiah(diskon)} onChange={handleInputChange(setDiskon)} className={numInputClass} placeholder="0" /></div>
                     <div><label className={labelClass}>6. Indent</label><input type="text" value={indent === 0 ? '' : formatRupiah(indent)} onChange={handleInputChange(setIndent)} className={numInputClass} placeholder="0" /></div>
                     <div><label className={labelClass}>8. Transfer</label><input type="text" value={transfer === 0 ? '' : formatRupiah(transfer)} onChange={handleInputChange(setTransfer)} className={numInputClass} placeholder="0" /></div>
-                    
-                    {/* SAKTI: Input Manual/Auto Sisa Uang Muka ditambahkan di Kwitansi Kredit! */}
                     <div><label className={labelClass}>10. Sisa Uang Muka (Auto / Manual)</label><input type="text" value={sisaUangMuka === 0 ? '' : formatRupiah(sisaUangMuka)} onChange={handleInputChange(setSisaUangMuka)} className="w-full h-12 px-4 bg-white border-2 border-indigo-400 rounded-xl text-base sm:text-lg font-black text-indigo-800 text-right outline-none transition-all focus:ring-4 focus:ring-indigo-500/20" placeholder="0" /></div>
                 </div>
               </section>
               
-              <div className="flex justify-center gap-4 pt-4 border-t border-slate-100">
-                {isEditing && <button type="button" onClick={resetForm} className="px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold active:scale-95 flex items-center shadow-sm">Batal</button>}
-                <button type="submit" className="px-12 py-3.5 bg-slate-950 text-white rounded-xl font-bold active:scale-95 shadow-lg tracking-wide flex items-center hover:bg-slate-800 transition-colors">
-                  <Receipt className="w-5 h-5 mr-2" />
-                  {isEditing ? 'Update Invoice' : 'Simpan & Cetak Kwitansi'}
+              {/* SAKTI: Ini kode rahasianya! Dibuat 100% KEMBAR IDENTIK dengan BASTK */}
+              <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-center items-center gap-4 transition-all duration-300">
+                {isEditing && (
+                  <button type="button" onClick={resetForm} className="px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-center w-full sm:w-auto">
+                    <X className="w-4 h-4 mr-2" /> Batal Edit
+                  </button>
+                )}
+                <button type="submit" disabled={isSubmitting} className={`px-12 py-3.5 text-white rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 shadow-lg tracking-wide flex items-center justify-center w-full sm:w-auto ${isSubmitting ? 'bg-slate-400 cursor-not-allowed' : 'bg-slate-950 hover:bg-slate-800'}`}>
+                  {isSubmitting ? (
+                    <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Memproses...</>
+                  ) : isEditing ? (
+                    <><Edit className="w-4 h-4 mr-2" /> Update Invoice</>
+                  ) : (
+                    <><Receipt className="w-4 h-4 mr-2" /> Simpan & Cetak Kwitansi</>
+                  )}
                 </button>
               </div>
             </form>
@@ -440,7 +442,6 @@ export default function KwitansiPage() {
         </div>
         
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          
           <div className="bg-slate-50/80 border-b border-slate-200 p-4 md:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5">
             <h3 className="text-lg font-bold text-slate-800 flex items-center"><Receipt className="w-5 h-5 mr-2 text-indigo-600" /> Riwayat Kwitansi Kredit</h3>
             
@@ -462,14 +463,14 @@ export default function KwitansiPage() {
           </div>
 
           <div className="overflow-x-auto max-h-[420px] scrollbar-thin">
-            <table className="w-full text-sm text-left border-collapse min-w-[900px] lg:min-w-full">
+            <table className="w-full text-sm text-left border-collapse whitespace-nowrap">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
                 <tr className="border-b border-slate-200">
-                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">No. Invoice</th>
-                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">Tanggal</th>
+                  <th className="px-6 py-4 font-bold tracking-wider">No. Invoice</th>
+                  <th className="px-6 py-4 font-bold tracking-wider">Tanggal</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Diterima Dari</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Tipe Kendaraan</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-right whitespace-nowrap">Aksi</th>
+                  <th className="px-6 py-4 font-bold tracking-wider text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

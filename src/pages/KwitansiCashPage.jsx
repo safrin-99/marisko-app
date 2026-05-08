@@ -31,18 +31,14 @@ export default function KwitansiCashPage() {
   
   const [accesoris, setAccesoris] = useState(0);
   const [potonganLecet, setPotonganLecet] = useState(0);
-
-  // SAKTI: State baru untuk Sisa Uang Muka agar bisa diedit manual ke 0
   const [sisaUangMuka, setSisaUangMuka] = useState(0);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownSearch, setDropdownSearch] = useState('');
   
   const [searchTerm, setSearchTerm] = useState('');
-
   const [logoBase64, setLogoBase64] = useState('');
 
-  // SAKTI: Sisa Uang Muka otomatis berhitung, tapi tetap bisa diedit manual!
   useEffect(() => {
     if (!isEditing) {
       const calculatedSisa = Math.max(0, otr - diskon - indent + accesoris - transfer - potonganLecet);
@@ -430,15 +426,25 @@ export default function KwitansiCashPage() {
                     <div><label className={labelClass}>4. Indent</label><input type="text" value={indent === 0 ? '' : formatRupiah(indent)} onChange={handleInputChange(setIndent)} className={numInputClass} placeholder="0" /></div>
                     <div><label className={labelClass}>5. Diskon</label><input type="text" value={diskon === 0 ? '' : formatRupiah(diskon)} onChange={handleInputChange(setDiskon)} className={numInputClass} placeholder="0" /></div>
                     <div><label className={labelClass}>6. Transfer</label><input type="text" value={transfer === 0 ? '' : formatRupiah(transfer)} onChange={handleInputChange(setTransfer)} className={numInputClass} placeholder="0" /></div>
-                    {/* SAKTI: Input Manual/Auto Sisa Uang Muka ditambahkan di sini! */}
                     <div><label className={labelClass}>9. Sisa Uang Muka (Auto / Manual)</label><input type="text" value={sisaUangMuka === 0 ? '' : formatRupiah(sisaUangMuka)} onChange={handleInputChange(setSisaUangMuka)} className="w-full h-12 px-4 bg-white border-2 border-emerald-400 rounded-xl text-base sm:text-lg font-black text-emerald-800 text-right outline-none transition-all focus:ring-4 focus:ring-emerald-500/20" placeholder="0" /></div>
                 </div>
               </section>
-              <div className="flex justify-center gap-3 sm:gap-4 pt-4 sm:pt-6 border-t border-slate-100 flex-col sm:flex-row">
-                {isEditing && <button type="button" onClick={resetForm} className="px-6 sm:px-8 py-3 sm:py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold active:scale-95 flex items-center shadow-sm w-full sm:w-auto justify-center"><X className="w-4 h-4 mr-2" /> Batal</button>}
-                <button type="submit" className="px-8 sm:px-12 py-3 sm:py-3.5 bg-slate-950 text-white rounded-xl font-bold active:scale-95 shadow-lg tracking-wide flex items-center hover:bg-slate-800 transition-colors w-full sm:w-auto justify-center">
-                  <Banknote className="w-5 h-5 mr-2" />
-                  {isEditing ? 'Update Cash' : 'Simpan & Cetak Kwitansi Cash'}
+
+              {/* SAKTI: Ini kode rahasianya! Dibuat 100% KEMBAR IDENTIK dengan BASTK */}
+              <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-center items-center gap-4 transition-all duration-300">
+                {isEditing && (
+                  <button type="button" onClick={resetForm} className="px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-center w-full sm:w-auto">
+                    <X className="w-4 h-4 mr-2" /> Batal Edit
+                  </button>
+                )}
+                <button type="submit" disabled={isSubmitting} className={`px-12 py-3.5 text-white rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 shadow-lg tracking-wide flex items-center justify-center w-full sm:w-auto ${isSubmitting ? 'bg-slate-400 cursor-not-allowed' : 'bg-slate-950 hover:bg-slate-800'}`}>
+                  {isSubmitting ? (
+                    <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Memproses...</>
+                  ) : isEditing ? (
+                    <><Edit className="w-4 h-4 mr-2" /> Update Cash</>
+                  ) : (
+                    <><Banknote className="w-4 h-4 mr-2" /> Simpan & Cetak Kwitansi</>
+                  )}
                 </button>
               </div>
             </form>

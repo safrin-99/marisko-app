@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { ClipboardSignature, Edit, Trash2, RefreshCw, X, CheckCircle2, AlertCircle, Printer, ChevronDown, FileText, Clock } from 'lucide-react';
+import { ClipboardSignature, Edit, Trash2, RefreshCw, Clock, X, CheckCircle2, AlertCircle, Printer, ChevronDown, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from "jspdf";
 
@@ -62,7 +62,6 @@ export default function KwitansiIndentPage() {
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  // SAKTI: Ini fungsinya!
   const handleNominalChange = (e) => {
     const val = parseNumber(e.target.value);
     setNominal(val === 0 ? '' : val);
@@ -339,37 +338,39 @@ export default function KwitansiIndentPage() {
               <section className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
                     
-                    <div className="relative">
+                    {/* SAKTI: UI Dropdown Mewah diperbaiki letaknya (turun ke bawah dan rapat) */}
+                    <div>
                         <label className={labelClass}>Jenis Indent</label>
-                        {isDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>}
-                        <div 
-                          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                          className={`w-full h-14 px-5 bg-white border-2 hover:border-amber-400 rounded-xl text-sm font-black flex items-center justify-between cursor-pointer transition-all shadow-sm ${jenisIndent ? 'border-amber-500 text-amber-700' : 'border-slate-200 text-slate-400'}`}
-                        >
-                          <span>{jenisIndent || '-- Pilih Jenis Indent --'}</span>
-                          <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? 'rotate-180 text-amber-500' : ''}`} />
-                        </div>
-                        
-                        {isDropdownOpen && (
-                          <div className="absolute z-[99] w-full bottom-full mb-2 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2">
-                            <div className="p-2">
-                              <div className="px-5 py-4 text-sm font-bold text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors flex items-center" onClick={() => handleSelectJenis('')}>
-                                <X className="w-4 h-4 mr-2" /> Batal / Kosongkan Pilihan
-                              </div>
-                              <div className="px-5 py-4 text-sm font-black text-slate-700 hover:bg-amber-50 hover:text-amber-700 rounded-lg cursor-pointer transition-colors" onClick={() => handleSelectJenis('INDENT KHUSUS')}>
-                                INDENT KHUSUS
-                              </div>
-                              <div className="px-5 py-4 text-sm font-black text-slate-700 hover:bg-amber-50 hover:text-amber-700 rounded-lg cursor-pointer transition-colors" onClick={() => handleSelectJenis('INDENT REGULER')}>
-                                INDENT REGULER
-                              </div>
+                        <div className="relative">
+                            {isDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>}
+                            <div 
+                              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                              className={`w-full h-14 px-5 bg-white border-2 hover:border-amber-400 rounded-xl text-sm font-black flex items-center justify-between cursor-pointer transition-all shadow-sm ${jenisIndent ? 'border-amber-500 text-amber-700' : 'border-slate-200 text-slate-400'}`}
+                            >
+                              <span>{jenisIndent || '-- Pilih Jenis Indent --'}</span>
+                              <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? 'rotate-180 text-amber-500' : ''}`} />
                             </div>
-                          </div>
-                        )}
+                            
+                            {isDropdownOpen && (
+                              <div className="absolute z-[99] w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="p-2">
+                                  <div className="px-5 py-4 text-sm font-bold text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors flex items-center" onClick={() => handleSelectJenis('')}>
+                                    <X className="w-4 h-4 mr-2" /> Batal / Kosongkan Pilihan
+                                  </div>
+                                  <div className="px-5 py-4 text-sm font-black text-slate-700 hover:bg-amber-50 hover:text-amber-700 rounded-lg cursor-pointer transition-colors" onClick={() => handleSelectJenis('INDENT KHUSUS')}>
+                                    INDENT KHUSUS
+                                  </div>
+                                  <div className="px-5 py-4 text-sm font-black text-slate-700 hover:bg-amber-50 hover:text-amber-700 rounded-lg cursor-pointer transition-colors" onClick={() => handleSelectJenis('INDENT REGULER')}>
+                                    INDENT REGULER
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                        </div>
                     </div>
 
                     <div>
                         <label className={labelClass}>Nominal Indent (Rp)</label>
-                        {/* SAKTI: Bug Fixed! onChange pakai handleNominalChange */}
                         <input type="text" value={nominal === 0 ? '' : formatRupiah(nominal)} onChange={handleNominalChange} className={numInputClass} placeholder="0" />
                     </div>
 

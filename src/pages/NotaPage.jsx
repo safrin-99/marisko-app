@@ -196,7 +196,7 @@ export default function NotaPage() {
       try {
         let imgFormat = 'PNG';
         if (logoBase64.toLowerCase().includes('jpeg') || logoBase64.toLowerCase().includes('jpg')) imgFormat = 'JPEG';
-        // SAKTI: Skala logo diubah menjadi 26x18 agar proporsional dan tidak terpotong!
+        // SAKTI: Skala logo diubah menjadi 26x18 agar proporsional (sayap Honda tidak terpotong)
         doc.addImage(logoBase64, imgFormat, startX - 32, curY - 12, 26, 18); 
       } catch (e) {}
     }
@@ -456,14 +456,14 @@ export default function NotaPage() {
                 </div>
               </div>
 
-              {/* SAKTI: Ini kode rahasianya! Dibuat 100% KEMBAR IDENTIK dengan BASTK untuk layar HP */}
+              {/* SAKTI: Padding w-full sm:w-auto px-4 sm:px-12 dikembalikan persis seperti BASTK agar tidak memepet! */}
               <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-center items-center gap-4 transition-all duration-300">
                 {isEditing && (
-                  <button type="button" onClick={resetForm} className="px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-center w-full sm:w-auto">
+                  <button type="button" onClick={resetForm} className="px-4 sm:px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-center w-full sm:w-auto">
                     <X className="w-4 h-4 mr-2" /> Batal Edit
                   </button>
                 )}
-                <button type="submit" disabled={isSubmitting} className={`px-12 py-3.5 text-white rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 shadow-lg tracking-wide flex items-center justify-center w-full sm:w-auto ${isSubmitting ? 'bg-slate-400 cursor-not-allowed' : 'bg-slate-950 hover:bg-slate-800'}`}>
+                <button type="submit" disabled={isSubmitting} className={`px-4 sm:px-12 py-3.5 text-white rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 shadow-lg tracking-wide flex items-center justify-center w-full sm:w-auto ${isSubmitting ? 'bg-slate-400 cursor-not-allowed' : 'bg-slate-950 hover:bg-slate-800'}`}>
                   {isSubmitting ? (
                     <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Memproses...</>
                   ) : (
@@ -531,12 +531,12 @@ export default function NotaPage() {
                         {row.kasir} {row.penerima && <><br/><span className="text-xs text-slate-400">Penerima: {row.penerima}</span></>}
                       </td>
                       <td className="px-6 py-5 text-sm font-black text-indigo-700 whitespace-nowrap">Rp {formatRupiah(row.total)}</td>
-                      <td className="px-4 py-4 md:px-6 md:py-5 whitespace-nowrap">
-                        {/* SAKTI: Tambahkan w-max dan flex-nowrap agar tombol tabel memanjang rapi di layar HP */}
-                        <div className="flex items-center justify-end gap-2 flex-nowrap w-max">
-                          <button onClick={() => generatePDF(row)} className="flex items-center gap-1.5 px-2.5 py-2 sm:px-3 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm whitespace-nowrap flex-shrink-0"><FileText className="w-3.5 h-3.5" /> PDF</button>
-                          <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-2.5 py-2 sm:px-3 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm whitespace-nowrap flex-shrink-0"><Edit className="w-3.5 h-3.5" /> Edit</button>
-                          <button onClick={() => handleDeleteRequest(row.id)} className="flex items-center gap-1.5 px-2.5 py-2 sm:px-3 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm whitespace-nowrap flex-shrink-0"><Trash2 className="w-3.5 h-3.5" /> Del</button>
+                      <td className="px-6 py-5 whitespace-nowrap">
+                        {/* SAKTI: Struktur tombol tabel dikembalikan MURNI SEPERTI BASTK agar tidak berantakan di layar Komputer! */}
+                        <div className="flex items-center justify-end gap-2.5">
+                          <button onClick={() => generatePDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm"><FileText className="w-3.5 h-3.5" /> PDF</button>
+                          <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm"><Edit className="w-3.5 h-3.5" /> Edit</button>
+                          <button onClick={() => handleDeleteRequest(row.id)} className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm"><Trash2 className="w-3.5 h-3.5" /> Del</button>
                         </div>
                       </td>
                     </tr>

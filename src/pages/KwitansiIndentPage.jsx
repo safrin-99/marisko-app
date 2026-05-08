@@ -332,6 +332,7 @@ export default function KwitansiIndentPage() {
         </div>, document.body
       )}
 
+      {/* SAKTI: Container UI Diseragamkan 100% Identik dengan Kredit */}
       <div className="max-w-5xl mx-auto pb-12 space-y-8 relative">
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-6 md:p-8">
@@ -373,13 +374,14 @@ export default function KwitansiIndentPage() {
                 <div className="md:col-span-2"><label className={labelClass}>Nama Motor & Warna</label><input type="text" value={tipeMotor} onChange={(e)=>setTipeMotor(e.target.value)} required placeholder="(BEAT SPORTY CBS / BLACK)" className={inputClass} /></div>
               </section>
               
+              {/* SAKTI: Kotak Angka dibagi rapi 2 Kiri, 2 Kanan agar Simetris */}
               <section className="bg-slate-50 p-6 rounded-2xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                     <div><label className={labelClass}>1. Nominal Uang Indent</label><input type="text" value={nominalIndent === 0 ? '' : formatRupiah(nominalIndent)} onChange={handleInputChange(setNominalIndent)} className="w-full h-12 px-4 bg-white border-2 border-amber-400 rounded-xl text-base sm:text-lg font-black text-amber-800 text-right outline-none transition-all focus:ring-4 focus:ring-amber-500/20" placeholder="0" /></div>
+                    <div><label className={labelClass}>Estimasi BBN (Opsional)</label><input type="text" value={bbn === 0 ? '' : formatRupiah(bbn)} onChange={handleInputChange(setBbn)} className={numInputClass} placeholder="0" /></div>
                 </div>
                 <div className="space-y-4">
                     <div><label className={labelClass}>Estimasi OTR (Opsional)</label><input type="text" value={otr === 0 ? '' : formatRupiah(otr)} onChange={handleInputChange(setOtr)} className={numInputClass} placeholder="0" /></div>
-                    <div><label className={labelClass}>Estimasi BBN (Opsional)</label><input type="text" value={bbn === 0 ? '' : formatRupiah(bbn)} onChange={handleInputChange(setBbn)} className={numInputClass} placeholder="0" /></div>
                     <div><label className={labelClass}>Estimasi Off The Road (Opsional)</label><input type="text" value={offTheRoad === 0 ? '' : formatRupiah(offTheRoad)} onChange={handleInputChange(setOffTheRoad)} className={numInputClass} placeholder="0" /></div>
                 </div>
               </section>

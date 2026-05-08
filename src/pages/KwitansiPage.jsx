@@ -213,7 +213,7 @@ export default function KwitansiPage() {
             try {
                 let imgFormat = 'PNG';
                 if (logoBase64.toLowerCase().includes('jpeg') || logoBase64.toLowerCase().includes('jpg')) imgFormat = 'JPEG';
-                // SAKTI: Logo 17x17, Posisi di Y - 10 (Agar presisi)
+                // SAKTI: Logo dikembalikan ke ukuran aslinya (17x17) agar BULAT SEMPURNA
                 doc.addImage(logoBase64, imgFormat, startX - 25, curY - 10, 17, 17); 
             } catch (e) {}
         }
@@ -248,18 +248,16 @@ export default function KwitansiPage() {
         
         curY += 6;
         const col1 = 15, col2 = 25, col3 = 145, col4 = 200;
-        
-        // SAKTI: UKURAN TABEL DIKUNCI MATI (Header 10, Baris 6)
-        const headerH = 10; 
+        const headerH = 11; 
         const rowH = 6;     
         
         doc.setFillColor(210, 230, 250); doc.setLineWidth(0.2); 
         doc.rect(col1, curY, col4 - col1, headerH, 'FD'); 
         doc.line(col2, curY, col2, curY + headerH); doc.line(col3, curY, col3, curY + headerH);
         doc.setFontSize(10); doc.setFont("helvetica", "bold");
-        doc.text("No.", col1 + 5, curY + 6.5, {align: "center"}); 
-        doc.text("Nama Barang", col2 + 3, curY + 6.5); 
-        doc.text("Total Harga", col3 + 27, curY + 6.5, {align: "center"});
+        doc.text("No.", col1 + 5, curY + 7, {align: "center"}); 
+        doc.text("Nama Barang", col2 + 3, curY + 7); 
+        doc.text("Total Harga", col3 + 27, curY + 7, {align: "center"});
         curY += headerH;
         
         const motor = data.tipeMotor ? `(${data.tipeMotor})` : '';
@@ -280,11 +278,11 @@ export default function KwitansiPage() {
         rows.forEach((r) => {
             doc.setFontSize(9); doc.setFont("helvetica", "normal"); 
             doc.line(col1, curY, col4, curY);
-            doc.text(r.no.toString(), col1 + 5, curY + 4, {align: "center"}); 
-            doc.text(r.name, col2 + 3, curY + 4);
-            doc.text("Rp", col3 + 3, curY + 4); 
+            doc.text(r.no.toString(), col1 + 5, curY + 4.5, {align: "center"}); 
+            doc.text(r.name, col2 + 3, curY + 4.5);
+            doc.text("Rp", col3 + 3, curY + 4.5); 
             const valStr = r.val === 0 ? "-" : formatRupiah(r.val);
-            doc.text(valStr, col4 - 3, curY + 4, { align: "right" });
+            doc.text(valStr, col4 - 3, curY + 4.5, { align: "right" });
             curY += rowH;
         });
         
@@ -312,7 +310,7 @@ export default function KwitansiPage() {
         return curY; 
     };
     
-    // SAKTI: StartY = 15 (Turun sedikit saja)
+    // SAKTI: Diturunkan JADI 15 (Hanya turun 3 milimeter agar jarak kwitansi tetap rapi & garis tidak hilang!)
     let yAkhirAtas = drawReceipt(15); 
     const yGarisPembatas = yAkhirAtas + 12; 
     doc.setLineDashPattern([3, 3], 0); doc.setLineWidth(0.3);
@@ -365,6 +363,7 @@ export default function KwitansiPage() {
         </div>, document.body
       )}
 
+      {/* SAKTI: UI Container Diseragamkan 100% untuk ketiga menu */}
       <div className="max-w-5xl mx-auto pb-12 space-y-8 relative">
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-6 md:p-8">
@@ -466,7 +465,6 @@ export default function KwitansiPage() {
           </div>
 
           <div className="overflow-x-auto max-h-[420px] scrollbar-thin">
-            {/* SAKTI: TABEL DIKEMBALIKAN TANPA MIN-W AGAR TIDAK ADA SCROLLBAR JELEK */}
             <table className="w-full text-sm text-left border-collapse whitespace-nowrap">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
                 <tr className="border-b border-slate-200">

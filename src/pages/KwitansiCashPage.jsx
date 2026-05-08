@@ -210,7 +210,7 @@ const generatePDF = (data) => {
             try {
                 let imgFormat = 'PNG';
                 if (logoBase64.toLowerCase().includes('jpeg') || logoBase64.toLowerCase().includes('jpg')) imgFormat = 'JPEG';
-                // SAKTI: Dikembalikan ke ukuran aslinya (17x17)
+                // SAKTI: Logo dikembalikan ke 17x17
                 doc.addImage(logoBase64, imgFormat, startX - 25, curY - 10, 17, 17); 
             } catch (e) {}
         }
@@ -304,8 +304,8 @@ const generatePDF = (data) => {
         return curY; 
     };
     
-    // SAKTI: Diturunkan dari 12 ke 18 agar seluruh Kop Surat turun dan aman dari potongan printer
-    let yAkhirAtas = drawReceipt(18); 
+    // SAKTI: Diturunkan JADI 15 (Hanya turun 3 milimeter)
+    let yAkhirAtas = drawReceipt(15); 
     const yGarisPembatas = yAkhirAtas + 12; 
     doc.setLineDashPattern([3, 3], 0); doc.setLineWidth(0.3);
     doc.line(10, yGarisPembatas, 205, yGarisPembatas);

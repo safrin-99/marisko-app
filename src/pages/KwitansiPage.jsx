@@ -47,12 +47,13 @@ export default function KwitansiPage() {
     }
   }, [dpGross, diskon, indent, accesoris, transfer, potonganLecet, isEditing]);
 
+  // SAKTI: RUMUS OFF THE ROAD KREDIT SUDAH DIPERBAIKI SESUAI EXCEL (OTR - BBN) / 1.11
   useEffect(() => {
     if (otr > 0 && bbn > 0 && !isEditing) {
-      const calculatedOffTheRoad = (otr / 1.11) - bbn - dpGross;
-      setOffTheRoad(Math.round(calculatedOffTheRoad));
+      const calculatedOffTheRoad = Math.round((otr - bbn) / 1.11);
+      setOffTheRoad(calculatedOffTheRoad);
     }
-  }, [otr, bbn, dpGross, isEditing]);
+  }, [otr, bbn, isEditing]);
 
   useEffect(() => {
     fetchHistory();
@@ -213,7 +214,6 @@ export default function KwitansiPage() {
             try {
                 let imgFormat = 'PNG';
                 if (logoBase64.toLowerCase().includes('jpeg') || logoBase64.toLowerCase().includes('jpg')) imgFormat = 'JPEG';
-                // SAKTI: Logo dikembalikan ke ukuran aslinya (17x17) agar BULAT SEMPURNA
                 doc.addImage(logoBase64, imgFormat, startX - 25, curY - 10, 17, 17); 
             } catch (e) {}
         }
@@ -248,8 +248,6 @@ export default function KwitansiPage() {
         
         curY += 6;
         const col1 = 15, col2 = 25, col3 = 145, col4 = 200;
-        
-        // SAKTI: UKURAN TABEL DIKUNCI MATI
         const headerH = 10; 
         const rowH = 6;     
         
@@ -312,7 +310,6 @@ export default function KwitansiPage() {
         return curY; 
     };
     
-    // SAKTI: StartY = 15 (Turun sedikit saja 3mm)
     let yAkhirAtas = drawReceipt(15); 
     const yGarisPembatas = yAkhirAtas + 12; 
     doc.setLineDashPattern([3, 3], 0); doc.setLineWidth(0.3);
@@ -466,7 +463,6 @@ export default function KwitansiPage() {
           </div>
 
           <div className="overflow-x-auto max-h-[420px] scrollbar-thin">
-            {/* SAKTI: TABEL DIKEMBALIKAN TANPA MIN-W AGAR TIDAK ADA SCROLLBAR JELEK. HANYA WHITESPACE-NOWRAP DI KOLOM TERTENTU AGAR BISA MEMBUNGKUS RAPI */}
             <table className="w-full text-sm text-left border-collapse">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
                 <tr className="border-b border-slate-200">

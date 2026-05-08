@@ -22,9 +22,6 @@ export default function KwitansiIndentPage() {
   const [kasir, setKasir] = useState('');
   const [pilihBastk, setPilihBastk] = useState(''); 
 
-  const [offTheRoad, setOffTheRoad] = useState(0);
-  const [bbn, setBbn] = useState(0);
-  const [otr, setOtr] = useState(0);
   const [nominalIndent, setNominalIndent] = useState(0);
   
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -115,10 +112,11 @@ export default function KwitansiIndentPage() {
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 1200)); 
     const cleanNo = noInvoice.trim();
+    
+    // SAKTI: Kembalikan payload data 100% seperti aslinya, tanpa OTR/BBN/OffTheRoad
     const formData = {
       noInvoice: cleanNo, noBastk: noBastk.trim(), tanggal, diterimaDari: diterimaDari.toUpperCase(), 
-      tipeMotor: tipeMotor.toUpperCase(), kasir: kasir.toUpperCase(),
-      offTheRoad, bbn, otr, nominalIndent
+      tipeMotor: tipeMotor.toUpperCase(), kasir: kasir.toUpperCase(), nominalIndent
     };
 
     try {
@@ -151,7 +149,7 @@ export default function KwitansiIndentPage() {
     setOriginalNo(data.noInvoice);
     setNoInvoice(data.noInvoice); setNoBastk(data.noBastk || ''); setTanggal(data.tanggal); setDiterimaDari(data.diterimaDari);
     setTipeMotor(data.tipeMotor); setKasir(data.kasir);
-    setOffTheRoad(data.offTheRoad || 0); setBbn(data.bbn || 0); setOtr(data.otr || 0); setNominalIndent(data.nominalIndent || 0);
+    setNominalIndent(data.nominalIndent || 0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -167,7 +165,7 @@ export default function KwitansiIndentPage() {
 
   const resetForm = () => {
     setNoInvoice(''); setNoBastk(''); setTanggal(''); setDiterimaDari(''); setTipeMotor(''); setKasir(''); setPilihBastk('');
-    setOffTheRoad(0); setBbn(0); setOtr(0); setNominalIndent(0);
+    setNominalIndent(0);
     setIsEditing(false); setOriginalNo('');
   };
 
@@ -235,11 +233,12 @@ export default function KwitansiIndentPage() {
         curY += headerH;
         
         const motor = data.tipeMotor ? `(${data.tipeMotor})` : '';
+        // SAKTI: Format baris PDF dikembalikan 100% seperti versi terbaik sebelumnya!
         const rows = [
             { no: 1, name: `Nominal Uang Indent ${motor}`, val: data.nominalIndent },
-            { no: 2, name: `Estimasi OTR`, val: data.otr },
-            { no: 3, name: `Estimasi BBN`, val: data.bbn },
-            { no: 4, name: `Estimasi Off The Road`, val: data.offTheRoad },
+            { no: 2, name: `Estimasi OTR`, val: data.otr || 0 },
+            { no: 3, name: `Estimasi BBN`, val: data.bbn || 0 },
+            { no: 4, name: `Estimasi Off The Road`, val: data.offTheRoad || 0 },
             { no: 5, name: `-`, val: 0 },
         ];
         
@@ -314,7 +313,6 @@ export default function KwitansiIndentPage() {
   };
 
   const inputClass = "w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:bg-white focus:border-amber-500 outline-none transition-all placeholder:text-slate-400";
-  const numInputClass = "w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-lg font-black text-amber-900 text-right focus:bg-white focus:border-amber-500 outline-none transition-all placeholder:text-slate-400";
   const labelClass = "block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider";
 
   return (
@@ -332,7 +330,6 @@ export default function KwitansiIndentPage() {
         </div>, document.body
       )}
 
-      {/* SAKTI: Container UI Diseragamkan 100% Identik dengan Kredit */}
       <div className="max-w-5xl mx-auto pb-12 space-y-8 relative">
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-6 md:p-8">
@@ -374,15 +371,11 @@ export default function KwitansiIndentPage() {
                 <div className="md:col-span-2"><label className={labelClass}>Nama Motor & Warna</label><input type="text" value={tipeMotor} onChange={(e)=>setTipeMotor(e.target.value)} required placeholder="(BEAT SPORTY CBS / BLACK)" className={inputClass} /></div>
               </section>
               
-              {/* SAKTI: Kotak Angka dibagi rapi 2 Kiri, 2 Kanan agar Simetris */}
-              <section className="bg-slate-50 p-6 rounded-2xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                    <div><label className={labelClass}>1. Nominal Uang Indent</label><input type="text" value={nominalIndent === 0 ? '' : formatRupiah(nominalIndent)} onChange={handleInputChange(setNominalIndent)} className="w-full h-12 px-4 bg-white border-2 border-amber-400 rounded-xl text-base sm:text-lg font-black text-amber-800 text-right outline-none transition-all focus:ring-4 focus:ring-amber-500/20" placeholder="0" /></div>
-                    <div><label className={labelClass}>Estimasi BBN (Opsional)</label><input type="text" value={bbn === 0 ? '' : formatRupiah(bbn)} onChange={handleInputChange(setBbn)} className={numInputClass} placeholder="0" /></div>
-                </div>
-                <div className="space-y-4">
-                    <div><label className={labelClass}>Estimasi OTR (Opsional)</label><input type="text" value={otr === 0 ? '' : formatRupiah(otr)} onChange={handleInputChange(setOtr)} className={numInputClass} placeholder="0" /></div>
-                    <div><label className={labelClass}>Estimasi Off The Road (Opsional)</label><input type="text" value={offTheRoad === 0 ? '' : formatRupiah(offTheRoad)} onChange={handleInputChange(setOffTheRoad)} className={numInputClass} placeholder="0" /></div>
+              {/* SAKTI: UI Dikembalikan Asli, hanya 1 kotak panjang untuk Nominal Indent */}
+              <section className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                <div>
+                    <label className={labelClass}>1. Nominal Uang Indent</label>
+                    <input type="text" value={nominalIndent === 0 ? '' : formatRupiah(nominalIndent)} onChange={handleInputChange(setNominalIndent)} className="w-full h-12 px-4 bg-white border-2 border-amber-400 rounded-xl text-base sm:text-lg font-black text-amber-800 outline-none transition-all focus:ring-4 focus:ring-amber-500/20" placeholder="0" />
                 </div>
               </section>
               
@@ -429,14 +422,14 @@ export default function KwitansiIndentPage() {
 
           <div className="overflow-x-auto max-h-[420px] scrollbar-thin">
             {/* SAKTI: TABEL DIKEMBALIKAN TANPA MIN-W AGAR TIDAK ADA SCROLLBAR JELEK */}
-            <table className="w-full text-sm text-left border-collapse whitespace-nowrap">
+            <table className="w-full text-sm text-left border-collapse">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
                 <tr className="border-b border-slate-200">
-                  <th className="px-6 py-4 font-bold tracking-wider">No. Invoice</th>
-                  <th className="px-6 py-4 font-bold tracking-wider">Tanggal</th>
+                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">No. Invoice</th>
+                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">Tanggal</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Diterima Dari</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Tipe Kendaraan</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-right">Aksi</th>
+                  <th className="px-6 py-4 font-bold tracking-wider text-right whitespace-nowrap">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

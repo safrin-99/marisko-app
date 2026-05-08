@@ -185,7 +185,9 @@ export default function NotaPage() {
   const generatePDF = (data) => {
     const doc = new jsPDF({ format: [215, 330], unit: 'mm' }); 
     const pageWidth = doc.internal.pageSize.width;
-    let curY = 12;
+    
+    // SAKTI: Diturunkan dari 12 ke 18 agar seluruh Kop Surat turun dan aman dari potongan printer
+    let curY = 18; 
 
     doc.setFontSize(26); doc.setFont("helvetica", "bold");
     const kopText = "CV. MARISKO PERKASA";
@@ -196,8 +198,9 @@ export default function NotaPage() {
       try {
         let imgFormat = 'PNG';
         if (logoBase64.toLowerCase().includes('jpeg') || logoBase64.toLowerCase().includes('jpg')) imgFormat = 'JPEG';
-        // SAKTI: Skala logo diubah menjadi 26x18 agar proporsional (sayap Honda tidak terpotong)
-        doc.addImage(logoBase64, imgFormat, startX - 32, curY - 12, 26, 18); 
+        
+        // SAKTI: Dikembalikan ke ukuran aslinya (17x17) agar tidak gepeng!
+        doc.addImage(logoBase64, imgFormat, startX - 25, curY - 10, 17, 17); 
       } catch (e) {}
     }
 
@@ -456,7 +459,7 @@ export default function NotaPage() {
                 </div>
               </div>
 
-              {/* SAKTI: Padding w-full sm:w-auto px-4 sm:px-12 dikembalikan persis seperti BASTK agar tidak memepet! */}
+              {/* SAKTI: Padding w-full sm:w-auto px-4 sm:px-12 dikembalikan persis seperti BASTK agar tidak memepet di HP! */}
               <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-center items-center gap-4 transition-all duration-300">
                 {isEditing && (
                   <button type="button" onClick={resetForm} className="px-4 sm:px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-center w-full sm:w-auto">
@@ -531,7 +534,7 @@ export default function NotaPage() {
                         {row.kasir} {row.penerima && <><br/><span className="text-xs text-slate-400">Penerima: {row.penerima}</span></>}
                       </td>
                       <td className="px-6 py-5 text-sm font-black text-indigo-700 whitespace-nowrap">Rp {formatRupiah(row.total)}</td>
-                      <td className="px-6 py-5 whitespace-nowrap">
+                      <td className="px-4 py-4 md:px-6 md:py-5 whitespace-nowrap">
                         {/* SAKTI: Struktur tombol tabel dikembalikan MURNI SEPERTI BASTK agar tidak berantakan di layar Komputer! */}
                         <div className="flex items-center justify-end gap-2.5">
                           <button onClick={() => generatePDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm"><FileText className="w-3.5 h-3.5" /> PDF</button>

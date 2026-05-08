@@ -328,7 +328,7 @@ export default function KwitansiIndentPage() {
             <form onSubmit={handleSubmit} className="space-y-8">
 
               <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div><label className={labelClass}>No. Invoice (Manual)</label><input type="text" value={noInvoice} onChange={(e)=>setNoInvoice(e.target.value)} required placeholder="IND-001" className={inputClass} /></div>
+                <div><label className={labelClass}>No. Invoice</label><input type="text" value={noInvoice} onChange={(e)=>setNoInvoice(e.target.value)} required placeholder="IND-001" className={inputClass} /></div>
                 <div><label className={labelClass}>Tanggal</label><input type="date" value={tanggal} onChange={(e)=>setTanggal(e.target.value)} required className={inputClass} /></div>
                 <div><label className={labelClass}>Di Terima Dari (Konsumen)</label><input type="text" value={diterimaDari} onChange={(e)=>setDiterimaDari(e.target.value)} required placeholder="NAMA LENGKAP" className={inputClass} /></div>
                 <div><label className={labelClass}>Nama Kasir</label><input type="text" value={namaKasir} onChange={(e)=>setNamaKasir(e.target.value)} required placeholder="STELY ARSYAD" className={inputClass} /></div>

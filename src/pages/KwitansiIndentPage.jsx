@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { ClipboardSignature, Edit, Trash2, RefreshCw, Clock, X, CheckCircle2, AlertCircle, Printer, FileText } from 'lucide-react';
+import { ClipboardSignature, Edit, Trash2, RefreshCw, Clock, X, CheckCircle2, AlertCircle, Printer, FileText, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from "jspdf";
 
@@ -219,7 +219,7 @@ export default function KwitansiIndentPage() {
         doc.text("Total Harga", col3 + 27, curY + 6.5, {align: "center"});
         curY += headerH;
         
-        // SAKTI: HANYA MENAMPILKAN NAMA MOTOR DI BARIS PERTAMA!
+        // SAKTI: HANYA MENAMPILKAN NAMA MOTOR DI BARIS PERTAMA (Tanpa embel-embel UANG INDENT)
         const motor = data.tipeMotor ? data.tipeMotor : '-';
         
         const rows = [
@@ -407,8 +407,8 @@ export default function KwitansiIndentPage() {
                       <td className="px-6 py-5 font-extrabold text-slate-900">{row?.noInvoice || '-'}</td>
                       <td className="px-6 py-5">
                         <div className="font-bold text-slate-700">{date}</div>
-                        <div className="flex items-center text-[11px] font-medium text-slate-400 mt-1">
-                          <Clock className="w-3.5 h-3.5 mr-1" /> Jam: {time}
+                        <div className="flex items-center text-[11px] text-slate-400 mt-1 font-medium bg-slate-100/70 inline-flex px-2 py-0.5 rounded">
+                          <Clock className="w-3 h-3 mr-1" /> Jam: {time}
                         </div>
                       </td>
                       <td className="px-6 py-5 font-bold text-slate-700 uppercase">{row?.diterimaDari || '-'}</td>

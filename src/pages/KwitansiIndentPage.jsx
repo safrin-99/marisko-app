@@ -22,12 +22,11 @@ export default function KwitansiIndentPage() {
   const [kasir, setKasir] = useState('');
   const [pilihBastk, setPilihBastk] = useState(''); 
 
-  // SAKTI: State untuk Jenis Indent dan Nominal saja
+  // SAKTI: Murni Hanya Jenis Indent dan Nominal Uang Indent
   const [jenisIndent, setJenisIndent] = useState('');
   const [nominalIndent, setNominalIndent] = useState(0);
   
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isDropdownJenisOpen, setIsDropdownJenisOpen] = useState(false);
   const [dropdownSearch, setDropdownSearch] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [logoBase64, setLogoBase64] = useState('');
@@ -116,10 +115,11 @@ export default function KwitansiIndentPage() {
     await new Promise(resolve => setTimeout(resolve, 1200)); 
     const cleanNo = noInvoice.trim();
     
-    // Payload murni hanya Indent
+    // SAKTI: Payload DB murni tanpa OTR/BBN dll dari UI, tapi diisi 0 agar database aman
     const formData = {
       noInvoice: cleanNo, noBastk: noBastk.trim(), tanggal, diterimaDari: diterimaDari.toUpperCase(), 
-      tipeMotor: tipeMotor.toUpperCase(), kasir: kasir.toUpperCase(), nominalIndent, jenisIndent
+      tipeMotor: tipeMotor.toUpperCase(), kasir: kasir.toUpperCase(), 
+      nominalIndent, jenisIndent, otr: 0, bbn: 0, offTheRoad: 0
     };
 
     try {
@@ -152,8 +152,7 @@ export default function KwitansiIndentPage() {
     setOriginalNo(data.noInvoice);
     setNoInvoice(data.noInvoice); setNoBastk(data.noBastk || ''); setTanggal(data.tanggal); setDiterimaDari(data.diterimaDari);
     setTipeMotor(data.tipeMotor); setKasir(data.kasir);
-    setNominalIndent(data.nominalIndent || 0);
-    setJenisIndent(data.jenisIndent || '');
+    setNominalIndent(data.nominalIndent || 0); setJenisIndent(data.jenisIndent || '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -237,13 +236,14 @@ export default function KwitansiIndentPage() {
         curY += headerH;
         
         const motor = data.tipeMotor ? `(${data.tipeMotor})` : '';
-        const jenisInd = data.jenisIndent ? data.jenisIndent : 'INDENT';
+        const jenisInd = data.jenisIndent ? data.jenisIndent : 'INDENT REGULER';
         
+        // SAKTI: PDF Murni 100% dikembalikan seperti aslinya, dan MEMAKAI data.nominalIndent AGAR TIDAK NaN!
         const rows = [
-            { no: 1, name: `UANG ${jenisInd} ${motor}`, val: data.nominalIndent },
-            { no: 2, name: `Estimasi OTR`, val: 0 },
-            { no: 3, name: `Estimasi BBN`, val: 0 },
-            { no: 4, name: `Estimasi Off The Road`, val: 0 },
+            { no: 1, name: `UANG ${jenisInd} ${motor}`, val: data.nominalIndent || 0 },
+            { no: 2, name: `Estimasi OTR`, val: data.otr || 0 },
+            { no: 3, name: `Estimasi BBN`, val: data.bbn || 0 },
+            { no: 4, name: `Estimasi Off The Road`, val: data.offTheRoad || 0 },
             { no: 5, name: `-`, val: 0 },
         ];
         
@@ -253,9 +253,14 @@ export default function KwitansiIndentPage() {
             doc.line(col1, curY, col4, curY);
             doc.text(r.no.toString(), col1 + 5, curY + 4, {align: "center"}); 
             doc.text(r.name, col2 + 3, curY + 4);
-            doc.text("Rp", col3 + 3, curY + 4); 
-            const valStr = r.val === 0 ? "-" : formatRupiah(r.val);
-            doc.text(valStr, col4 - 3, curY + 4, { align: "right" });
+            
+            if (r.val > 0) {
+                doc.text("Rp", col3 + 3, curY + 4); 
+                doc.text(formatRupiah(r.val), col4 - 3, curY + 4, { align: "right" });
+            } else {
+                doc.text("Rp", col3 + 3, curY + 4); 
+                doc.text("-", col4 - 3, curY + 4, { align: "right" });
+            }
             curY += rowH;
         });
         
@@ -283,7 +288,7 @@ export default function KwitansiIndentPage() {
         return curY; 
     };
     
-    // SAKTI: StartY = 15 (Turun sedikit saja) tidak disentuh lagi
+    // SAKTI: StartY = 15 (Turun sedikit saja 3mm)
     let yAkhirAtas = drawReceipt(15); 
     const yGarisPembatas = yAkhirAtas + 12; 
     doc.setLineDashPattern([3, 3], 0); doc.setLineWidth(0.3);
@@ -335,7 +340,6 @@ export default function KwitansiIndentPage() {
         </div>, document.body
       )}
 
-      {/* SAKTI: Container UI Diseragamkan 100% Identik dengan Kredit dan Cash */}
       <div className="max-w-5xl mx-auto pb-12 space-y-8 relative">
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-6 md:p-8">
@@ -377,30 +381,25 @@ export default function KwitansiIndentPage() {
                 <div className="md:col-span-2"><label className={labelClass}>Nama Motor & Warna</label><input type="text" value={tipeMotor} onChange={(e)=>setTipeMotor(e.target.value)} required placeholder="(BEAT SPORTY CBS / BLACK)" className={inputClass} /></div>
               </section>
               
-              {/* SAKTI: Dikembalikan dengan Dropdown Jenis Indent */}
+              {/* SAKTI: Form UI Murni Hanya Jenis Indent (Dropdown Sistem Bawaan) & Nominal Indent */}
               <section className="bg-slate-50 p-6 rounded-2xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="relative">
                   <label className={labelClass}>Jenis Indent</label>
-                  <div onClick={() => setIsDropdownJenisOpen(!isDropdownJenisOpen)} className="w-full h-12 px-4 bg-white border border-amber-200 hover:border-amber-400 rounded-xl text-sm font-bold text-slate-800 flex items-center justify-between cursor-pointer transition-all shadow-sm">
-                    <span>{jenisIndent ? jenisIndent : '-- Pilih Jenis Indent --'}</span>
-                    <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isDropdownJenisOpen ? 'rotate-180' : ''}`} />
-                  </div>
-                  {isDropdownJenisOpen && (
-                    <>
-                      <div className="fixed inset-0 z-10" onClick={() => setIsDropdownJenisOpen(false)}></div>
-                      <div className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                        {['INDENT REGULER', 'INDENT KHUSUS'].map((opt) => (
-                          <div key={opt} onClick={() => { setJenisIndent(opt); setIsDropdownJenisOpen(false); }} className="px-4 py-3.5 text-sm font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-700 cursor-pointer transition-colors border-b border-slate-100 last:border-0">
-                            {opt}
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
+                  <select 
+                    value={jenisIndent} 
+                    onChange={(e) => setJenisIndent(e.target.value)} 
+                    className={`${inputClass} appearance-none cursor-pointer`} 
+                    required
+                  >
+                    <option value="">-- Pilih Jenis Indent --</option>
+                    <option value="INDENT REGULER">INDENT REGULER</option>
+                    <option value="INDENT KHUSUS">INDENT KHUSUS</option>
+                  </select>
+                  <ChevronDown className="w-5 h-5 text-slate-400 absolute right-4 top-9 pointer-events-none" />
                 </div>
                 <div>
                     <label className={labelClass}>Nominal Uang Indent</label>
-                    <input type="text" value={nominalIndent === 0 ? '' : formatRupiah(nominalIndent)} onChange={handleInputChange(setNominalIndent)} className="w-full h-12 px-4 bg-white border-2 border-amber-400 rounded-xl text-base sm:text-lg font-black text-amber-800 text-right outline-none transition-all focus:ring-4 focus:ring-amber-500/20" placeholder="0" />
+                    <input type="text" value={nominalIndent === 0 ? '' : formatRupiah(nominalIndent)} onChange={handleInputChange(setNominalIndent)} className="w-full h-12 px-4 bg-white border-2 border-amber-400 rounded-xl text-base sm:text-lg font-black text-amber-800 text-right outline-none transition-all focus:ring-4 focus:ring-amber-500/20" placeholder="0" required />
                 </div>
               </section>
               
@@ -446,15 +445,14 @@ export default function KwitansiIndentPage() {
           </div>
 
           <div className="overflow-x-auto max-h-[420px] scrollbar-thin">
-            {/* SAKTI: TABEL DIKEMBALIKAN TANPA MIN-W AGAR TIDAK ADA SCROLLBAR JELEK */}
-            <table className="w-full text-sm text-left border-collapse whitespace-nowrap">
+            <table className="w-full text-sm text-left border-collapse">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
                 <tr className="border-b border-slate-200">
-                  <th className="px-6 py-4 font-bold tracking-wider">No. Invoice</th>
-                  <th className="px-6 py-4 font-bold tracking-wider">Tanggal</th>
+                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">No. Invoice</th>
+                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">Tanggal</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Diterima Dari</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Tipe Kendaraan</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-right">Aksi</th>
+                  <th className="px-6 py-4 font-bold tracking-wider text-right whitespace-nowrap">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

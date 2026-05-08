@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { ClipboardSignature, Edit, Trash2, RefreshCw, Clock, X, CheckCircle2, AlertCircle, Printer, FileText, ChevronDown } from 'lucide-react';
+import { ClipboardSignature, Edit, Trash2, RefreshCw, X, CheckCircle2, AlertCircle, Printer, ChevronDown, FileText, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from "jspdf";
 
@@ -62,6 +62,7 @@ export default function KwitansiIndentPage() {
     return isNaN(parsed) ? 0 : parsed;
   };
 
+  // SAKTI: Ini fungsinya!
   const handleNominalChange = (e) => {
     const val = parseNumber(e.target.value);
     setNominal(val === 0 ? '' : val);
@@ -219,7 +220,6 @@ export default function KwitansiIndentPage() {
         doc.text("Total Harga", col3 + 27, curY + 6.5, {align: "center"});
         curY += headerH;
         
-        // SAKTI: HANYA MENAMPILKAN NAMA MOTOR DI BARIS PERTAMA (Tanpa embel-embel UANG INDENT)
         const motor = data.tipeMotor ? data.tipeMotor : '-';
         
         const rows = [
@@ -369,7 +369,8 @@ export default function KwitansiIndentPage() {
 
                     <div>
                         <label className={labelClass}>Nominal Indent (Rp)</label>
-                        <input type="text" value={nominal === 0 ? '' : formatRupiah(nominal)} onChange={handleInputChange(setNominal)} className={numInputClass} placeholder="0" />
+                        {/* SAKTI: Bug Fixed! onChange pakai handleNominalChange */}
+                        <input type="text" value={nominal === 0 ? '' : formatRupiah(nominal)} onChange={handleNominalChange} className={numInputClass} placeholder="0" />
                     </div>
 
                 </div>

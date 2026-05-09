@@ -14,7 +14,6 @@ export default function KwitansiIndentPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [originalId, setOriginalId] = useState('');
 
-  // Form Fields 100% Asli
   const [noInvoice, setNoInvoice] = useState('');
   const [tanggal, setTanggal] = useState('');
   const [diterimaDari, setDiterimaDari] = useState('');
@@ -287,13 +286,27 @@ export default function KwitansiIndentPage() {
     if (!modal.isOpen) return null;
     return createPortal(
       <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
-        <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md p-8 animate-in zoom-in-95 duration-300 border border-slate-100">
+        {/* SAKTI: Modal Lebar Max 90% di HP agar tidak gepeng */}
+        <div className="bg-white rounded-4xl shadow-2xl w-full max-w-[90%] sm:max-w-md p-6 sm:p-8 animate-in zoom-in-95 duration-300 border border-slate-100">
           <div className="flex flex-col items-center text-center mt-2">
-            {modal.type === 'success' || modal.type === 'success_delete' ? <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6 text-indigo-600 shadow-inner"><CheckCircle2 className="w-10 h-10" /></div> : <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-6 text-rose-600 shadow-inner"><AlertCircle className="w-10 h-10" /></div>}
-            <h3 className="text-2xl font-extrabold text-slate-900 mb-2">{modal.title}</h3>
-            <p className="text-slate-500 font-medium mb-8">{modal.message}</p>
-            <div className="flex w-full gap-3 justify-center">
-              {modal.type === 'confirm_delete' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="flex-1 py-3.5 bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Ya, Hapus!</button></> : modal.type === 'success' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">Tutup</button><button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="flex-1 py-3.5 bg-indigo-600 text-white font-bold rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-all"><Printer className="w-4 h-4 mr-2" /> Cetak PDF</button></> : <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-slate-950 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Mengerti</button>}
+            {modal.type === 'success' || modal.type === 'success_delete' ? <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mb-6 text-amber-600 shadow-inner"><CheckCircle2 className="w-10 h-10" /></div> : <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-6 text-rose-600 shadow-inner"><AlertCircle className="w-10 h-10" /></div>}
+            <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 mb-2">{modal.title}</h3>
+            <p className="text-sm sm:text-base text-slate-500 font-medium mb-8">{modal.message}</p>
+            {/* SAKTI: Tombol di Modal Menyusun ke bawah di HP */}
+            <div className="flex flex-col sm:flex-row w-full gap-3 justify-center">
+              {modal.type === 'confirm_delete' ? (
+                <>
+                  <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full sm:flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-center">Batal</button>
+                  <button onClick={() => executeDelete(modal.actionData)} className="w-full sm:flex-1 py-3.5 bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all text-center">Ya, Hapus!</button>
+                </>
+              ) : modal.type === 'success' ? (
+                <>
+                  <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full sm:flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-center">Tutup</button>
+                  <button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="w-full sm:flex-1 py-3.5 bg-amber-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-all hover:bg-amber-600"><Printer className="w-4 h-4 mr-2" /> Cetak PDF</button>
+                </>
+              ) : (
+                <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-slate-950 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all text-center">Mengerti</button>
+              )}
             </div>
           </div>
         </div>
@@ -374,9 +387,9 @@ export default function KwitansiIndentPage() {
                 </div>
               </section>
 
-              {/* SAKTI: Flex-col sm:flex-row ini yang bikin tombol bersusun di HP! */}
-              <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4 border-t border-slate-100">
-                {isEditing && <button type="button" onClick={resetForm} className="w-full sm:w-auto px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold active:scale-95 shadow-sm flex items-center justify-center">Batal</button>}
+              {/* SAKTI: Ini yang bikin Form Tombol Utama HP memanjang ke bawah lurus rapi! */}
+              <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 border-t border-slate-100">
+                {isEditing && <button type="button" onClick={resetForm} className="w-full sm:w-auto px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold active:scale-95 shadow-sm text-center">Batal</button>}
                 <button type="submit" className="w-full sm:w-auto px-12 py-3.5 bg-amber-500 text-white rounded-xl font-bold active:scale-95 shadow-lg tracking-wide flex items-center justify-center hover:bg-amber-600 transition-colors">
                   <ClipboardSignature className="w-5 h-5 mr-2" />
                   {isEditing ? 'Update Indent' : 'Simpan & Cetak Kwitansi Indent'}
@@ -387,16 +400,22 @@ export default function KwitansiIndentPage() {
         </div>
         
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="bg-slate-50/80 border-b border-slate-200 p-5 px-6 flex justify-between items-center"><h3 className="text-lg font-bold text-slate-800 flex items-center"><ClipboardSignature className="w-5 h-5 mr-2 text-amber-500" /> Riwayat Kwitansi Indent</h3><button onClick={fetchHistory} className="flex items-center text-xs font-bold text-slate-700 bg-white border border-slate-300 px-4 py-2 rounded-xl active:scale-95 shadow-sm hover:bg-slate-100"><RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh</button></div>
+          {/* SAKTI: Header Tabel juga responsif, tombol Refresh tidak kejepit! */}
+          <div className="bg-slate-50/80 border-b border-slate-200 p-4 sm:p-5 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <h3 className="text-lg font-bold text-slate-800 flex items-center"><ClipboardSignature className="w-5 h-5 mr-2 text-amber-500" /> Riwayat Kwitansi Indent</h3>
+            <button onClick={fetchHistory} className="w-full sm:w-auto flex items-center justify-center text-xs font-bold text-slate-700 bg-white border border-slate-300 px-4 py-2.5 rounded-xl active:scale-95 shadow-sm hover:bg-slate-100 transition-all">
+              <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+            </button>
+          </div>
           <div className="overflow-x-auto max-h-[420px] scrollbar-thin">
             <table className="w-full text-sm text-left border-collapse">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
                 <tr className="border-b border-slate-200">
-                  <th className="px-6 py-4 font-bold tracking-wider">No. Invoice</th>
-                  <th className="px-6 py-4 font-bold tracking-wider">Tanggal</th>
+                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">No. Invoice</th>
+                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">Tanggal</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Diterima Dari</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Jenis & Nominal</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-right">Aksi</th>
+                  <th className="px-6 py-4 font-bold tracking-wider text-right whitespace-nowrap">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -404,8 +423,8 @@ export default function KwitansiIndentPage() {
                     const { date, time } = formatDateTime(row.created_at, row.tanggal);
                     return (
                     <tr key={`${row?.noInvoice || idx}-${idx}`} className="hover:bg-amber-50/40 transition-colors">
-                      <td className="px-6 py-5 font-extrabold text-slate-900">{row?.noInvoice || '-'}</td>
-                      <td className="px-6 py-5">
+                      <td className="px-6 py-5 font-extrabold text-slate-900 whitespace-nowrap">{row?.noInvoice || '-'}</td>
+                      <td className="px-6 py-5 whitespace-nowrap">
                         <div className="font-bold text-slate-700">{date}</div>
                         <div className="flex items-center text-[11px] text-slate-400 mt-1 font-medium bg-slate-100/70 inline-flex px-2 py-0.5 rounded">
                           <Clock className="w-3 h-3 mr-1" /> Jam: {time}
@@ -413,7 +432,7 @@ export default function KwitansiIndentPage() {
                       </td>
                       <td className="px-6 py-5 font-bold text-slate-700 uppercase">{row?.diterimaDari || '-'}</td>
                       <td className="px-6 py-5"><div className="text-xs font-black text-amber-700 uppercase">{row?.jenisIndent}</div><div className="text-sm font-bold text-slate-900 mt-0.5">Rp {formatRupiah(row?.nominal)}</div></td>
-                      <td className="px-6 py-5">
+                      <td className="px-6 py-5 whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2.5">
                           <button onClick={() => generatePDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm">
                             <FileText className="w-3.5 h-3.5" /> PDF

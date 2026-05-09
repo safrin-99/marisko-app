@@ -18,8 +18,8 @@ export default function KwitansiIndentPage() {
   const [tanggal, setTanggal] = useState('');
   const [diterimaDari, setDiterimaDari] = useState('');
   const [tipeMotor, setTipeMotor] = useState('');
-  const [kasir, setKasir] = useState(''); // SAKTI: Mempertahankan 'kasir' sesuai database Bosku
-  const [nominal, setNominal] = useState(''); // Diubah default ke string kosong agar placeholder muncul
+  const [kasir, setKasir] = useState('');
+  const [nominal, setNominal] = useState('');
   const [jenisIndent, setJenisIndent] = useState('');
   
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -79,21 +79,6 @@ export default function KwitansiIndentPage() {
     setIsDropdownOpen(false);
   };
 
-  // SAKTI: Fungsi Terbilang dimasukkan agar PDF tidak error!
-  const terbilang = (angka) => {
-    const bilangan = ['','Satu','Dua','Tiga','Empat','Lima','Enam','Tujuh','Delapan','Sembilan','Sepuluh','Sebelas'];
-    let kalimat = '';
-    if(angka < 12){ kalimat = bilangan[angka]; }
-    else if(angka < 20){ kalimat = bilangan[angka - 10] + ' Belas'; }
-    else if(angka < 100){ kalimat = bilangan[Math.floor(angka / 10)] + ' Puluh ' + bilangan[angka % 10]; }
-    else if(angka < 200){ kalimat = 'Seratus ' + terbilang(angka - 100); }
-    else if(angka < 1000){ kalimat = bilangan[Math.floor(angka / 100)] + ' Ratus ' + terbilang(angka % 100); }
-    else if(angka < 2000){ kalimat = 'Seribu ' + terbilang(angka - 1000); }
-    else if(angka < 1000000){ kalimat = terbilang(Math.floor(angka / 1000)) + ' Ribu ' + terbilang(angka % 1000); }
-    else if(angka < 1000000000){ kalimat = terbilang(Math.floor(angka / 1000000)) + ' Juta ' + terbilang(angka % 1000000); }
-    return kalimat.trim() + ' Rupiah';
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!noInvoice || !tanggal || !diterimaDari || !tipeMotor || !kasir || !jenisIndent || !nominal) {
@@ -104,7 +89,6 @@ export default function KwitansiIndentPage() {
     await new Promise(resolve => setTimeout(resolve, 1200)); 
     const cleanNo = noInvoice.trim();
     
-    // SAKTI: Mapping ke Database menggunakan 'kasir' sesuai aslinya
     const formData = {
       noInvoice: cleanNo, 
       tanggal, 
@@ -147,7 +131,7 @@ export default function KwitansiIndentPage() {
     setTanggal(data.tanggal); 
     setDiterimaDari(data.diterimaDari);
     setTipeMotor(data.tipeMotor); 
-    setKasir(data.kasir || ''); // SAKTI: Memanggil data.kasir
+    setKasir(data.kasir || ''); 
     setJenisIndent(data.jenisIndent); 
     setNominal(data.nominal);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -170,7 +154,6 @@ export default function KwitansiIndentPage() {
     setIsEditing(false); setOriginalNo('');
   };
 
-  // SAKTI: PDF MEWAH RANGKAP 2 (ATAS & BAWAH)
   const generatePDF = (data) => {
     const doc = new jsPDF({ format: [215, 330], unit: 'mm' }); 
     const pageWidth = doc.internal.pageSize.width;
@@ -263,15 +246,9 @@ export default function KwitansiIndentPage() {
         doc.rect(col1, startTableBody, col4 - col1, curY - startTableBody);
         doc.line(col2, startTableBody, col2, curY); doc.line(col3, startTableBody, col3, curY);
 
-        // Terbilang
-        curY += 8;
-        const txtTerbilang = terbilang(data.nominal || 0);
-        doc.setFont("helvetica", "bold");
-        doc.text("Terbilang : ", leftL, curY);
-        doc.setFont("helvetica", "italic");
-        doc.text(`# ${txtTerbilang} #`, leftL + 20, curY);
-        
-        curY += 16; const konsX = 50; const kasirX = 165;
+        // SAKTI: Terbilang sudah dihapus total. Langsung lompat ke area Tanda Tangan.
+        curY += 20; 
+        const konsX = 50; const kasirX = 165;
         doc.setFontSize(9); doc.setFont("helvetica", "bold");
         
         const namaKonsum = (data.diterimaDari || '........................').trim();
@@ -282,7 +259,7 @@ export default function KwitansiIndentPage() {
         doc.setFont("helvetica", "normal"); doc.text("Konsumen", konsX, curY + 5, { align: "center" });
         
         doc.setFont("helvetica", "bold");
-        const kasirTxt = (data.kasir || "STELY ARSYAD").trim(); // SAKTI: data.kasir
+        const kasirTxt = (data.kasir || "STELY ARSYAD").trim(); 
         doc.text(kasirTxt, kasirX, curY, { align: "center" });
         const wKasir = doc.getTextWidth(kasirTxt);
         doc.line(kasirX - (wKasir/2), curY + 1, kasirX + (wKasir/2), curY + 1); 

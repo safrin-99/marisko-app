@@ -13,7 +13,7 @@ export default function KwitansiIndentPage() {
   const [modal, setModal] = useState({ isOpen: false, type: '', title: '', message: '', actionData: null });
   const [isEditing, setIsEditing] = useState(false);
   
-  // SAKTI: KEMBALI MENGGUNAKAN originalNo!
+  // SAKTI: Menyimpan noInvoice original untuk keperluan Update
   const [originalNo, setOriginalNo] = useState(''); 
 
   const [noInvoice, setNoInvoice] = useState('');
@@ -94,11 +94,12 @@ export default function KwitansiIndentPage() {
     setIsSubmitting(true);
     const cleanNo = noInvoice.trim();
 
+    // SAKTI: Penyakitnya di sini kemarin! Sudah diperbaiki menjadi namaKasir.
     const formData = {
       noInvoice: cleanNo,
       tanggal,
       diterimaDari: diterimaDari.toUpperCase(),
-      kasir: namaKasir.toUpperCase(), 
+      namaKasir: namaKasir.toUpperCase(), 
       tipeMotor: tipeMotor.toUpperCase(),
       jenisIndent: jenisIndent.toUpperCase(),
       nominal: Number(nominal)
@@ -106,7 +107,7 @@ export default function KwitansiIndentPage() {
 
     try {
       if (isEditing) {
-        // SAKTI: Update berdasarkan noInvoice
+        // Update berdasarkan noInvoice
         const { error } = await supabase.from('kwitansi_indent_history').update(formData).eq('noInvoice', originalNo);
         if (error) throw error;
         setModal({ isOpen: true, type: 'success', title: 'Berhasil Diupdate!', message: `Data Kwitansi Indent diperbarui.`, actionData: formData });
@@ -132,11 +133,12 @@ export default function KwitansiIndentPage() {
 
   const handleEdit = (data) => {
     setIsEditing(true);
-    setOriginalNo(data.noInvoice); // SAKTI: Simpan noInvoice lama
+    setOriginalNo(data.noInvoice); 
     setNoInvoice(data.noInvoice);
     setTanggal(data.tanggal);
     setDiterimaDari(data.diterimaDari);
-    setNamaKasir(data.kasir || ''); 
+    // SAKTI: Penyakit kedua di sini kemarin! Sudah diperbaiki memanggil data.namaKasir
+    setNamaKasir(data.namaKasir || ''); 
     setTipeMotor(data.tipeMotor || '');
     setJenisIndent(data.jenisIndent);
     setNominal(data.nominal);
@@ -150,7 +152,7 @@ export default function KwitansiIndentPage() {
   const executeDelete = async (noInv) => {
     setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
     try {
-      // SAKTI: Delete berdasarkan noInvoice
+      // Hapus berdasarkan noInvoice
       const { error } = await supabase.from('kwitansi_indent_history').delete().eq('noInvoice', noInv);
       if (error) throw error;
       fetchHistory();
@@ -164,6 +166,20 @@ export default function KwitansiIndentPage() {
     setNoInvoice(''); setTanggal(''); setDiterimaDari(''); setNamaKasir(''); 
     setTipeMotor(''); setJenisIndent(''); setNominal('');
     setIsEditing(false); setOriginalNo('');
+  };
+
+  const terbilang = (angka) => {
+    const bilangan = ['','Satu','Dua','Tiga','Empat','Lima','Enam','Tujuh','Delapan','Sembilan','Sepuluh','Sebelas'];
+    let kalimat = '';
+    if(angka < 12){ kalimat = bilangan[angka]; }
+    else if(angka < 20){ kalimat = bilangan[angka - 10] + ' Belas'; }
+    else if(angka < 100){ kalimat = bilangan[Math.floor(angka / 10)] + ' Puluh ' + bilangan[angka % 10]; }
+    else if(angka < 200){ kalimat = 'Seratus ' + terbilang(angka - 100); }
+    else if(angka < 1000){ kalimat = bilangan[Math.floor(angka / 100)] + ' Ratus ' + terbilang(angka % 100); }
+    else if(angka < 2000){ kalimat = 'Seribu ' + terbilang(angka - 1000); }
+    else if(angka < 1000000){ kalimat = terbilang(Math.floor(angka / 1000)) + ' Ribu ' + terbilang(angka % 1000); }
+    else if(angka < 1000000000){ kalimat = terbilang(Math.floor(angka / 1000000)) + ' Juta ' + terbilang(angka % 1000000); }
+    return kalimat.trim() + ' Rupiah';
   };
 
   const generatePDF = (data) => {
@@ -225,11 +241,12 @@ export default function KwitansiIndentPage() {
         doc.line(col2, curY, col2, curY + headerH); doc.line(col3, curY, col3, curY + headerH);
         doc.setFontSize(10); doc.setFont("helvetica", "bold");
         doc.text("No.", col1 + 5, curY + 6.5, {align: "center"}); 
-        doc.text("Nama Barang", col2 + 3, curY + 6.5); 
+        doc.text("Keterangan", col2 + 3, curY + 6.5); 
         doc.text("Total Harga", col3 + 27, curY + 6.5, {align: "center"});
         curY += headerH;
         
-        const motor = data.tipeMotor ? data.tipeMotor : '-';
+        const motor = data.tipeMotor ? `Tanda Jadi Kendaraan Motor (${data.tipeMotor})` : 'Tanda Jadi Kendaraan Motor';
+        const txtTerbilang = terbilang(data.nominal || 0);
         
         const rows = [
             { no: 1, name: motor, val: data.nominal || 0 },
@@ -257,8 +274,14 @@ export default function KwitansiIndentPage() {
         
         doc.rect(col1, startTableBody, col4 - col1, curY - startTableBody);
         doc.line(col2, startTableBody, col2, curY); doc.line(col3, startTableBody, col3, curY);
+
+        curY += 8;
+        doc.setFont("helvetica", "bold");
+        doc.text("Terbilang : ", leftL, curY);
+        doc.setFont("helvetica", "italic");
+        doc.text(`# ${txtTerbilang} #`, leftL + 20, curY);
         
-        curY += 24; const konsX = 50; const kasirX = 165;
+        curY += 16; const konsX = 50; const kasirX = 165;
         doc.setFontSize(9); doc.setFont("helvetica", "bold");
         
         const namaKonsum = (data.diterimaDari || '........................').trim();
@@ -269,7 +292,7 @@ export default function KwitansiIndentPage() {
         doc.setFont("helvetica", "normal"); doc.text("Konsumen", konsX, curY + 5, { align: "center" });
         
         doc.setFont("helvetica", "bold");
-        const kasirTxt = (data.kasir || "STELY ARSYAD").trim();
+        const kasirTxt = (data.namaKasir || "STELY ARSYAD").trim(); 
         doc.text(kasirTxt, kasirX, curY, { align: "center" });
         const wKasir = doc.getTextWidth(kasirTxt);
         doc.line(kasirX - (wKasir/2), curY + 1, kasirX + (wKasir/2), curY + 1); 
@@ -435,7 +458,6 @@ export default function KwitansiIndentPage() {
                           <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm">
                             <Edit className="w-3.5 h-3.5" /> Edit
                           </button>
-                          {/* SAKTI: Hapus menggunakan row.noInvoice, BUKAN row.id! */}
                           <button onClick={() => handleDeleteRequest(row.noInvoice)} className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm">
                             <Trash2 className="w-3.5 h-3.5" /> Del
                           </button>

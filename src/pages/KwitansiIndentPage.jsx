@@ -92,11 +92,12 @@ export default function KwitansiIndentPage() {
     setIsSubmitting(true);
     const cleanNo = noInvoice.trim();
 
+    // SAKTI: Perbaikan namaKasir menjadi kasir agar cocok 100% dengan Supabase Anda!
     const formData = {
       noInvoice: cleanNo,
       tanggal,
       diterimaDari: diterimaDari.toUpperCase(),
-      namaKasir: namaKasir.toUpperCase(),
+      kasir: namaKasir.toUpperCase(), 
       tipeMotor: tipeMotor.toUpperCase(),
       jenisIndent: jenisIndent.toUpperCase(),
       nominal: Number(nominal)
@@ -104,7 +105,9 @@ export default function KwitansiIndentPage() {
 
     try {
       if (isEditing) {
-        await supabase.from('kwitansi_indent_history').update(formData).eq('id', originalId);
+        // SAKTI: Tangkap error agar tidak berbohong
+        const { error } = await supabase.from('kwitansi_indent_history').update(formData).eq('id', originalId);
+        if (error) throw error;
         setModal({ isOpen: true, type: 'success', title: 'Berhasil Diupdate!', message: `Data Kwitansi Indent diperbarui.`, actionData: formData });
         setIsEditing(false);
       } else {
@@ -114,13 +117,15 @@ export default function KwitansiIndentPage() {
           setModal({ isOpen: true, type: 'error', title: 'Duplikasi!', message: `No. Invoice "${cleanNo}" sudah ada!` });
           return;
         }
-        await supabase.from('kwitansi_indent_history').insert([formData]);
+        // SAKTI: Tangkap error agar tidak berbohong
+        const { error } = await supabase.from('kwitansi_indent_history').insert([formData]);
+        if (error) throw error;
         setModal({ isOpen: true, type: 'success', title: 'Berhasil Disimpan!', message: `Kwitansi Indent siap dicetak.`, actionData: formData });
       }
       resetForm();
       fetchHistory();
     } catch (err) {
-      setModal({ isOpen: true, type: 'error', title: 'Gagal', message: 'Koneksi database terputus / Tabel belum dibuat.' });
+      setModal({ isOpen: true, type: 'error', title: 'Gagal', message: 'Koneksi database terputus / Terjadi kesalahan simpan.' });
     }
     setIsSubmitting(false);
   };
@@ -131,7 +136,7 @@ export default function KwitansiIndentPage() {
     setNoInvoice(data.noInvoice);
     setTanggal(data.tanggal);
     setDiterimaDari(data.diterimaDari);
-    setNamaKasir(data.namaKasir);
+    setNamaKasir(data.kasir || ''); // SAKTI: Panggil dari data.kasir
     setTipeMotor(data.tipeMotor || '');
     setJenisIndent(data.jenisIndent);
     setNominal(data.nominal);
@@ -258,7 +263,7 @@ export default function KwitansiIndentPage() {
         doc.setFont("helvetica", "normal"); doc.text("Konsumen", konsX, curY + 5, { align: "center" });
         
         doc.setFont("helvetica", "bold");
-        const kasirTxt = (data.namaKasir || "STELY ARSYAD").trim();
+        const kasirTxt = (data.kasir || "STELY ARSYAD").trim(); // SAKTI: Panggil dari data.kasir
         doc.text(kasirTxt, kasirX, curY, { align: "center" });
         const wKasir = doc.getTextWidth(kasirTxt);
         doc.line(kasirX - (wKasir/2), curY + 1, kasirX + (wKasir/2), curY + 1); 
@@ -286,27 +291,13 @@ export default function KwitansiIndentPage() {
     if (!modal.isOpen) return null;
     return createPortal(
       <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
-        {/* SAKTI: Modal Lebar Max 90% di HP agar tidak gepeng */}
         <div className="bg-white rounded-4xl shadow-2xl w-full max-w-[90%] sm:max-w-md p-6 sm:p-8 animate-in zoom-in-95 duration-300 border border-slate-100">
           <div className="flex flex-col items-center text-center mt-2">
-            {modal.type === 'success' || modal.type === 'success_delete' ? <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mb-6 text-amber-600 shadow-inner"><CheckCircle2 className="w-10 h-10" /></div> : <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-6 text-rose-600 shadow-inner"><AlertCircle className="w-10 h-10" /></div>}
+            {modal.type === 'success' || modal.type === 'success_delete' ? <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6 text-emerald-600 shadow-inner"><CheckCircle2 className="w-10 h-10" /></div> : <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-6 text-rose-600 shadow-inner"><AlertCircle className="w-10 h-10" /></div>}
             <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 mb-2">{modal.title}</h3>
             <p className="text-sm sm:text-base text-slate-500 font-medium mb-8">{modal.message}</p>
-            {/* SAKTI: Tombol di Modal Menyusun ke bawah di HP */}
             <div className="flex flex-col sm:flex-row w-full gap-3 justify-center">
-              {modal.type === 'confirm_delete' ? (
-                <>
-                  <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full sm:flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-center">Batal</button>
-                  <button onClick={() => executeDelete(modal.actionData)} className="w-full sm:flex-1 py-3.5 bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all text-center">Ya, Hapus!</button>
-                </>
-              ) : modal.type === 'success' ? (
-                <>
-                  <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full sm:flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-center">Tutup</button>
-                  <button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="w-full sm:flex-1 py-3.5 bg-amber-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-all hover:bg-amber-600"><Printer className="w-4 h-4 mr-2" /> Cetak PDF</button>
-                </>
-              ) : (
-                <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-slate-950 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all text-center">Mengerti</button>
-              )}
+              {modal.type === 'confirm_delete' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full sm:flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-center">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="w-full sm:flex-1 py-3.5 bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all text-center">Ya, Hapus!</button></> : modal.type === 'success' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full sm:flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-center">Tutup</button><button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="w-full sm:flex-1 py-3.5 bg-amber-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-all hover:bg-amber-600"><Printer className="w-4 h-4 mr-2" /> Cetak PDF</button></> : <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-slate-950 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all text-center">Mengerti</button>}
             </div>
           </div>
         </div>
@@ -387,7 +378,6 @@ export default function KwitansiIndentPage() {
                 </div>
               </section>
 
-              {/* SAKTI: Ini yang bikin Form Tombol Utama HP memanjang ke bawah lurus rapi! */}
               <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 border-t border-slate-100">
                 {isEditing && <button type="button" onClick={resetForm} className="w-full sm:w-auto px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold active:scale-95 shadow-sm text-center">Batal</button>}
                 <button type="submit" className="w-full sm:w-auto px-12 py-3.5 bg-amber-500 text-white rounded-xl font-bold active:scale-95 shadow-lg tracking-wide flex items-center justify-center hover:bg-amber-600 transition-colors">
@@ -400,7 +390,6 @@ export default function KwitansiIndentPage() {
         </div>
         
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          {/* SAKTI: Header Tabel juga responsif, tombol Refresh tidak kejepit! */}
           <div className="bg-slate-50/80 border-b border-slate-200 p-4 sm:p-5 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <h3 className="text-lg font-bold text-slate-800 flex items-center"><ClipboardSignature className="w-5 h-5 mr-2 text-amber-500" /> Riwayat Kwitansi Indent</h3>
             <button onClick={fetchHistory} className="w-full sm:w-auto flex items-center justify-center text-xs font-bold text-slate-700 bg-white border border-slate-300 px-4 py-2.5 rounded-xl active:scale-95 shadow-sm hover:bg-slate-100 transition-all">
@@ -426,8 +415,8 @@ export default function KwitansiIndentPage() {
                       <td className="px-6 py-5 font-extrabold text-slate-900 whitespace-nowrap">{row?.noInvoice || '-'}</td>
                       <td className="px-6 py-5 whitespace-nowrap">
                         <div className="font-bold text-slate-700">{date}</div>
-                        <div className="flex items-center text-[11px] font-medium text-slate-400 mt-1">
-                          <Clock className="w-3.5 h-3.5 mr-1" /> Jam: {time}
+                        <div className="flex items-center text-[11px] text-slate-400 mt-1 font-medium bg-slate-100/70 inline-flex px-2 py-0.5 rounded">
+                          <Clock className="w-3 h-3 mr-1" /> Jam: {time}
                         </div>
                       </td>
                       <td className="px-6 py-5 font-bold text-slate-700 uppercase">{row?.diterimaDari || '-'}</td>

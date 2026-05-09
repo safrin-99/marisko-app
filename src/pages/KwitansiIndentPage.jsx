@@ -12,12 +12,14 @@ export default function KwitansiIndentPage() {
 
   const [modal, setModal] = useState({ isOpen: false, type: '', title: '', message: '', actionData: null });
   const [isEditing, setIsEditing] = useState(false);
-  const [originalId, setOriginalId] = useState(''); // KEMBALI MENGGUNAKAN originalId
+  
+  // SAKTI: KEMBALI MENGGUNAKAN originalNo!
+  const [originalNo, setOriginalNo] = useState(''); 
 
   const [noInvoice, setNoInvoice] = useState('');
   const [tanggal, setTanggal] = useState('');
   const [diterimaDari, setDiterimaDari] = useState('');
-  const [namaKasir, setNamaKasir] = useState(''); // KEMBALI MENGGUNAKAN namaKasir
+  const [namaKasir, setNamaKasir] = useState('');
   const [tipeMotor, setTipeMotor] = useState('');
   const [jenisIndent, setJenisIndent] = useState('');
   const [nominal, setNominal] = useState('');
@@ -85,74 +87,74 @@ export default function KwitansiIndentPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!noInvoice || !tanggal || !diterimaDari || !namaKasir || !jenisIndent || !nominal) {
-      setModal({ isOpen: true, type: 'error', title: 'Data Belum Lengkap!', message: 'Mohon lengkapi semua ruangan yang wajib diisi.' });
+      setModal({ isOpen: true, type: 'error', title: 'Data Belum Lengkap!', message: 'Mohon lengkapi semua field yang wajib diisi.' });
       return;
     }
 
     setIsSubmitting(true);
     const cleanNo = noInvoice.trim();
 
-    // SAKTI: Logik pangkalan data tepat 100% seperti kod asal anda
     const formData = {
       noInvoice: cleanNo,
       tanggal,
-      diterimaDari: (diterimaDari || '').toUpperCase(),
-      namaKasir: (namaKasir || '').toUpperCase(), 
-      tipeMotor: (tipeMotor || '').toUpperCase(),
-      jenisIndent: (jenisIndent || '').toUpperCase(),
+      diterimaDari: diterimaDari.toUpperCase(),
+      kasir: namaKasir.toUpperCase(), 
+      tipeMotor: tipeMotor.toUpperCase(),
+      jenisIndent: jenisIndent.toUpperCase(),
       nominal: Number(nominal)
     };
 
     try {
       if (isEditing) {
-        const { error } = await supabase.from('kwitansi_indent_history').update(formData).eq('id', originalId);
+        // SAKTI: Update berdasarkan noInvoice
+        const { error } = await supabase.from('kwitansi_indent_history').update(formData).eq('noInvoice', originalNo);
         if (error) throw error;
-        setModal({ isOpen: true, type: 'success', title: 'Berjaya Dikemas Kini!', message: `Data Kwitansi Indent diperbarui.`, actionData: formData });
+        setModal({ isOpen: true, type: 'success', title: 'Berhasil Diupdate!', message: `Data Kwitansi Indent diperbarui.`, actionData: formData });
         setIsEditing(false);
       } else {
         const { data: existing } = await supabase.from('kwitansi_indent_history').select('noInvoice').ilike('noInvoice', cleanNo);
         if (existing && existing.length > 0) {
           setIsSubmitting(false);
-          setModal({ isOpen: true, type: 'error', title: 'Duplikasi!', message: `No. Invoice "${cleanNo}" sudah wujud!` });
+          setModal({ isOpen: true, type: 'error', title: 'Duplikasi!', message: `No. Invoice "${cleanNo}" sudah ada!` });
           return;
         }
         const { error } = await supabase.from('kwitansi_indent_history').insert([formData]);
         if (error) throw error;
-        setModal({ isOpen: true, type: 'success', title: 'Berjaya Disimpan!', message: `Kwitansi Indent siap dicetak.`, actionData: formData });
+        setModal({ isOpen: true, type: 'success', title: 'Berhasil Disimpan!', message: `Kwitansi Indent siap dicetak.`, actionData: formData });
       }
       resetForm();
       fetchHistory();
     } catch (err) {
-      setModal({ isOpen: true, type: 'error', title: 'Gagal', message: 'Ralat pelayan: ' + err.message });
+      setModal({ isOpen: true, type: 'error', title: 'Gagal', message: 'Koneksi database terputus / Terjadi kesalahan simpan.' });
     }
     setIsSubmitting(false);
   };
 
   const handleEdit = (data) => {
     setIsEditing(true);
-    setOriginalId(data.id);
+    setOriginalNo(data.noInvoice); // SAKTI: Simpan noInvoice lama
     setNoInvoice(data.noInvoice);
     setTanggal(data.tanggal);
     setDiterimaDari(data.diterimaDari);
-    setNamaKasir(data.namaKasir || ''); // SAKTI: kembali menggunakan data.namaKasir
+    setNamaKasir(data.kasir || ''); 
     setTipeMotor(data.tipeMotor || '');
     setJenisIndent(data.jenisIndent);
     setNominal(data.nominal);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDeleteRequest = (id) => {
-    setModal({ isOpen: true, type: 'confirm_delete', title: 'Padam Kwitansi?', message: 'Data ini akan dipadam secara kekal.', actionData: id });
+  const handleDeleteRequest = (noInv) => {
+    setModal({ isOpen: true, type: 'confirm_delete', title: 'Hapus Kwitansi?', message: `Invoice No: ${noInv} akan dihapus permanen.`, actionData: noInv });
   };
 
-  const executeDelete = async (id) => {
+  const executeDelete = async (noInv) => {
     setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
     try {
-      // SAKTI: Hapus menggunakan ID seperti kod asal anda, bebas ralat!
-      const { error } = await supabase.from('kwitansi_indent_history').delete().eq('id', id);
+      // SAKTI: Delete berdasarkan noInvoice
+      const { error } = await supabase.from('kwitansi_indent_history').delete().eq('noInvoice', noInv);
       if (error) throw error;
       fetchHistory();
-      setModal({ isOpen: true, type: 'success_delete', title: 'Terpadam!', message: 'Data Kwitansi berjaya dipadam.', actionData: null });
+      setModal({ isOpen: true, type: 'success_delete', title: 'Terhapus!', message: 'Data Kwitansi dihapus.', actionData: null });
     } catch (err) {
       setModal({ isOpen: true, type: 'error', title: 'Gagal Memadam', message: err.message });
     }
@@ -161,7 +163,7 @@ export default function KwitansiIndentPage() {
   const resetForm = () => {
     setNoInvoice(''); setTanggal(''); setDiterimaDari(''); setNamaKasir(''); 
     setTipeMotor(''); setJenisIndent(''); setNominal('');
-    setIsEditing(false); setOriginalId('');
+    setIsEditing(false); setOriginalNo('');
   };
 
   const generatePDF = (data) => {
@@ -267,7 +269,7 @@ export default function KwitansiIndentPage() {
         doc.setFont("helvetica", "normal"); doc.text("Konsumen", konsX, curY + 5, { align: "center" });
         
         doc.setFont("helvetica", "bold");
-        const kasirTxt = (data.namaKasir || "STELY ARSYAD").trim(); // SAKTI: Panggil dari namaKasir
+        const kasirTxt = (data.kasir || "STELY ARSYAD").trim();
         doc.text(kasirTxt, kasirX, curY, { align: "center" });
         const wKasir = doc.getTextWidth(kasirTxt);
         doc.line(kasirX - (wKasir/2), curY + 1, kasirX + (wKasir/2), curY + 1); 
@@ -433,7 +435,8 @@ export default function KwitansiIndentPage() {
                           <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm">
                             <Edit className="w-3.5 h-3.5" /> Edit
                           </button>
-                          <button onClick={() => handleDeleteRequest(row.id)} className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm">
+                          {/* SAKTI: Hapus menggunakan row.noInvoice, BUKAN row.id! */}
+                          <button onClick={() => handleDeleteRequest(row.noInvoice)} className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm">
                             <Trash2 className="w-3.5 h-3.5" /> Del
                           </button>
                         </div>

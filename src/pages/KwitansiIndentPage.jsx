@@ -92,7 +92,6 @@ export default function KwitansiIndentPage() {
     setIsSubmitting(true);
     const cleanNo = noInvoice.trim();
 
-    // SAKTI: Perbaikan namaKasir menjadi kasir agar cocok 100% dengan Supabase Anda!
     const formData = {
       noInvoice: cleanNo,
       tanggal,
@@ -105,7 +104,6 @@ export default function KwitansiIndentPage() {
 
     try {
       if (isEditing) {
-        // SAKTI: Tangkap error agar tidak berbohong
         const { error } = await supabase.from('kwitansi_indent_history').update(formData).eq('id', originalId);
         if (error) throw error;
         setModal({ isOpen: true, type: 'success', title: 'Berhasil Diupdate!', message: `Data Kwitansi Indent diperbarui.`, actionData: formData });
@@ -117,7 +115,6 @@ export default function KwitansiIndentPage() {
           setModal({ isOpen: true, type: 'error', title: 'Duplikasi!', message: `No. Invoice "${cleanNo}" sudah ada!` });
           return;
         }
-        // SAKTI: Tangkap error agar tidak berbohong
         const { error } = await supabase.from('kwitansi_indent_history').insert([formData]);
         if (error) throw error;
         setModal({ isOpen: true, type: 'success', title: 'Berhasil Disimpan!', message: `Kwitansi Indent siap dicetak.`, actionData: formData });
@@ -136,7 +133,7 @@ export default function KwitansiIndentPage() {
     setNoInvoice(data.noInvoice);
     setTanggal(data.tanggal);
     setDiterimaDari(data.diterimaDari);
-    setNamaKasir(data.kasir || ''); // SAKTI: Panggil dari data.kasir
+    setNamaKasir(data.kasir || ''); 
     setTipeMotor(data.tipeMotor || '');
     setJenisIndent(data.jenisIndent);
     setNominal(data.nominal);
@@ -263,7 +260,7 @@ export default function KwitansiIndentPage() {
         doc.setFont("helvetica", "normal"); doc.text("Konsumen", konsX, curY + 5, { align: "center" });
         
         doc.setFont("helvetica", "bold");
-        const kasirTxt = (data.kasir || "STELY ARSYAD").trim(); // SAKTI: Panggil dari data.kasir
+        const kasirTxt = (data.kasir || "STELY ARSYAD").trim();
         doc.text(kasirTxt, kasirX, curY, { align: "center" });
         const wKasir = doc.getTextWidth(kasirTxt);
         doc.line(kasirX - (wKasir/2), curY + 1, kasirX + (wKasir/2), curY + 1); 
@@ -297,7 +294,7 @@ export default function KwitansiIndentPage() {
             <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 mb-2">{modal.title}</h3>
             <p className="text-sm sm:text-base text-slate-500 font-medium mb-8">{modal.message}</p>
             <div className="flex flex-col sm:flex-row w-full gap-3 justify-center">
-              {modal.type === 'confirm_delete' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full sm:flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-center">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="w-full sm:flex-1 py-3.5 bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all text-center">Ya, Hapus!</button></> : modal.type === 'success' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full sm:flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-center">Tutup</button><button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="w-full sm:flex-1 py-3.5 bg-amber-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-all hover:bg-amber-600"><Printer className="w-4 h-4 mr-2" /> Cetak PDF</button></> : <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-slate-950 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all text-center">Mengerti</button>}
+              {modal.type === 'confirm_delete' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full sm:flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-center">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="w-full sm:flex-1 py-3.5 bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all text-center">Ya, Hapus!</button></> : modal.type === 'success' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full sm:flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-center">Tutup</button><button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="w-full sm:flex-1 py-3.5 bg-amber-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-all hover:bg-amber-600"><Printer className="w-4 h-4 mr-2 shrink-0" /> Cetak PDF</button></> : <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-slate-950 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all text-center">Mengerti</button>}
             </div>
           </div>
         </div>
@@ -378,11 +375,12 @@ export default function KwitansiIndentPage() {
                 </div>
               </section>
 
-              <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 border-t border-slate-100">
-                {isEditing && <button type="button" onClick={resetForm} className="w-full sm:w-auto px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold active:scale-95 shadow-sm text-center">Batal</button>}
-                <button type="submit" className="w-full sm:w-auto px-12 py-3.5 bg-amber-500 text-white rounded-xl font-bold active:scale-95 shadow-lg tracking-wide flex items-center justify-center hover:bg-amber-600 transition-colors">
-                  <ClipboardSignature className="w-5 h-5 mr-2" />
-                  {isEditing ? 'Update Indent' : 'Simpan & Cetak Kwitansi Indent'}
+              {/* SAKTI: Ini obat mujarab agar tombol lurus menyusun ke bawah tanpa terpotong! */}
+              <div className="flex flex-col sm:flex-row justify-center gap-4 pt-8 border-t border-slate-100">
+                {isEditing && <button type="button" onClick={resetForm} className="w-full sm:w-auto px-6 sm:px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold active:scale-95 shadow-sm text-center">BATAL EDIT</button>}
+                <button type="submit" className="w-full sm:w-auto px-4 sm:px-12 py-3.5 bg-amber-500 text-white rounded-xl font-bold active:scale-95 shadow-lg tracking-wide flex items-center justify-center hover:bg-amber-600 transition-colors">
+                  <ClipboardSignature className="w-5 h-5 mr-2 shrink-0" />
+                  <span>{isEditing ? 'UPDATE KWITANSI INDENT' : 'SIMPAN & CETAK KWITANSI INDENT'}</span>
                 </button>
               </div>
             </form>
@@ -420,7 +418,7 @@ export default function KwitansiIndentPage() {
                         </div>
                       </td>
                       <td className="px-6 py-5 font-bold text-slate-700 uppercase">{row?.diterimaDari || '-'}</td>
-                      <td className="px-6 py-5"><div className="text-xs font-black text-amber-700 uppercase">{row?.jenisIndent}</div><div className="text-sm font-bold text-slate-900 mt-0.5">Rp {formatRupiah(row?.nominal)}</div></td>
+                      <td className="px-6 py-5 whitespace-nowrap"><div className="text-xs font-black text-amber-700 uppercase">{row?.jenisIndent}</div><div className="text-sm font-bold text-slate-900 mt-0.5">Rp {formatRupiah(row?.nominal)}</div></td>
                       <td className="px-6 py-5 whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2.5">
                           <button onClick={() => generatePDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm">

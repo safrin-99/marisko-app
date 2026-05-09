@@ -12,23 +12,21 @@ export default function KwitansiIndentPage() {
 
   const [modal, setModal] = useState({ isOpen: false, type: '', title: '', message: '', actionData: null });
   const [isEditing, setIsEditing] = useState(false);
-  
-  // SAKTI: Menyimpan noInvoice original untuk keperluan Update
-  const [originalNo, setOriginalNo] = useState(''); 
+  const [originalNo, setOriginalNo] = useState('');
 
-  const [noInvoice, setNoInvoice] = useState('');
+  const [noInvoice, setNoInvoice] = useState(''); 
   const [tanggal, setTanggal] = useState('');
   const [diterimaDari, setDiterimaDari] = useState('');
-  const [namaKasir, setNamaKasir] = useState('');
   const [tipeMotor, setTipeMotor] = useState('');
+  const [kasir, setKasir] = useState(''); // SAKTI: Mempertahankan 'kasir' sesuai database Bosku
+  const [nominal, setNominal] = useState(''); // Diubah default ke string kosong agar placeholder muncul
   const [jenisIndent, setJenisIndent] = useState('');
-  const [nominal, setNominal] = useState('');
-
+  
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
-    fetchLogo();
     fetchHistory();
+    fetchLogo();
   }, []);
 
   const fetchLogo = async () => {
@@ -46,13 +44,10 @@ export default function KwitansiIndentPage() {
 
   const fetchHistory = async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from('kwitansi_indent_history')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(100);
-    
-    if (!error && data) setHistoryData(data);
+    try {
+      const { data } = await supabase.from('kwitansi_indent_history').select('*').order('created_at', { ascending: false }).limit(100);
+      if (data) setHistoryData(data);
+    } catch (err) {}
     setIsLoading(false);
   };
 
@@ -62,10 +57,10 @@ export default function KwitansiIndentPage() {
     const parsed = parseInt(val.toString().replace(/[^0-9]/g, ''), 10);
     return isNaN(parsed) ? 0 : parsed;
   };
-
-  const handleNominalChange = (e) => {
-    const val = parseNumber(e.target.value);
-    setNominal(val === 0 ? '' : val);
+  
+  const handleInputChange = (setter) => (e) => {
+      const val = parseNumber(e.target.value);
+      setter(val === 0 ? '' : val);
   };
 
   const formatDateTime = (isoString, tglSurat) => {
@@ -84,90 +79,7 @@ export default function KwitansiIndentPage() {
     setIsDropdownOpen(false);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!noInvoice || !tanggal || !diterimaDari || !namaKasir || !jenisIndent || !nominal) {
-      setModal({ isOpen: true, type: 'error', title: 'Data Belum Lengkap!', message: 'Mohon lengkapi semua field yang wajib diisi.' });
-      return;
-    }
-
-    setIsSubmitting(true);
-    const cleanNo = noInvoice.trim();
-
-    // SAKTI: Penyakitnya di sini kemarin! Sudah diperbaiki menjadi namaKasir.
-    const formData = {
-      noInvoice: cleanNo,
-      tanggal,
-      diterimaDari: diterimaDari.toUpperCase(),
-      namaKasir: namaKasir.toUpperCase(), 
-      tipeMotor: tipeMotor.toUpperCase(),
-      jenisIndent: jenisIndent.toUpperCase(),
-      nominal: Number(nominal)
-    };
-
-    try {
-      if (isEditing) {
-        // Update berdasarkan noInvoice
-        const { error } = await supabase.from('kwitansi_indent_history').update(formData).eq('noInvoice', originalNo);
-        if (error) throw error;
-        setModal({ isOpen: true, type: 'success', title: 'Berhasil Diupdate!', message: `Data Kwitansi Indent diperbarui.`, actionData: formData });
-        setIsEditing(false);
-      } else {
-        const { data: existing } = await supabase.from('kwitansi_indent_history').select('noInvoice').ilike('noInvoice', cleanNo);
-        if (existing && existing.length > 0) {
-          setIsSubmitting(false);
-          setModal({ isOpen: true, type: 'error', title: 'Duplikasi!', message: `No. Invoice "${cleanNo}" sudah ada!` });
-          return;
-        }
-        const { error } = await supabase.from('kwitansi_indent_history').insert([formData]);
-        if (error) throw error;
-        setModal({ isOpen: true, type: 'success', title: 'Berhasil Disimpan!', message: `Kwitansi Indent siap dicetak.`, actionData: formData });
-      }
-      resetForm();
-      fetchHistory();
-    } catch (err) {
-      setModal({ isOpen: true, type: 'error', title: 'Gagal', message: 'Koneksi database terputus / Terjadi kesalahan simpan.' });
-    }
-    setIsSubmitting(false);
-  };
-
-  const handleEdit = (data) => {
-    setIsEditing(true);
-    setOriginalNo(data.noInvoice); 
-    setNoInvoice(data.noInvoice);
-    setTanggal(data.tanggal);
-    setDiterimaDari(data.diterimaDari);
-    // SAKTI: Penyakit kedua di sini kemarin! Sudah diperbaiki memanggil data.namaKasir
-    setNamaKasir(data.namaKasir || ''); 
-    setTipeMotor(data.tipeMotor || '');
-    setJenisIndent(data.jenisIndent);
-    setNominal(data.nominal);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleDeleteRequest = (noInv) => {
-    setModal({ isOpen: true, type: 'confirm_delete', title: 'Hapus Kwitansi?', message: `Invoice No: ${noInv} akan dihapus permanen.`, actionData: noInv });
-  };
-
-  const executeDelete = async (noInv) => {
-    setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
-    try {
-      // Hapus berdasarkan noInvoice
-      const { error } = await supabase.from('kwitansi_indent_history').delete().eq('noInvoice', noInv);
-      if (error) throw error;
-      fetchHistory();
-      setModal({ isOpen: true, type: 'success_delete', title: 'Terhapus!', message: 'Data Kwitansi dihapus.', actionData: null });
-    } catch (err) {
-      setModal({ isOpen: true, type: 'error', title: 'Gagal Memadam', message: err.message });
-    }
-  };
-
-  const resetForm = () => {
-    setNoInvoice(''); setTanggal(''); setDiterimaDari(''); setNamaKasir(''); 
-    setTipeMotor(''); setJenisIndent(''); setNominal('');
-    setIsEditing(false); setOriginalNo('');
-  };
-
+  // SAKTI: Fungsi Terbilang dimasukkan agar PDF tidak error!
   const terbilang = (angka) => {
     const bilangan = ['','Satu','Dua','Tiga','Empat','Lima','Enam','Tujuh','Delapan','Sembilan','Sepuluh','Sebelas'];
     let kalimat = '';
@@ -182,6 +94,83 @@ export default function KwitansiIndentPage() {
     return kalimat.trim() + ' Rupiah';
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!noInvoice || !tanggal || !diterimaDari || !tipeMotor || !kasir || !jenisIndent || !nominal) {
+      setModal({ isOpen: true, type: 'error', title: 'Data Belum Lengkap!', message: 'Mohon isi semua kolom teks dan pilih Jenis Indent.' });
+      return;
+    }
+    setIsSubmitting(true);
+    await new Promise(resolve => setTimeout(resolve, 1200)); 
+    const cleanNo = noInvoice.trim();
+    
+    // SAKTI: Mapping ke Database menggunakan 'kasir' sesuai aslinya
+    const formData = {
+      noInvoice: cleanNo, 
+      tanggal, 
+      diterimaDari: diterimaDari.toUpperCase(), 
+      tipeMotor: tipeMotor.toUpperCase(), 
+      kasir: kasir.toUpperCase(),
+      jenisIndent, 
+      nominal: Number(nominal)
+    };
+
+    try {
+      if (isEditing) {
+        const { error } = await supabase.from('kwitansi_indent_history').update(formData).eq('noInvoice', originalNo);
+        if (error) throw error;
+        setModal({ isOpen: true, type: 'success', title: 'Diperbarui!', message: 'Data Berhasil diupdate.', actionData: formData });
+        setIsEditing(false);
+      } else {
+        const { data: existing } = await supabase.from('kwitansi_indent_history').select('noInvoice').ilike('noInvoice', cleanNo);
+        if (existing && existing.length > 0) {
+          setIsSubmitting(false);
+          setModal({ isOpen: true, type: 'error', title: 'Duplikasi!', message: `Nomor Invoice "${cleanNo}" sudah ada!` });
+          return;
+        }
+        const { error } = await supabase.from('kwitansi_indent_history').insert([formData]);
+        if (error) throw error;
+        setModal({ isOpen: true, type: 'success', title: 'Tersimpan!', message: 'Kwitansi INDENT Berhasil dibuat.', actionData: formData });
+      }
+      resetForm();
+      fetchHistory();
+    } catch (err) {
+      setModal({ isOpen: true, type: 'error', title: 'Gagal Simpan', message: err.message });
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleEdit = (data) => {
+    setIsEditing(true);
+    setOriginalNo(data.noInvoice);
+    setNoInvoice(data.noInvoice); 
+    setTanggal(data.tanggal); 
+    setDiterimaDari(data.diterimaDari);
+    setTipeMotor(data.tipeMotor); 
+    setKasir(data.kasir || ''); // SAKTI: Memanggil data.kasir
+    setJenisIndent(data.jenisIndent); 
+    setNominal(data.nominal);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDeleteRequest = (id) => {
+    setModal({ isOpen: true, type: 'confirm_delete', title: 'Hapus?', message: `Invoice No: ${id} akan dihapus permanen.`, actionData: id });
+  };
+
+  const executeDelete = async (id) => {
+    setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
+    await supabase.from('kwitansi_indent_history').delete().eq('noInvoice', id);
+    fetchHistory();
+    setModal({ isOpen: true, type: 'success_delete', title: 'Terhapus!', message: 'Data Kwitansi dihapus.', actionData: null });
+  };
+
+  const resetForm = () => {
+    setNoInvoice(''); setTanggal(''); setDiterimaDari(''); setTipeMotor(''); setKasir('');
+    setJenisIndent(''); setNominal(''); 
+    setIsEditing(false); setOriginalNo('');
+  };
+
+  // SAKTI: PDF MEWAH RANGKAP 2 (ATAS & BAWAH)
   const generatePDF = (data) => {
     const doc = new jsPDF({ format: [215, 330], unit: 'mm' }); 
     const pageWidth = doc.internal.pageSize.width;
@@ -246,7 +235,6 @@ export default function KwitansiIndentPage() {
         curY += headerH;
         
         const motor = data.tipeMotor ? `Tanda Jadi Kendaraan Motor (${data.tipeMotor})` : 'Tanda Jadi Kendaraan Motor';
-        const txtTerbilang = terbilang(data.nominal || 0);
         
         const rows = [
             { no: 1, name: motor, val: data.nominal || 0 },
@@ -275,7 +263,9 @@ export default function KwitansiIndentPage() {
         doc.rect(col1, startTableBody, col4 - col1, curY - startTableBody);
         doc.line(col2, startTableBody, col2, curY); doc.line(col3, startTableBody, col3, curY);
 
+        // Terbilang
         curY += 8;
+        const txtTerbilang = terbilang(data.nominal || 0);
         doc.setFont("helvetica", "bold");
         doc.text("Terbilang : ", leftL, curY);
         doc.setFont("helvetica", "italic");
@@ -292,7 +282,7 @@ export default function KwitansiIndentPage() {
         doc.setFont("helvetica", "normal"); doc.text("Konsumen", konsX, curY + 5, { align: "center" });
         
         doc.setFont("helvetica", "bold");
-        const kasirTxt = (data.namaKasir || "STELY ARSYAD").trim(); 
+        const kasirTxt = (data.kasir || "STELY ARSYAD").trim(); // SAKTI: data.kasir
         doc.text(kasirTxt, kasirX, curY, { align: "center" });
         const wKasir = doc.getTextWidth(kasirTxt);
         doc.line(kasirX - (wKasir/2), curY + 1, kasirX + (wKasir/2), curY + 1); 
@@ -301,14 +291,15 @@ export default function KwitansiIndentPage() {
         return curY; 
     };
     
+    // Cetak 2 Rangkap
     let yAkhirAtas = drawReceipt(15); 
-    const yGarisPembatas = yAkhirAtas + 12; 
+    const yGarisPembatas = yAkhirAtas + 15; 
     doc.setLineDashPattern([3, 3], 0); doc.setLineWidth(0.3);
     doc.line(10, yGarisPembatas, 205, yGarisPembatas);
     doc.setLineDashPattern([], 0); 
     
-    let yAkhirBawah = drawReceipt(yGarisPembatas + 12); 
-    const yGarisPembatasBawah = yAkhirBawah + 12;
+    let yAkhirBawah = drawReceipt(yGarisPembatas + 15); 
+    const yGarisPembatasBawah = yAkhirBawah + 15;
     doc.setLineDashPattern([3, 3], 0); doc.setLineWidth(0.3);
     doc.line(10, yGarisPembatasBawah, 205, yGarisPembatasBawah);
     doc.setLineDashPattern([], 0); 
@@ -320,13 +311,13 @@ export default function KwitansiIndentPage() {
     if (!modal.isOpen) return null;
     return createPortal(
       <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
-        <div className="bg-white rounded-4xl shadow-2xl w-full max-w-[90%] sm:max-w-md p-6 sm:p-8 animate-in zoom-in-95 duration-300 border border-slate-100">
+        <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md p-8 animate-in zoom-in-95 duration-300 border border-slate-100">
           <div className="flex flex-col items-center text-center mt-2">
-            {modal.type === 'success' || modal.type === 'success_delete' ? <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6 text-emerald-600 shadow-inner"><CheckCircle2 className="w-10 h-10" /></div> : <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-6 text-rose-600 shadow-inner"><AlertCircle className="w-10 h-10" /></div>}
-            <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 mb-2">{modal.title}</h3>
-            <p className="text-sm sm:text-base text-slate-500 font-medium mb-8">{modal.message}</p>
-            <div className="flex flex-col sm:flex-row w-full gap-3 justify-center">
-              {modal.type === 'confirm_delete' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full sm:flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-center">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="w-full sm:flex-1 py-3.5 bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all text-center">Ya, Hapus!</button></> : modal.type === 'success' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full sm:flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-center">Tutup</button><button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="w-full sm:flex-1 py-3.5 bg-amber-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-all hover:bg-amber-600"><Printer className="w-4 h-4 mr-2" /> Cetak PDF</button></> : <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-slate-950 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all text-center">Mengerti</button>}
+            {modal.type === 'success' || modal.type === 'success_delete' ? <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6 text-indigo-600 shadow-inner"><CheckCircle2 className="w-10 h-10" /></div> : <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-6 text-rose-600 shadow-inner"><AlertCircle className="w-10 h-10" /></div>}
+            <h3 className="text-2xl font-extrabold text-slate-900 mb-2">{modal.title}</h3>
+            <p className="text-slate-500 font-medium mb-8">{modal.message}</p>
+            <div className="flex w-full gap-3 justify-center">
+              {modal.type === 'confirm_delete' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="flex-1 py-3.5 bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Ya, Hapus!</button></> : modal.type === 'success' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">Tutup</button><button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="flex-1 py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-all"><Printer className="w-4 h-4 mr-2" /> Cetak PDF</button></> : <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-slate-950 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Mengerti</button>}
             </div>
           </div>
         </div>
@@ -364,8 +355,8 @@ export default function KwitansiIndentPage() {
                 <div><label className={labelClass}>No. Invoice (Manual)</label><input type="text" value={noInvoice} onChange={(e)=>setNoInvoice(e.target.value)} required placeholder="IND-001" className={inputClass} /></div>
                 <div><label className={labelClass}>Tanggal</label><input type="date" value={tanggal} onChange={(e)=>setTanggal(e.target.value)} required className={inputClass} /></div>
                 <div><label className={labelClass}>Di Terima Dari (Konsumen)</label><input type="text" value={diterimaDari} onChange={(e)=>setDiterimaDari(e.target.value)} required placeholder="NAMA LENGKAP" className={inputClass} /></div>
-                <div><label className={labelClass}>Nama Kasir</label><input type="text" value={namaKasir} onChange={(e)=>setNamaKasir(e.target.value)} required placeholder="STELY ARSYAD" className={inputClass} /></div>
-                <div className="md:col-span-2"><label className={labelClass}>Tipe Motor & Warna</label><input type="text" value={tipeMotor} onChange={(e)=>setTipeMotor(e.target.value)} placeholder="(PCX160 ABS / BLUE)" className={inputClass} /></div>
+                <div><label className={labelClass}>Nama Kasir</label><input type="text" value={kasir} onChange={(e)=>setKasir(e.target.value)} required placeholder="STELY ARSYAD" className={inputClass} /></div>
+                <div className="md:col-span-2"><label className={labelClass}>Tipe Motor & Warna</label><input type="text" value={tipeMotor} onChange={(e)=>setTipeMotor(e.target.value)} required placeholder="(PCX160 ABS / BLUE)" className={inputClass} /></div>
               </section>
 
               <section className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
@@ -383,7 +374,7 @@ export default function KwitansiIndentPage() {
                         </div>
                         
                         {isDropdownOpen && (
-                          <div className="absolute z-[99] w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                          <div className="absolute z-[99] w-full bottom-full mb-2 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2">
                             <div className="p-2">
                               <div className="px-5 py-4 text-sm font-bold text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors flex items-center" onClick={() => handleSelectJenis('')}>
                                 <X className="w-4 h-4 mr-2" /> Batal / Kosongkan Pilihan
@@ -401,17 +392,17 @@ export default function KwitansiIndentPage() {
 
                     <div>
                         <label className={labelClass}>Nominal Indent (Rp)</label>
-                        <input type="text" value={nominal === 0 ? '' : formatRupiah(nominal)} onChange={handleNominalChange} className={numInputClass} placeholder="0" />
+                        <input type="text" value={nominal === '' ? '' : formatRupiah(nominal)} onChange={handleInputChange(setNominal)} className={numInputClass} placeholder="0" />
                     </div>
 
                 </div>
               </section>
 
-              <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 border-t border-slate-100">
-                {isEditing && <button type="button" onClick={resetForm} className="w-full sm:w-auto px-6 sm:px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold active:scale-95 shadow-sm text-center">BATAL EDIT</button>}
-                <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto px-4 sm:px-12 py-3.5 bg-amber-500 text-white rounded-xl font-bold active:scale-95 shadow-lg tracking-wide flex items-center justify-center hover:bg-amber-600 transition-colors">
-                  <ClipboardSignature className="w-5 h-5 mr-2 shrink-0" />
-                  <span>{isEditing ? 'UPDATE KWITANSI INDENT' : 'SIMPAN & CETAK KWITANSI INDENT'}</span>
+              <div className="flex justify-center gap-4 pt-4 border-t border-slate-100">
+                {isEditing && <button type="button" onClick={resetForm} className="px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold active:scale-95 shadow-sm">Batal</button>}
+                <button type="submit" className="px-12 py-3.5 bg-amber-500 text-white rounded-xl font-bold active:scale-95 shadow-lg tracking-wide flex items-center hover:bg-amber-600 transition-colors">
+                  <ClipboardSignature className="w-5 h-5 mr-2" />
+                  {isEditing ? 'Update Indent' : 'Simpan & Cetak Kwitansi Indent'}
                 </button>
               </div>
             </form>
@@ -419,21 +410,16 @@ export default function KwitansiIndentPage() {
         </div>
         
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="bg-slate-50/80 border-b border-slate-200 p-4 sm:p-5 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <h3 className="text-lg font-bold text-slate-800 flex items-center"><ClipboardSignature className="w-5 h-5 mr-2 text-amber-500" /> Riwayat Kwitansi Indent</h3>
-            <button onClick={fetchHistory} className="w-full sm:w-auto flex items-center justify-center text-xs font-bold text-slate-700 bg-white border border-slate-300 px-4 py-2.5 rounded-xl active:scale-95 shadow-sm hover:bg-slate-100 transition-all">
-              <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
-            </button>
-          </div>
+          <div className="bg-slate-50/80 border-b border-slate-200 p-5 px-6 flex justify-between items-center"><h3 className="text-lg font-bold text-slate-800 flex items-center"><ClipboardSignature className="w-5 h-5 mr-2 text-amber-500" /> Riwayat Kwitansi Indent</h3><button onClick={fetchHistory} className="flex items-center text-xs font-bold text-slate-700 bg-white border border-slate-300 px-4 py-2 rounded-xl active:scale-95 shadow-sm hover:bg-slate-100"><RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh</button></div>
           <div className="overflow-x-auto max-h-[420px] scrollbar-thin">
             <table className="w-full text-sm text-left border-collapse">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
                 <tr className="border-b border-slate-200">
-                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">No. Invoice</th>
-                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">Tanggal</th>
+                  <th className="px-6 py-4 font-bold tracking-wider">No. Invoice</th>
+                  <th className="px-6 py-4 font-bold tracking-wider">Tanggal</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Diterima Dari</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Jenis & Nominal</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-right whitespace-nowrap">Aksi</th>
+                  <th className="px-6 py-4 font-bold tracking-wider text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -441,16 +427,16 @@ export default function KwitansiIndentPage() {
                     const { date, time } = formatDateTime(row.created_at, row.tanggal);
                     return (
                     <tr key={`${row?.noInvoice || idx}-${idx}`} className="hover:bg-amber-50/40 transition-colors">
-                      <td className="px-6 py-5 font-extrabold text-slate-900 whitespace-nowrap">{row?.noInvoice || '-'}</td>
-                      <td className="px-6 py-5 whitespace-nowrap">
+                      <td className="px-6 py-5 font-extrabold text-slate-900">{row?.noInvoice || '-'}</td>
+                      <td className="px-6 py-5">
                         <div className="font-bold text-slate-700">{date}</div>
                         <div className="flex items-center text-[11px] text-slate-400 mt-1 font-medium bg-slate-100/70 inline-flex px-2 py-0.5 rounded">
                           <Clock className="w-3 h-3 mr-1" /> Jam: {time}
                         </div>
                       </td>
                       <td className="px-6 py-5 font-bold text-slate-700 uppercase">{row?.diterimaDari || '-'}</td>
-                      <td className="px-6 py-5 whitespace-nowrap"><div className="text-xs font-black text-amber-700 uppercase">{row?.jenisIndent}</div><div className="text-sm font-bold text-slate-900 mt-0.5">Rp {formatRupiah(row?.nominal)}</div></td>
-                      <td className="px-6 py-5 whitespace-nowrap">
+                      <td className="px-6 py-5"><div className="text-xs font-black text-amber-700 uppercase">{row?.jenisIndent}</div><div className="text-sm font-bold text-slate-900 mt-0.5">Rp {formatRupiah(row?.nominal)}</div></td>
+                      <td className="px-6 py-5">
                         <div className="flex items-center justify-end gap-2.5">
                           <button onClick={() => generatePDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm">
                             <FileText className="w-3.5 h-3.5" /> PDF

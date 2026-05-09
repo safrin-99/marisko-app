@@ -413,8 +413,8 @@ export default function KwitansiIndentPage() {
                       <td className="px-6 py-5 font-extrabold text-slate-900 whitespace-nowrap">{row?.noInvoice || '-'}</td>
                       <td className="px-6 py-5 whitespace-nowrap">
                         <div className="font-bold text-slate-700">{date}</div>
-                        <div className="flex items-center text-[11px] text-slate-400 mt-1 font-medium bg-slate-100/70 inline-flex px-2 py-0.5 rounded">
-                          <Clock className="w-3 h-3 mr-1" /> Jam: {time}
+                        <div className="flex items-center text-[11px] font-medium text-slate-400 mt-1">
+                          <Clock className="w-3.5 h-3.5 mr-1" /> Jam: {time}
                         </div>
                       </td>
                       <td className="px-6 py-5 font-bold text-slate-700 uppercase">{row?.diterimaDari || '-'}</td>

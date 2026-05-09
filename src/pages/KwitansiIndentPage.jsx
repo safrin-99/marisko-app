@@ -246,7 +246,7 @@ export default function KwitansiIndentPage() {
         doc.rect(col1, startTableBody, col4 - col1, curY - startTableBody);
         doc.line(col2, startTableBody, col2, curY); doc.line(col3, startTableBody, col3, curY);
 
-        // SAKTI: Terbilang sudah dihapus total. Langsung lompat ke area Tanda Tangan.
+        // Terbilang sudah dihapus total. Langsung lompat ke area Tanda Tangan.
         curY += 20; 
         const konsX = 50; const kasirX = 165;
         doc.setFontSize(9); doc.setFont("helvetica", "bold");
@@ -350,8 +350,9 @@ export default function KwitansiIndentPage() {
                           <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? 'rotate-180 text-amber-500' : ''}`} />
                         </div>
                         
+                        {/* SAKTI: Dropdown diubah jadi top-full mt-2 agar muncul pas di bawah tombol, bukan nabrak ke atas */}
                         {isDropdownOpen && (
-                          <div className="absolute z-[99] w-full bottom-full mb-2 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+                          <div className="absolute z-[99] w-full top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
                             <div className="p-2">
                               <div className="px-5 py-4 text-sm font-bold text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors flex items-center" onClick={() => handleSelectJenis('')}>
                                 <X className="w-4 h-4 mr-2" /> Batal / Kosongkan Pilihan

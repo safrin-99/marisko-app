@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { ClipboardSignature, Edit, Trash2, RefreshCw, Clock, X, CheckCircle2, AlertCircle, Printer, FileText, ChevronDown } from 'lucide-react';
+import { ClipboardSignature, Edit, Trash2, RefreshCw, Clock, X, CheckCircle2, AlertCircle, Printer, FileText, ChevronDown, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from "jspdf";
 
@@ -23,6 +23,9 @@ export default function KwitansiIndentPage() {
   const [jenisIndent, setJenisIndent] = useState('');
   
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  
+  // SAKTI: State baru untuk Pencarian Tabel
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchHistory();
@@ -246,7 +249,6 @@ export default function KwitansiIndentPage() {
         doc.rect(col1, startTableBody, col4 - col1, curY - startTableBody);
         doc.line(col2, startTableBody, col2, curY); doc.line(col3, startTableBody, col3, curY);
 
-        // Terbilang sudah dihapus total. Langsung lompat ke area Tanda Tangan.
         curY += 20; 
         const konsX = 50; const kasirX = 165;
         doc.setFontSize(9); doc.setFont("helvetica", "bold");
@@ -268,7 +270,6 @@ export default function KwitansiIndentPage() {
         return curY; 
     };
     
-    // Cetak 2 Rangkap
     let yAkhirAtas = drawReceipt(15); 
     const yGarisPembatas = yAkhirAtas + 15; 
     doc.setLineDashPattern([3, 3], 0); doc.setLineWidth(0.3);
@@ -288,13 +289,27 @@ export default function KwitansiIndentPage() {
     if (!modal.isOpen) return null;
     return createPortal(
       <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
-        <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md p-8 animate-in zoom-in-95 duration-300 border border-slate-100">
+        {/* SAKTI: Modal Lebar Max 90% di HP agar tidak gepeng */}
+        <div className="bg-white rounded-4xl shadow-2xl w-full max-w-[90%] sm:max-w-md p-6 sm:p-8 animate-in zoom-in-95 duration-300 border border-slate-100">
           <div className="flex flex-col items-center text-center mt-2">
             {modal.type === 'success' || modal.type === 'success_delete' ? <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6 text-indigo-600 shadow-inner"><CheckCircle2 className="w-10 h-10" /></div> : <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-6 text-rose-600 shadow-inner"><AlertCircle className="w-10 h-10" /></div>}
-            <h3 className="text-2xl font-extrabold text-slate-900 mb-2">{modal.title}</h3>
-            <p className="text-slate-500 font-medium mb-8">{modal.message}</p>
-            <div className="flex w-full gap-3 justify-center">
-              {modal.type === 'confirm_delete' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="flex-1 py-3.5 bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Ya, Hapus!</button></> : modal.type === 'success' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">Tutup</button><button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="flex-1 py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-all"><Printer className="w-4 h-4 mr-2" /> Cetak PDF</button></> : <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-slate-950 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Mengerti</button>}
+            <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 mb-2">{modal.title}</h3>
+            <p className="text-sm sm:text-base text-slate-500 font-medium mb-8">{modal.message}</p>
+            {/* SAKTI: Tombol di Modal Menyusun ke bawah di HP */}
+            <div className="flex flex-col sm:flex-row w-full gap-3 justify-center">
+              {modal.type === 'confirm_delete' ? (
+                <>
+                  <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full sm:flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-center">Batal</button>
+                  <button onClick={() => executeDelete(modal.actionData)} className="w-full sm:flex-1 py-3.5 bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all text-center">Ya, Hapus!</button>
+                </>
+              ) : modal.type === 'success' ? (
+                <>
+                  <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full sm:flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-center">Tutup</button>
+                  <button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="w-full sm:flex-1 py-3.5 bg-amber-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-all hover:bg-amber-600"><Printer className="w-4 h-4 mr-2" /> Cetak PDF</button>
+                </>
+              ) : (
+                <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-slate-950 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all text-center">Mengerti</button>
+              )}
             </div>
           </div>
         </div>
@@ -329,11 +344,11 @@ export default function KwitansiIndentPage() {
             <form onSubmit={handleSubmit} className="space-y-8">
 
               <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div><label className={labelClass}>No. Invoice</label><input type="text" value={noInvoice} onChange={(e)=>setNoInvoice(e.target.value)} required placeholder="IND-001" className={inputClass} /></div>
+                <div><label className={labelClass}>No. Invoice (Manual)</label><input type="text" value={noInvoice} onChange={(e)=>setNoInvoice(e.target.value)} required placeholder="IND-001" className={inputClass} /></div>
                 <div><label className={labelClass}>Tanggal</label><input type="date" value={tanggal} onChange={(e)=>setTanggal(e.target.value)} required className={inputClass} /></div>
                 <div><label className={labelClass}>Di Terima Dari (Konsumen)</label><input type="text" value={diterimaDari} onChange={(e)=>setDiterimaDari(e.target.value)} required placeholder="NAMA LENGKAP" className={inputClass} /></div>
                 <div><label className={labelClass}>Nama Kasir</label><input type="text" value={kasir} onChange={(e)=>setKasir(e.target.value)} required placeholder="STELY ARSYAD" className={inputClass} /></div>
-                <div className="md:col-span-2"><label className={labelClass}>Tipe Motor & Warna</label><input type="text" value={tipeMotor} onChange={(e)=>setTipeMotor(e.target.value)} required placeholder="(PCX160 ABS / BLUE)" className={inputClass} /></div>
+                <div className="md:col-span-2"><label className={labelClass}>Tipe Motor & Warna</label><input type="text" value={tipeMotor} onChange={(e)=>setTipeMotor(e.target.value)} placeholder="(PCX160 ABS / BLUE)" className={inputClass} /></div>
               </section>
 
               <section className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
@@ -350,9 +365,8 @@ export default function KwitansiIndentPage() {
                           <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? 'rotate-180 text-amber-500' : ''}`} />
                         </div>
                         
-                        {/* SAKTI: Dropdown diubah jadi top-full mt-2 agar muncul pas di bawah tombol, bukan nabrak ke atas */}
                         {isDropdownOpen && (
-                          <div className="absolute z-[99] w-full top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
+                          <div className="absolute z-[99] w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                             <div className="p-2">
                               <div className="px-5 py-4 text-sm font-bold text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors flex items-center" onClick={() => handleSelectJenis('')}>
                                 <X className="w-4 h-4 mr-2" /> Batal / Kosongkan Pilihan
@@ -376,11 +390,12 @@ export default function KwitansiIndentPage() {
                 </div>
               </section>
 
-              <div className="flex justify-center gap-4 pt-4 border-t border-slate-100">
-                {isEditing && <button type="button" onClick={resetForm} className="px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold active:scale-95 shadow-sm">Batal</button>}
-                <button type="submit" className="px-12 py-3.5 bg-amber-500 text-white rounded-xl font-bold active:scale-95 shadow-lg tracking-wide flex items-center hover:bg-amber-600 transition-colors">
-                  <ClipboardSignature className="w-5 h-5 mr-2" />
-                  {isEditing ? 'Update Indent' : 'Simpan & Cetak Kwitansi Indent'}
+              {/* SAKTI: Ini yang bikin Form Tombol Utama HP memanjang ke bawah lurus rapi! */}
+              <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 border-t border-slate-100">
+                {isEditing && <button type="button" onClick={resetForm} className="w-full sm:w-auto px-6 sm:px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold active:scale-95 shadow-sm text-center">Batal</button>}
+                <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto px-4 sm:px-12 py-3.5 bg-amber-500 text-white rounded-xl font-bold active:scale-95 shadow-lg tracking-wide flex items-center justify-center hover:bg-amber-600 transition-colors">
+                  <ClipboardSignature className="w-5 h-5 mr-2 shrink-0" />
+                  <span>{isEditing ? 'Update Indent' : 'Simpan & Cetak Kwitansi Indent'}</span>
                 </button>
               </div>
             </form>
@@ -388,33 +403,63 @@ export default function KwitansiIndentPage() {
         </div>
         
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="bg-slate-50/80 border-b border-slate-200 p-5 px-6 flex justify-between items-center"><h3 className="text-lg font-bold text-slate-800 flex items-center"><ClipboardSignature className="w-5 h-5 mr-2 text-amber-500" /> Riwayat Kwitansi Indent</h3><button onClick={fetchHistory} className="flex items-center text-xs font-bold text-slate-700 bg-white border border-slate-300 px-4 py-2 rounded-xl active:scale-95 shadow-sm hover:bg-slate-100"><RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh</button></div>
+          {/* SAKTI: Input Pencarian ditambahkan di sini, berdampingan dengan Refresh */}
+          <div className="bg-slate-50/80 border-b border-slate-200 p-4 sm:p-5 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <h3 className="text-lg font-bold text-slate-800 flex items-center shrink-0">
+              <ClipboardSignature className="w-5 h-5 mr-2 text-amber-500" /> Riwayat Kwitansi Indent
+            </h3>
+            
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+              <div className="relative w-full sm:w-64">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Cari Nama / No. Invoice..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 sm:py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all shadow-sm"
+                />
+              </div>
+              <button onClick={fetchHistory} className="w-full sm:w-auto flex items-center justify-center text-xs font-bold text-slate-700 bg-white border border-slate-300 px-4 py-2.5 rounded-xl active:scale-95 shadow-sm hover:bg-slate-100 transition-all">
+                <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+              </button>
+            </div>
+          </div>
+
           <div className="overflow-x-auto max-h-[420px] scrollbar-thin">
             <table className="w-full text-sm text-left border-collapse">
               <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
                 <tr className="border-b border-slate-200">
-                  <th className="px-6 py-4 font-bold tracking-wider">No. Invoice</th>
-                  <th className="px-6 py-4 font-bold tracking-wider">Tanggal</th>
+                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">No. Invoice</th>
+                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">Tanggal</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Diterima Dari</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Jenis & Nominal</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-right">Aksi</th>
+                  <th className="px-6 py-4 font-bold tracking-wider text-right whitespace-nowrap">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {historyData.map((row, idx) => {
+                {/* SAKTI: Logika Pencarian Tabel ditambahkan di sini */}
+                {historyData
+                  .filter((row) => {
+                    if (!searchTerm) return true;
+                    const keyword = searchTerm.toLowerCase();
+                    const searchString = `${row?.noInvoice || ''} ${row?.diterimaDari || ''} ${row?.jenisIndent || ''}`.toLowerCase();
+                    return searchString.includes(keyword);
+                  })
+                  .map((row, idx) => {
                     const { date, time } = formatDateTime(row.created_at, row.tanggal);
                     return (
                     <tr key={`${row?.noInvoice || idx}-${idx}`} className="hover:bg-amber-50/40 transition-colors">
-                      <td className="px-6 py-5 font-extrabold text-slate-900">{row?.noInvoice || '-'}</td>
-                      <td className="px-6 py-5">
+                      <td className="px-6 py-5 font-extrabold text-slate-900 whitespace-nowrap">{row?.noInvoice || '-'}</td>
+                      <td className="px-6 py-5 whitespace-nowrap">
                         <div className="font-bold text-slate-700">{date}</div>
-                        <div className="flex items-center text-[11px] font-medium text-slate-400 mt-1">
-                          <Clock className="w-3.5 h-3.5 mr-1" /> Jam: {time}
+                        <div className="flex items-center text-[11px] text-slate-400 mt-1 font-medium bg-slate-100/70 inline-flex px-2 py-0.5 rounded">
+                          <Clock className="w-3 h-3 mr-1" /> Jam: {time}
                         </div>
                       </td>
                       <td className="px-6 py-5 font-bold text-slate-700 uppercase">{row?.diterimaDari || '-'}</td>
-                      <td className="px-6 py-5"><div className="text-xs font-black text-amber-700 uppercase">{row?.jenisIndent}</div><div className="text-sm font-bold text-slate-900 mt-0.5">Rp {formatRupiah(row?.nominal)}</div></td>
-                      <td className="px-6 py-5">
+                      <td className="px-6 py-5 whitespace-nowrap"><div className="text-xs font-black text-amber-700 uppercase">{row?.jenisIndent}</div><div className="text-sm font-bold text-slate-900 mt-0.5">Rp {formatRupiah(row?.nominal)}</div></td>
+                      <td className="px-6 py-5 whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2.5">
                           <button onClick={() => generatePDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm">
                             <FileText className="w-3.5 h-3.5" /> PDF

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FileSignature, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, CalendarDays, Search, MessageCircle, CheckCircle, XCircle, Users } from 'lucide-react';
+import { FileSignature, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, CalendarDays, Search, MessageCircle, CheckCircle, XCircle, Users, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from "jspdf";
 
@@ -33,6 +33,8 @@ export default function CutiPage() {
     { value: 'MENIKAH', label: 'Cuti Menikah' },
     { value: 'MELAHIRKAN', label: 'Cuti Melahirkan' },
     { value: 'DUKA', label: 'Izin Kedukaan' },
+    { value: 'SETENGAH_HARI_AWAL', label: 'Izin Setengah Hari (08:00 s/d 13:00)' },
+    { value: 'SETENGAH_HARI_AKHIR', label: 'Izin Setengah Hari (13:00 s/d 17:00)' },
     { value: 'LAINNYA', label: 'Keperluan Lainnya' }
   ];
 
@@ -192,6 +194,8 @@ export default function CutiPage() {
     else if (data.jenisCuti === 'MELAHIRKAN') { perihalStr = "cuti melahirkan"; jenisKata = "CUTI"; }
     else if (data.jenisCuti === 'SAKIT') { perihalStr = "izin sakit"; jenisKata = "IZIN"; }
     else if (data.jenisCuti === 'DUKA') { perihalStr = "izin kedukaan"; jenisKata = "IZIN"; }
+    else if (data.jenisCuti === 'SETENGAH_HARI_AWAL') { perihalStr = "izin setengah hari (08:00 - 13:00)"; jenisKata = "IZIN"; }
+    else if (data.jenisCuti === 'SETENGAH_HARI_AKHIR') { perihalStr = "izin setengah hari (13:00 - 17:00)"; jenisKata = "IZIN"; }
     else { perihalStr = "izin keperluan lainnya"; jenisKata = "IZIN"; }
 
     doc.text(todayStr, leftMargin, currentY); currentY += 6;
@@ -211,6 +215,11 @@ export default function CutiPage() {
     const diffTime = Math.abs(d2 - d1);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; 
 
+    let diffDaysText = `${diffDays} hari`;
+    if (data.jenisCuti === 'SETENGAH_HARI_AWAL' || data.jenisCuti === 'SETENGAH_HARI_AKHIR') {
+        diffDaysText = "setengah hari";
+    }
+
     const dKembali = new Date(d2);
     dKembali.setDate(dKembali.getDate() + 1);
 
@@ -228,7 +237,7 @@ export default function CutiPage() {
     const hariKembaliStr = daysLower[dKembali.getDay()];
     const tglKembaliFullStr = `${hariKembaliStr} ${dKembali.getDate()} ${monthsLower[dKembali.getMonth()]} ${dKembali.getFullYear()}`;
 
-    const textParagraf1 = `Melalui surat ini saya mengajukan permohonan ${jenisKata} untuk tidak masuk kerja selama ${diffDays} hari pada tanggal ${tglRangeStr}, saya akan memulai bekerja kembali pada hari ${tglKembaliFullStr}.`;
+    const textParagraf1 = `Melalui surat ini saya mengajukan permohonan ${jenisKata} untuk tidak masuk kerja selama ${diffDaysText} pada tanggal ${tglRangeStr}, saya akan memulai bekerja kembali pada hari ${tglKembaliFullStr}.`;
     doc.text(textParagraf1, leftMargin, currentY, { maxWidth: contentWidth, align: "justify", lineHeightFactor: 1.5 });
     currentY += (doc.splitTextToSize(textParagraf1, contentWidth).length * 6.5) + 4;
 
@@ -273,15 +282,28 @@ export default function CutiPage() {
   const labelClass = "block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider";
 
   // =========================================================================
-  // SAKTI: LOGIKA MESIN PENGHITUNG TOTAL HARI CUTI YANG DISETUJUI
+  // SAKTI: LOGIKA MESIN PENGHITUNG CUTI VS IZIN (BERBEDA)
   // =========================================================================
   const rekapCutiData = Object.values(historyData.reduce((acc, row) => {
-    if (row.status !== 'DISETUJUI') return acc; // Hanya menghitung cuti yang sudah valid/disetujui Kacab
+    if (row.status !== 'DISETUJUI') return acc; 
     
     const d1 = new Date(row.tglMulai);
     const d2 = new Date(row.tglSelesai);
     const diffTime = Math.abs(d2 - d1);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Rumus akurat hitung jarak hari
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; 
+    
+    let calculatedDays = diffDays;
+    let isCuti = false;
+
+    // Klasifikasi: Mana yang CUTI, mana yang IZIN
+    if (['TAHUNAN', 'MENIKAH', 'MELAHIRKAN'].includes(row.jenisCuti)) {
+        isCuti = true; // Ini adalah CUTI yang diuangkan
+    } else if (['SETENGAH_HARI_AWAL', 'SETENGAH_HARI_AKHIR'].includes(row.jenisCuti)) {
+        calculatedDays = 0.5;
+        isCuti = false; // Ini IZIN (Setengah Hari)
+    } else {
+        isCuti = false; // SAKIT, DUKA, LAINNYA -> Ini IZIN
+    }
     
     const key = row.namaPegawai?.toUpperCase() || 'NN';
     
@@ -289,15 +311,49 @@ export default function CutiPage() {
         acc[key] = { 
             nama: row.namaPegawai?.toUpperCase(), 
             jabatan: row.jabatan?.toUpperCase(), 
-            totalHari: 0, 
-            pengajuan: 0 
+            totalCuti: 0, 
+            totalIzin: 0 
         };
     }
-    acc[key].totalHari += diffDays;
-    acc[key].pengajuan += 1;
+
+    if (isCuti) {
+        acc[key].totalCuti += calculatedDays;
+    } else {
+        acc[key].totalIzin += calculatedDays;
+    }
     
     return acc;
-  }, {})).sort((a, b) => b.totalHari - a.totalHari); // Mengurutkan dari karyawan yang paling sering cuti di posisi atas
+  }, {})).sort((a, b) => b.totalCuti - a.totalCuti);
+
+  // =========================================================================
+  // SAKTI: FUNGSI EXPORT KE EXCEL
+  // =========================================================================
+  const exportToExcel = () => {
+    let csvContent = "Peringkat,Nama Pegawai,Posisi / Jabatan,Total Cuti Terpakai (Hari),Sisa Cuti (Dari 12 Hari),Total Izin (Hari)\n";
+
+    rekapCutiData.forEach((item, index) => {
+        const sisaCuti = 12 - item.totalCuti;
+        const row = [
+            index + 1,
+            `"${item.nama}"`,
+            `"${item.jabatan}"`,
+            item.totalCuti,
+            sisaCuti,
+            item.totalIzin
+        ].join(",");
+        csvContent += row + "\n";
+    });
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Rekapitulasi_Cuti_Izin_${new Date().toISOString().slice(0,10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const renderModal = () => {
     if (!modal.isOpen) return null;
@@ -531,6 +587,7 @@ export default function CutiPage() {
                             <div className="flex items-center justify-end gap-2.5">
                               <button onClick={() => handleSendWA(row)} className="flex items-center gap-1.5 px-3 py-2 bg-[#25D366]/10 text-[#075E54] hover:bg-[#25D366]/20 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-[#25D366]/30 shadow-sm"><MessageCircle className="w-3.5 h-3.5" /> Kirim WA</button>
                               <button onClick={() => generateCutiPDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm"><Printer className="w-3.5 h-3.5" /> PDF</button>
+                              
                               <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm"><Edit className="w-3.5 h-3.5" /> Edit</button>
                               
                               {userRole !== 'KARYAWAN' && (
@@ -548,14 +605,19 @@ export default function CutiPage() {
         </div>
 
         {/* =========================================================================
-            SAKTI: TABEL REKAPITULASI PENGGUNAAN CUTI KARYAWAN (KHUSUS YANG DISETUJUI) 
+            SAKTI: TABEL REKAPITULASI CUTI (MAKS 12 HARI) & IZIN
             ========================================================================= */}
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
           <div className="bg-indigo-50/80 border-b border-indigo-100 p-4 md:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5">
             <div>
-              <h3 className="text-lg font-bold text-indigo-900 flex items-center"><Users className="w-5 h-5 mr-2 text-indigo-600" /> Rekapitulasi Penggunaan Cuti</h3>
-              <p className="text-[11px] font-medium text-indigo-700/70 mt-1">Pantau total pengajuan dan hari cuti yang telah <b className="text-indigo-800">DISETUJUI</b> oleh Kepala Cabang.</p>
+              <h3 className="text-lg font-bold text-indigo-900 flex items-center"><Users className="w-5 h-5 mr-2 text-indigo-600" /> Rekapitulasi Cuti & Izin</h3>
+              <p className="text-[11px] font-medium text-indigo-700/70 mt-1">Pantau sisa jatah Cuti (Maks 12 Hari/Tahun) dan total Izin karyawan.</p>
             </div>
+            
+            {/* SAKTI: TOMBOL EKSPOR KE EXCEL UNTUK KACAB */}
+            <button onClick={exportToExcel} className="w-full sm:w-auto flex items-center justify-center text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-4 py-2.5 rounded-xl active:scale-95 shadow-sm hover:bg-emerald-200 transition-all duration-200">
+              <Download className="w-4 h-4 mr-2" /> Ekspor ke Excel
+            </button>
           </div>
           <div className="overflow-y-auto overflow-x-auto max-h-[420px] scrollbar-thin">
             <table className="w-full text-sm text-left border-collapse whitespace-nowrap">
@@ -564,28 +626,39 @@ export default function CutiPage() {
                   <th className="px-6 py-4 font-bold tracking-wider w-16 text-center">Peringkat</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Nama Pegawai</th>
                   <th className="px-6 py-4 font-bold tracking-wider">Posisi / Jabatan</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-center">Total Pengajuan</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-center">Total Hari Cuti</th>
+                  <th className="px-6 py-4 font-bold tracking-wider text-center">Total Cuti Terpakai</th>
+                  <th className="px-6 py-4 font-bold tracking-wider text-center">Sisa Cuti (12 Hari)</th>
+                  <th className="px-6 py-4 font-bold tracking-wider text-center">Total Izin (Hari)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {rekapCutiData.length === 0 ? (
-                  <tr><td colSpan="5" className="text-center py-8 text-slate-400 font-medium">Belum ada rekap data cuti yang disetujui.</td></tr>
+                  <tr><td colSpan="6" className="text-center py-8 text-slate-400 font-medium">Belum ada rekap data cuti/izin yang disetujui.</td></tr>
                 ) : (
-                  rekapCutiData.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-indigo-50/40 transition-colors">
-                      <td className="px-6 py-4 font-black text-slate-400 text-center">{idx + 1}</td>
-                      <td className="px-6 py-4 font-black text-slate-900">{item.nama}</td>
-                      <td className="px-6 py-4 font-bold text-slate-500 text-[11px]">{item.jabatan}</td>
-                      <td className="px-6 py-4 font-bold text-indigo-600 text-center">{item.pengajuan} Kali</td>
-                      <td className="px-6 py-4 text-center">
-                        {/* Jika hari cuti >= 12, maka warna akan berubah merah sebagai indikator peringatan */}
-                        <span className={`px-3 py-1.5 rounded-lg text-xs font-black shadow-sm border ${item.totalHari >= 12 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
-                          {item.totalHari} Hari
-                        </span>
-                      </td>
-                    </tr>
-                  ))
+                  rekapCutiData.map((item, idx) => {
+                    const sisaCuti = 12 - item.totalCuti;
+                    return (
+                      <tr key={idx} className="hover:bg-indigo-50/40 transition-colors">
+                        <td className="px-6 py-4 font-black text-slate-400 text-center">{idx + 1}</td>
+                        <td className="px-6 py-4 font-black text-slate-900">{item.nama}</td>
+                        <td className="px-6 py-4 font-bold text-slate-500 text-[11px]">{item.jabatan}</td>
+                        
+                        <td className="px-6 py-4 text-center font-bold text-slate-700">
+                          {item.totalCuti} Hari
+                        </td>
+                        
+                        <td className="px-6 py-4 text-center">
+                          <span className={`px-3 py-1.5 rounded-lg text-xs font-black shadow-sm border ${sisaCuti <= 0 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                            {sisaCuti} Hari
+                          </span>
+                        </td>
+                        
+                        <td className="px-6 py-4 text-center font-bold text-slate-700">
+                          {item.totalIzin} Hari
+                        </td>
+                      </tr>
+                    )
+                  })
                 )}
               </tbody>
             </table>

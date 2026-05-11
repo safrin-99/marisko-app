@@ -8,7 +8,10 @@ export default function DashboardPage() {
   const [recentActivities, setRecentActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  
   const adminName = localStorage.getItem('adminName') || 'Admin';
+  // SAKTI: Ambil Role dari localStorage untuk mengamankan Akses Cepat!
+  const userRole = localStorage.getItem('adminRole')?.toUpperCase() || '';
 
   useEffect(() => {
     fetchDashboardData();
@@ -25,7 +28,6 @@ export default function DashboardPage() {
     }
 
     try {
-      // SAKTI: resCuti dimasukkan kembali
       const [
         { count: cBastk }, { count: cKredit }, { count: cCash }, { count: cIndent },
         resBastk, resKredit, resCash, resIndent, resNota, resCuti
@@ -41,7 +43,6 @@ export default function DashboardPage() {
         supabase.from('kwitansi_indent_history').select('noInvoice, diterimaDari, created_at').order('created_at', {ascending: false}).limit(6),
         supabase.from('nota_history').select('no_invoice, penerima, total, kategori, created_at').order('created_at', {ascending: false}).limit(10),
         
-        // SAKTI: noRegistrasi diganti menjadi noCuti agar cocok dengan database Supabase!
         supabase.from('cuti_history').select('noCuti, namaPegawai, jenisCuti, created_at').order('created_at', {ascending: false}).limit(6)
       ]);
 
@@ -58,7 +59,6 @@ export default function DashboardPage() {
       if(resCash.data) activities.push(...resCash.data.map(d => ({ id: d.noInvoice, type: 'Kwitansi Cash', customer: d.diterimaDari, time: d.created_at, status: 'Sukses', icon: Banknote, color: 'text-emerald-600', bg: 'bg-emerald-50' })));
       if(resIndent.data) activities.push(...resIndent.data.map(d => ({ id: d.noInvoice, type: 'Kwitansi Indent', customer: d.diterimaDari, time: d.created_at, status: 'Sukses', icon: ClipboardSignature, color: 'text-amber-600', bg: 'bg-amber-50' })));
       
-      // SAKTI: Pemetaan data cuti menggunakan d.noCuti
       if(resCuti.data) activities.push(...resCuti.data.map(d => ({ id: d.noCuti, type: 'Pengajuan Cuti', customer: d.namaPegawai, time: d.created_at, status: 'Diproses', icon: CalendarDays, color: 'text-purple-600', bg: 'bg-purple-50' })));
       
       if(resNota.data) {
@@ -119,7 +119,6 @@ export default function DashboardPage() {
              <RefreshCw className={`w-5 h-5 group-hover:rotate-180 transition-transform duration-500 ${isLoading ? 'animate-spin text-indigo-600' : ''}`} />
           </button>
           
-          {/* SAKTI: Gradient Premium elegan untuk Kotak Total Pemasukan */}
           <div className="flex flex-col justify-center px-6 py-3 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 rounded-2xl border border-slate-800 shadow-xl shadow-indigo-900/20 min-w-[200px] relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 cursor-default">
              <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
              <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-indigo-500 rounded-full blur-2xl opacity-30"></div>
@@ -268,14 +267,19 @@ export default function DashboardPage() {
           </div>
           
           <div className="p-4 md:p-6 space-y-3 relative z-10 flex-1 flex flex-col justify-center">
-            <Link to="/bastk" className="w-full flex items-center justify-between p-3 md:p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-colors group/btn cursor-pointer">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-500/20 rounded-xl flex items-center justify-center text-blue-400 group-hover/btn:scale-110 group-hover/btn:bg-blue-500/30 transition-all shadow-inner"><FileText className="w-4 h-4 md:w-5 md:h-5" /></div>
-                <span className="font-semibold text-xs md:text-sm text-slate-100 drop-shadow-sm group-hover/btn:text-white transition-colors">Buat BASTK Baru</span>
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover/btn:text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-all" />
-            </Link>
             
+            {/* SAKTI: HANYA ADMIN YANG BISA MELIHAT DAN MENGKLIK BASTK */}
+            {userRole !== 'KARYAWAN' && (
+              <Link to="/bastk" className="w-full flex items-center justify-between p-3 md:p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-colors group/btn cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-500/20 rounded-xl flex items-center justify-center text-blue-400 group-hover/btn:scale-110 group-hover/btn:bg-blue-500/30 transition-all shadow-inner"><FileText className="w-4 h-4 md:w-5 md:h-5" /></div>
+                  <span className="font-semibold text-xs md:text-sm text-slate-100 drop-shadow-sm group-hover/btn:text-white transition-colors">Buat BASTK Baru</span>
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover/btn:text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-all" />
+              </Link>
+            )}
+            
+            {/* Cuti & Izin selalu muncul untuk semua (Termasuk Karyawan) */}
             <Link to="/cuti" className="w-full flex items-center justify-between p-3 md:p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-colors group/btn cursor-pointer">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 md:w-10 md:h-10 bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-400 group-hover/btn:scale-110 group-hover/btn:bg-purple-500/30 transition-all shadow-inner"><CalendarDays className="w-4 h-4 md:w-5 md:h-5" /></div>
@@ -284,29 +288,34 @@ export default function DashboardPage() {
               <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover/btn:text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-all" />
             </Link>
             
-            <Link to="/kwitansi-kredit" className="w-full flex items-center justify-between p-3 md:p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-colors group/btn cursor-pointer">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400 group-hover/btn:scale-110 group-hover/btn:bg-indigo-500/30 transition-all shadow-inner"><Receipt className="w-4 h-4 md:w-5 md:h-5" /></div>
-                <span className="font-semibold text-xs md:text-sm text-slate-100 drop-shadow-sm group-hover/btn:text-white transition-colors">Cetak Kwitansi Kredit</span>
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover/btn:text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-all" />
-            </Link>
-            
-            <Link to="/kwitansi-indent" className="w-full flex items-center justify-between p-3 md:p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-colors group/btn cursor-pointer">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-amber-500/20 rounded-xl flex items-center justify-center text-amber-400 group-hover/btn:scale-110 group-hover/btn:bg-amber-500/30 transition-all shadow-inner"><ClipboardSignature className="w-4 h-4 md:w-5 md:h-5" /></div>
-                <span className="font-semibold text-xs md:text-sm text-slate-100 drop-shadow-sm group-hover/btn:text-white transition-colors">Kwitansi Indent</span>
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover/btn:text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-all" />
-            </Link>
-            
-            <Link to="/nota" className="w-full flex items-center justify-between p-3 md:p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-colors group/btn cursor-pointer">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-rose-500/20 rounded-xl flex items-center justify-center text-rose-400 group-hover/btn:scale-110 group-hover/btn:bg-rose-500/30 transition-all shadow-inner"><ScrollText className="w-4 h-4 md:w-5 md:h-5" /></div>
-                <span className="font-semibold text-xs md:text-sm text-slate-100 drop-shadow-sm group-hover/btn:text-white transition-colors">Nota & Laporan</span>
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover/btn:text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-all" />
-            </Link>
+            {/* SAKTI: HANYA ADMIN YANG BISA MELIHAT SEMUA MENU KEUANGAN INI */}
+            {userRole !== 'KARYAWAN' && (
+              <>
+                <Link to="/kwitansi-kredit" className="w-full flex items-center justify-between p-3 md:p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-colors group/btn cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400 group-hover/btn:scale-110 group-hover/btn:bg-indigo-500/30 transition-all shadow-inner"><Receipt className="w-4 h-4 md:w-5 md:h-5" /></div>
+                    <span className="font-semibold text-xs md:text-sm text-slate-100 drop-shadow-sm group-hover/btn:text-white transition-colors">Cetak Kwitansi Kredit</span>
+                  </div>
+                  <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover/btn:text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-all" />
+                </Link>
+                
+                <Link to="/kwitansi-indent" className="w-full flex items-center justify-between p-3 md:p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-colors group/btn cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-amber-500/20 rounded-xl flex items-center justify-center text-amber-400 group-hover/btn:scale-110 group-hover/btn:bg-amber-500/30 transition-all shadow-inner"><ClipboardSignature className="w-4 h-4 md:w-5 md:h-5" /></div>
+                    <span className="font-semibold text-xs md:text-sm text-slate-100 drop-shadow-sm group-hover/btn:text-white transition-colors">Kwitansi Indent</span>
+                  </div>
+                  <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover/btn:text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-all" />
+                </Link>
+                
+                <Link to="/nota" className="w-full flex items-center justify-between p-3 md:p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-colors group/btn cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-rose-500/20 rounded-xl flex items-center justify-center text-rose-400 group-hover/btn:scale-110 group-hover/btn:bg-rose-500/30 transition-all shadow-inner"><ScrollText className="w-4 h-4 md:w-5 md:h-5" /></div>
+                    <span className="font-semibold text-xs md:text-sm text-slate-100 drop-shadow-sm group-hover/btn:text-white transition-colors">Nota & Laporan</span>
+                  </div>
+                  <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover/btn:text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-all" />
+                </Link>
+              </>
+            )}
           </div>
         </div>
 

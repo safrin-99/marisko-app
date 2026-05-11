@@ -25,7 +25,14 @@ export default function CutiPage() {
   const [alasan, setAlasan] = useState('');
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  
+  // State Pencarian Tabel Riwayat
   const [searchTerm, setSearchTerm] = useState('');
+
+  // SAKTI: State Pencarian & Filter Tanggal KHUSUS Tabel Rekapitulasi
+  const [rekapSearchTerm, setRekapSearchTerm] = useState('');
+  const [rekapStartDate, setRekapStartDate] = useState('');
+  const [rekapEndDate, setRekapEndDate] = useState('');
 
   const opsiCuti = [
     { value: 'TAHUNAN', label: 'Cuti Tahunan' },
@@ -282,10 +289,14 @@ export default function CutiPage() {
   const labelClass = "block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider";
 
   // =========================================================================
-  // SAKTI: LOGIKA MESIN PENGHITUNG CUTI VS IZIN (BERBEDA)
+  // SAKTI: LOGIKA MESIN PENGHITUNG CUTI VS IZIN DENGAN FILTER TANGGAL
   // =========================================================================
   const rekapCutiData = Object.values(historyData.reduce((acc, row) => {
     if (row.status !== 'DISETUJUI') return acc; 
+    
+    // SAKTI: Logika Filter Tanggal (Jika diisi oleh Admin)
+    if (rekapStartDate && row.tglMulai < rekapStartDate) return acc;
+    if (rekapEndDate && row.tglMulai > rekapEndDate) return acc;
     
     const d1 = new Date(row.tglMulai);
     const d2 = new Date(row.tglSelesai);
@@ -295,14 +306,13 @@ export default function CutiPage() {
     let calculatedDays = diffDays;
     let isCuti = false;
 
-    // Klasifikasi: Mana yang CUTI, mana yang IZIN
     if (['TAHUNAN', 'MENIKAH', 'MELAHIRKAN'].includes(row.jenisCuti)) {
-        isCuti = true; // Ini adalah CUTI yang diuangkan
+        isCuti = true; 
     } else if (['SETENGAH_HARI_AWAL', 'SETENGAH_HARI_AKHIR'].includes(row.jenisCuti)) {
         calculatedDays = 0.5;
-        isCuti = false; // Ini IZIN (Setengah Hari)
+        isCuti = false; 
     } else {
-        isCuti = false; // SAKIT, DUKA, LAINNYA -> Ini IZIN
+        isCuti = false; 
     }
     
     const key = row.namaPegawai?.toUpperCase() || 'NN';
@@ -323,10 +333,16 @@ export default function CutiPage() {
     }
     
     return acc;
-  }, {})).sort((a, b) => b.totalCuti - a.totalCuti);
+  }, {}))
+  // Filter by Search Term di Rekap
+  .filter(item => {
+    if (!rekapSearchTerm) return true;
+    return item.nama.toLowerCase().includes(rekapSearchTerm.toLowerCase());
+  })
+  .sort((a, b) => b.totalCuti - a.totalCuti);
 
   // =========================================================================
-  // SAKTI: FUNGSI EXPORT KE EXCEL
+  // SAKTI: FUNGSI EXPORT KE EXCEL SESUAI FILTER
   // =========================================================================
   const exportToExcel = () => {
     let csvContent = "Peringkat,Nama Pegawai,Posisi / Jabatan,Total Cuti Terpakai (Hari),Sisa Cuti (Dari 12 Hari),Total Izin (Hari)\n";
@@ -605,66 +621,120 @@ export default function CutiPage() {
         </div>
 
         {/* =========================================================================
-            SAKTI: TABEL REKAPITULASI CUTI (MAKS 12 HARI) & IZIN
+            SAKTI: TABEL REKAPITULASI CUTI & IZIN DENGAN FITUR PENCARIAN DAN TANGGAL
             ========================================================================= */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
-          <div className="bg-indigo-50/80 border-b border-indigo-100 p-4 md:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5">
-            <div>
-              <h3 className="text-lg font-bold text-indigo-900 flex items-center"><Users className="w-5 h-5 mr-2 text-indigo-600" /> Rekapitulasi Cuti & Izin</h3>
-              <p className="text-[11px] font-medium text-indigo-700/70 mt-1">Pantau sisa jatah Cuti (Maks 12 Hari/Tahun) dan total Izin karyawan.</p>
-            </div>
-            
-            {/* SAKTI: TOMBOL EKSPOR KE EXCEL UNTUK KACAB */}
-            <button onClick={exportToExcel} className="w-full sm:w-auto flex items-center justify-center text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-4 py-2.5 rounded-xl active:scale-95 shadow-sm hover:bg-emerald-200 transition-all duration-200">
-              <Download className="w-4 h-4 mr-2" /> Ekspor ke Excel
-            </button>
-          </div>
-          <div className="overflow-y-auto overflow-x-auto max-h-[420px] scrollbar-thin">
-            <table className="w-full text-sm text-left border-collapse whitespace-nowrap">
-              <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10">
-                <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                  <th className="px-6 py-4 font-bold tracking-wider w-16 text-center">Peringkat</th>
-                  <th className="px-6 py-4 font-bold tracking-wider">Nama Pegawai</th>
-                  <th className="px-6 py-4 font-bold tracking-wider">Posisi / Jabatan</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-center">Total Cuti Terpakai</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-center">Sisa Cuti (12 Hari)</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-center">Total Izin (Hari)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {rekapCutiData.length === 0 ? (
-                  <tr><td colSpan="6" className="text-center py-8 text-slate-400 font-medium">Belum ada rekap data cuti/izin yang disetujui.</td></tr>
-                ) : (
-                  rekapCutiData.map((item, idx) => {
-                    const sisaCuti = 12 - item.totalCuti;
-                    return (
-                      <tr key={idx} className="hover:bg-indigo-50/40 transition-colors">
-                        <td className="px-6 py-4 font-black text-slate-400 text-center">{idx + 1}</td>
-                        <td className="px-6 py-4 font-black text-slate-900">{item.nama}</td>
-                        <td className="px-6 py-4 font-bold text-slate-500 text-[11px]">{item.jabatan}</td>
-                        
-                        <td className="px-6 py-4 text-center font-bold text-slate-700">
-                          {item.totalCuti} Hari
-                        </td>
-                        
-                        <td className="px-6 py-4 text-center">
-                          <span className={`px-3 py-1.5 rounded-lg text-xs font-black shadow-sm border ${sisaCuti <= 0 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
-                            {sisaCuti} Hari
-                          </span>
-                        </td>
-                        
-                        <td className="px-6 py-4 text-center font-bold text-slate-700">
-                          {item.totalIzin} Hari
-                        </td>
-                      </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        {userRole !== 'KARYAWAN' && (
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
+            <div className="bg-indigo-50/80 border-b border-indigo-100 p-4 md:p-5 flex flex-col justify-between items-start gap-4">
+              
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-3.5">
+                <div>
+                  <h3 className="text-lg font-bold text-indigo-900 flex items-center"><Users className="w-5 h-5 mr-2 text-indigo-600" /> Rekapitulasi Cuti & Izin</h3>
+                  <p className="text-[11px] font-medium text-indigo-700/70 mt-1">Pantau sisa jatah Cuti (Maks 12 Hari/Tahun) dan total Izin karyawan.</p>
+                </div>
+                
+                <button onClick={exportToExcel} className="w-full sm:w-auto flex items-center justify-center text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-4 py-2.5 rounded-xl active:scale-95 shadow-sm hover:bg-emerald-200 transition-all duration-200">
+                  <Download className="w-4 h-4 mr-2" /> Ekspor ke Excel
+                </button>
+              </div>
 
+              {/* BARIS PENCARIAN & FILTER KHUSUS REKAPITULASI */}
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full bg-white p-3 rounded-2xl border border-indigo-100 shadow-sm">
+                
+                {/* Cari Nama */}
+                <div className="relative w-full sm:w-1/3">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Cari Nama Pegawai..."
+                    value={rekapSearchTerm}
+                    onChange={(e) => setRekapSearchTerm(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  />
+                </div>
+
+                {/* Filter Dari Tanggal */}
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Dari:</span>
+                  <input 
+                    type="date" 
+                    value={rekapStartDate} 
+                    onChange={(e) => setRekapStartDate(e.target.value)} 
+                    className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" 
+                  />
+                </div>
+
+                {/* Filter Sampai Tanggal */}
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Sampai:</span>
+                  <input 
+                    type="date" 
+                    value={rekapEndDate} 
+                    onChange={(e) => setRekapEndDate(e.target.value)} 
+                    className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" 
+                  />
+                </div>
+
+                {/* Tombol Clear Filter (Akan muncul jika ada filter yang aktif) */}
+                {(rekapSearchTerm || rekapStartDate || rekapEndDate) && (
+                  <button 
+                    onClick={() => { setRekapSearchTerm(''); setRekapStartDate(''); setRekapEndDate(''); }} 
+                    className="p-2 text-rose-500 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all shadow-sm" 
+                    title="Reset Filter"
+                  >
+                     <X className="w-4 h-4" />
+                  </button>
+                )}
+                
+              </div>
+            </div>
+
+            <div className="overflow-y-auto overflow-x-auto max-h-[420px] scrollbar-thin">
+              <table className="w-full text-sm text-left border-collapse whitespace-nowrap">
+                <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10">
+                  <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
+                    <th className="px-6 py-4 font-bold tracking-wider w-16 text-center">Peringkat</th>
+                    <th className="px-6 py-4 font-bold tracking-wider">Nama Pegawai</th>
+                    <th className="px-6 py-4 font-bold tracking-wider">Posisi / Jabatan</th>
+                    <th className="px-6 py-4 font-bold tracking-wider text-center">Total Cuti Terpakai</th>
+                    <th className="px-6 py-4 font-bold tracking-wider text-center">Sisa Cuti (12 Hari)</th>
+                    <th className="px-6 py-4 font-bold tracking-wider text-center">Total Izin (Hari)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {rekapCutiData.length === 0 ? (
+                    <tr><td colSpan="6" className="text-center py-8 text-slate-400 font-medium">Belum ada rekap data cuti/izin yang disetujui untuk filter tersebut.</td></tr>
+                  ) : (
+                    rekapCutiData.map((item, idx) => {
+                      const sisaCuti = 12 - item.totalCuti;
+                      return (
+                        <tr key={idx} className="hover:bg-indigo-50/40 transition-colors">
+                          <td className="px-6 py-4 font-black text-slate-400 text-center">{idx + 1}</td>
+                          <td className="px-6 py-4 font-black text-slate-900">{item.nama}</td>
+                          <td className="px-6 py-4 font-bold text-slate-500 text-[11px]">{item.jabatan}</td>
+                          
+                          <td className="px-6 py-4 text-center font-bold text-slate-700">
+                            {item.totalCuti} Hari
+                          </td>
+                          
+                          <td className="px-6 py-4 text-center">
+                            <span className={`px-3 py-1.5 rounded-lg text-xs font-black shadow-sm border ${sisaCuti <= 0 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                              {sisaCuti} Hari
+                            </span>
+                          </td>
+                          
+                          <td className="px-6 py-4 text-center font-bold text-slate-700">
+                            {item.totalIzin} Hari
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

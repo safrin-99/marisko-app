@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FileSignature, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, CalendarDays, Search, MessageCircle, CheckCircle, XCircle, Users, Download } from 'lucide-react';
+import { FileSignature, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, CalendarDays, Search, MessageCircle, CheckCircle, XCircle, Users, Download, BellRing } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from "jspdf";
 
@@ -12,6 +12,9 @@ export default function CutiPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [modal, setModal] = useState({ isOpen: false, type: '', title: '', message: '', actionData: null });
+  
+  // SAKTI: State khusus untuk In-App Notification (Notif Modern Melayang)
+  const [liveNotif, setLiveNotif] = useState(null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [originalNoCuti, setOriginalNoCuti] = useState('');
@@ -74,34 +77,25 @@ export default function CutiPage() {
   }, [userRole]);
 
   // =========================================================================
-  // SAKTI: MESIN NOTIFIKASI PUSH REAL-TIME KE HP/LAPTOP
+  // SAKTI: MESIN IN-APP NOTIFICATION MODERN (BUKAN NOTIF BROWSER LAGI)
   // =========================================================================
   useEffect(() => {
-    // 1. Minta Izin Munculkan Notifikasi di HP/Browser
-    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
-      Notification.requestPermission();
-    }
-
-    // 2. Pasang Radar Realtime ke Database Supabase
     const cutiSubscription = supabase
-      .channel('public:cuti_history')
+      .channel('custom-update-channel')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'cuti_history' }, (payload) => {
         const newData = payload.new;
-        const oldData = payload.old;
         
-        // Jika statusnya berubah (misal dari DIPROSES ke DISETUJUI)
-        if (newData.status !== oldData.status) {
+        if (newData && newData.status) {
+          // 1. Munculkan UI Popup Notifikasi Elegan di Dalam Aplikasi
+          setLiveNotif(newData);
           
-          // Tembak Notifikasi ke HP/Laptop
-          if ("Notification" in window && Notification.permission === "granted") {
-            new Notification(`Status Cuti: ${newData.status}`, {
-              body: `Permohonan atas nama ${newData.namaPegawai} telah ${newData.status}.`,
-              icon: "https://cdn-icons-png.flaticon.com/512/2645/2645897.png" // Ikon Notifikasi
-            });
-          }
-          
-          // Refresh tabel otomatis tanpa perlu klik tombol refresh
+          // 2. Otomatis refresh data tabel
           fetchHistory();
+
+          // 3. Notifikasi akan hilang sendiri setelah 6 detik
+          setTimeout(() => {
+            setLiveNotif(null);
+          }, 6000);
         }
       })
       .subscribe();
@@ -110,6 +104,17 @@ export default function CutiPage() {
       supabase.removeChannel(cutiSubscription);
     };
   }, []);
+
+  // SAKTI: TOMBOL TEST NOTIFIKASI DALAM APLIKASI
+  const testNotifikasi = () => {
+    const testData = {
+      namaPegawai: "KARYAWAN DEMO",
+      noCuti: "TEST/001/2026",
+      status: "DISETUJUI" // Coba ganti jadi DITOLAK atau DIPROSES untuk lihat warnanya
+    };
+    setLiveNotif(testData);
+    setTimeout(() => setLiveNotif(null), 6000);
+  };
 
   const executeActionStatus = async (id, newStatus) => {
     setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
@@ -399,6 +404,52 @@ export default function CutiPage() {
     document.body.removeChild(link);
   };
 
+  // =========================================================================
+  // SAKTI: UI POPUP IN-APP NOTIFICATION (MEWAH & MODERN)
+  // =========================================================================
+  const renderLiveNotif = () => {
+    if (!liveNotif) return null;
+    
+    // Tentukan warna dan ikon berdasarkan status
+    const isSetuju = liveNotif.status === 'DISETUJUI';
+    const isTolak = liveNotif.status === 'DITOLAK';
+    
+    const bgColor = isSetuju ? 'bg-emerald-50' : isTolak ? 'bg-rose-50' : 'bg-amber-50';
+    const iconColor = isSetuju ? 'text-emerald-600' : isTolak ? 'text-rose-600' : 'text-amber-600';
+    const textColor = isSetuju ? 'text-emerald-700' : isTolak ? 'text-rose-700' : 'text-amber-700';
+    const IconComponent = isSetuju ? CheckCircle2 : isTolak ? XCircle : Clock;
+
+    return createPortal(
+      <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[999999] w-full max-w-[90%] sm:max-w-sm animate-in slide-in-from-top-10 fade-in duration-500">
+        {/* Desain Glassmorphism Kelas Atas */}
+        <div className="bg-white/95 backdrop-blur-xl border border-slate-200/60 shadow-2xl rounded-3xl p-4 sm:p-5 flex items-start gap-4">
+          
+          {/* Ikon Animasi Berdenyut */}
+          <div className="relative shrink-0 flex items-center justify-center">
+             <div className={`absolute w-12 h-12 rounded-full opacity-50 animate-ping ${bgColor}`}></div>
+             <div className={`relative w-12 h-12 rounded-full flex items-center justify-center shadow-inner ${bgColor} ${iconColor}`}>
+                <IconComponent className="w-6 h-6" />
+             </div>
+          </div>
+          
+          {/* Teks Informasi */}
+          <div className="flex-1 pt-1">
+             <h4 className="text-[15px] font-black text-slate-900 leading-tight mb-1">Status Diperbarui!</h4>
+             <p className="text-[13px] font-medium text-slate-500 leading-relaxed">
+               Permohonan cuti/izin <b className="text-slate-800">{liveNotif.namaPegawai}</b> kini berstatus <span className={`font-black ${textColor}`}>{liveNotif.status}</span>.
+             </p>
+          </div>
+          
+          {/* Tombol Tutup Silang (X) */}
+          <button onClick={() => setLiveNotif(null)} className="shrink-0 p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 rounded-full transition-colors focus:outline-none">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>,
+      document.body
+    );
+  };
+
   const renderModal = () => {
     if (!modal.isOpen) return null;
     return createPortal(
@@ -485,6 +536,10 @@ export default function CutiPage() {
   return (
     <>
       {renderModal()}
+      
+      {/* SAKTI: Panggil In-App Notification (Toast) di sini agar selalu dirender */}
+      {renderLiveNotif()}
+
       <div className="max-w-5xl mx-auto pb-12 space-y-8 relative">
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
           <div className="p-6 md:p-8">
@@ -549,7 +604,15 @@ export default function CutiPage() {
 
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
           <div className="bg-slate-50/80 border-b border-slate-200 p-4 md:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5">
-            <h3 className="text-lg font-bold text-slate-800 flex items-center"><CalendarDays className="w-5 h-5 mr-2 text-indigo-600" /> Riwayat Permohonan</h3>
+            
+            <div className="flex items-center gap-3">
+              <h3 className="text-lg font-bold text-slate-800 flex items-center"><CalendarDays className="w-5 h-5 mr-2 text-indigo-600" /> Riwayat Permohonan</h3>
+              
+              {/* TOMBOL TEST IN-APP NOTIFIKASI */}
+              <button onClick={testNotifikasi} className="hidden sm:flex items-center justify-center px-3 py-1.5 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-lg text-[10px] font-black tracking-wider transition-all active:scale-95 shadow-sm border border-indigo-200">
+                <BellRing className="w-3.5 h-3.5 mr-1" /> TEST POPUP NOTIF
+              </button>
+            </div>
             
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
               <div className="relative w-full sm:w-64">
@@ -648,9 +711,6 @@ export default function CutiPage() {
           </div>
         </div>
 
-        {/* =========================================================================
-            SAKTI: TABEL REKAPITULASI (HANYA MUNCUL UNTUK BUKAN KARYAWAN)
-            ========================================================================= */}
         {userRole !== 'KARYAWAN' && (
           <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
             <div className="bg-indigo-50/80 border-b border-indigo-100 p-4 md:p-5 flex flex-col justify-between items-start gap-4">
@@ -666,10 +726,8 @@ export default function CutiPage() {
                 </button>
               </div>
 
-              {/* BARIS PENCARIAN & FILTER KHUSUS REKAPITULASI */}
               <div className="flex flex-col sm:flex-row items-center gap-3 w-full bg-white p-3 rounded-2xl border border-indigo-100 shadow-sm">
                 
-                {/* Cari Nama */}
                 <div className="relative w-full sm:w-1/3">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
                   <input
@@ -681,7 +739,6 @@ export default function CutiPage() {
                   />
                 </div>
 
-                {/* Filter Dari Tanggal */}
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Dari:</span>
                   <input 
@@ -692,7 +749,6 @@ export default function CutiPage() {
                   />
                 </div>
 
-                {/* Filter Sampai Tanggal */}
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Sampai:</span>
                   <input 
@@ -703,7 +759,6 @@ export default function CutiPage() {
                   />
                 </div>
 
-                {/* Tombol Clear Filter */}
                 {(rekapSearchTerm || rekapStartDate || rekapEndDate) && (
                   <button 
                     onClick={() => { setRekapSearchTerm(''); setRekapStartDate(''); setRekapEndDate(''); }} 

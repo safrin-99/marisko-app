@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase';
 import { jsPDF } from "jspdf";
 
 export default function CutiPage() {
+  const userRole = localStorage.getItem('adminRole')?.toUpperCase() || '';
+
   const [historyData, setHistoryData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,6 +45,12 @@ export default function CutiPage() {
       const actionId = params.get('action'); 
       
       if (actionId) {
+        if (userRole === 'KARYAWAN') {
+          setModal({ isOpen: true, type: 'error', title: 'Akses Ditolak', message: 'Karyawan tidak memiliki wewenang untuk menyetujui/menolak permohonan.', actionData: 'MAGIC_LINK' });
+          window.history.replaceState({}, document.title, window.location.pathname);
+          return;
+        }
+
         setModal({ 
           isOpen: true, 
           type: 'action_select', 
@@ -56,7 +64,7 @@ export default function CutiPage() {
     
     checkMagicLink();
     fetchHistory();
-  }, []);
+  }, [userRole]);
 
   const executeActionStatus = async (id, newStatus) => {
     setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
@@ -271,14 +279,12 @@ export default function CutiPage() {
         <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-md" onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })}></div>
         <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-[90%] sm:max-w-md p-6 sm:p-8 relative z-10 animate-in zoom-in-95 fade-in duration-300 border border-slate-100 overflow-hidden">
           
-          {/* SAKTI: Hiasan Background Premium untuk Modal Action */}
           {modal.type === 'action_select' && (
             <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-indigo-50 to-transparent -z-10"></div>
           )}
 
           <div className="flex flex-col items-center text-center mt-2">
             
-            {/* SAKTI: Ikon Premium */}
             {modal.type === 'action_select' ? (
               <div className="relative flex items-center justify-center mb-6">
                  <div className="absolute w-24 h-24 bg-indigo-100/50 rounded-full animate-pulse"></div>
@@ -298,8 +304,6 @@ export default function CutiPage() {
             <div className="flex w-full gap-3 justify-center">
               {modal.type === 'action_select' ? (
                 <div className="flex flex-col gap-3 w-full">
-                  
-                  {/* SAKTI: Tombol Card Premium Setujui */}
                   <button onClick={() => executeActionStatus(modal.actionData, 'DISETUJUI')} className="group relative w-full p-4 bg-white border border-slate-200 hover:border-emerald-500 rounded-2xl shadow-sm hover:shadow-md transition-all text-left flex items-center gap-4 focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
                     <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
                       <CheckCircle className="w-6 h-6" />
@@ -310,7 +314,6 @@ export default function CutiPage() {
                     </div>
                   </button>
 
-                  {/* SAKTI: Tombol Card Premium Tolak */}
                   <button onClick={() => executeActionStatus(modal.actionData, 'DITOLAK')} className="group relative w-full p-4 bg-white border border-slate-200 hover:border-rose-500 rounded-2xl shadow-sm hover:shadow-md transition-all text-left flex items-center gap-4 focus:outline-none focus:ring-4 focus:ring-rose-500/10">
                     <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 group-hover:scale-110 group-hover:bg-rose-500 group-hover:text-white transition-all duration-300">
                       <XCircle className="w-6 h-6" />
@@ -321,7 +324,6 @@ export default function CutiPage() {
                     </div>
                   </button>
 
-                  {/* SAKTI: Tombol Card Premium Proses */}
                   <button onClick={() => executeActionStatus(modal.actionData, 'DIPROSES')} className="group relative w-full p-4 bg-white border border-slate-200 hover:border-amber-500 rounded-2xl shadow-sm hover:shadow-md transition-all text-left flex items-center gap-4 focus:outline-none focus:ring-4 focus:ring-amber-500/10">
                     <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300">
                       <Clock className="w-6 h-6" />
@@ -332,7 +334,6 @@ export default function CutiPage() {
                     </div>
                   </button>
 
-                  {/* SAKTI: Tombol Batal Elegan */}
                   <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 mt-2 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-xs uppercase tracking-wider">
                     Batal / Tutup
                   </button>
@@ -503,8 +504,14 @@ export default function CutiPage() {
                             <div className="flex items-center justify-end gap-2.5">
                               <button onClick={() => handleSendWA(row)} className="flex items-center gap-1.5 px-3 py-2 bg-[#25D366]/10 text-[#075E54] hover:bg-[#25D366]/20 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-[#25D366]/30 shadow-sm"><MessageCircle className="w-3.5 h-3.5" /> Kirim WA</button>
                               <button onClick={() => generateCutiPDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm"><Printer className="w-3.5 h-3.5" /> PDF</button>
+                              
+                              {/* SAKTI: Karyawan dan Admin sama-sama bisa klik Edit */}
                               <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm"><Edit className="w-3.5 h-3.5" /> Edit</button>
-                              <button onClick={() => handleDeleteRequest(row.noCuti)} className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm"><Trash2 className="w-3.5 h-3.5" /> Del</button>
+                              
+                              {/* SAKTI: HANYA ADMIN YANG BISA MELIHAT TOMBOL DELETE! */}
+                              {userRole !== 'KARYAWAN' && (
+                                <button onClick={() => handleDeleteRequest(row.noCuti)} className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm"><Trash2 className="w-3.5 h-3.5" /> Del</button>
+                              )}
                             </div>
                           </td>
                         </tr>

@@ -167,7 +167,7 @@ export default function CutiPage() {
     const jenis = opsiCuti.find(o => o.value === data.jenisCuti)?.label || data.jenisCuti;
     const magicLink = `https://marisko-app.vercel.app/cuti?action=${encodeURIComponent(data.noCuti)}`;
 
-    const teksWA = `Halo Bapak/Ibu Kepala Cabang,\n\nSaya mengajukan permohonan persetujuan:\n\n*No. Registrasi:* ${data.noCuti}\n*Nama Pegawai:* ${data.namaPegawai}\n*Jabatan:* ${data.jabatan}\n*Jenis Cuti:* ${jenis}\n*Tanggal:* ${formatTgl(data.tglMulai)} s/d ${formatTgl(data.tglSelesai)}\n*Alasan:* ${data.alasan || '-'}\n\n✅ *KLIK LINK DI BAWAH INI UNTUK MEMILIH STATUS PERSETUJUAN:*\n${magicLink}\n\nTerima kasih. 🙏`;
+    const teksWA = `Salam Satu Hati Owner/Kepala Cabang,\n\nSaya mengajukan permohonan persetujuan:\n\n*No. Registrasi:* ${data.noCuti}\n*Nama Pegawai:* ${data.namaPegawai}\n*Jabatan:* ${data.jabatan}\n*Jenis Cuti:* ${jenis}\n*Tanggal:* ${formatTgl(data.tglMulai)} s/d ${formatTgl(data.tglSelesai)}\n*Alasan:* ${data.alasan || '-'}\n\n✅ *KLIK LINK DI BAWAH INI UNTUK MEMILIH STATUS PERSETUJUAN:*\n${magicLink}\n\nTerima kasih. 🙏`;
 
     const waUrl = `https://wa.me/${nomorWAKacab}?text=${encodeURIComponent(teksWA)}`;
     window.open(waUrl, '_blank');

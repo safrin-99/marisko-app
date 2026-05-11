@@ -40,18 +40,16 @@ export default function CutiPage() {
   useEffect(() => {
     const checkMagicLink = () => {
       const params = new URLSearchParams(window.location.search);
-      const actionId = params.get('action'); // Hanya menangkap 1 kata kunci: action
+      const actionId = params.get('action'); 
       
       if (actionId) {
-        // Tampilkan Popup Pilihan Status
         setModal({ 
           isOpen: true, 
           type: 'action_select', 
-          title: 'Pilih Status Persetujuan', 
-          message: `Silakan pilih status untuk permohonan No. Registrasi: ${actionId}`, 
+          title: 'Persetujuan Dokumen', 
+          message: `Silakan tinjau dan pilih status untuk permohonan No. Registrasi: ${actionId}`, 
           actionData: actionId 
         });
-        // Hapus link dari URL agar tidak muncul terus kalau direfresh
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     };
@@ -60,7 +58,6 @@ export default function CutiPage() {
     fetchHistory();
   }, []);
 
-  // Fungsi Eksekusi Pilihan Status dari Popup
   const executeActionStatus = async (id, newStatus) => {
     setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
     setIsLoading(true);
@@ -158,11 +155,8 @@ export default function CutiPage() {
 
   const handleSendWA = (data) => {
     const nomorWAKacab = "6282271470883"; 
-    
     const formatTgl = (tgl) => tgl.split('-').reverse().join('/');
     const jenis = opsiCuti.find(o => o.value === data.jenisCuti)?.label || data.jenisCuti;
-    
-    // SAKTI: HANYA 1 LINK UNTUK MEMUNCULKAN POPUP!
     const magicLink = `https://marisko-app.vercel.app/cuti?action=${encodeURIComponent(data.noCuti)}`;
 
     const teksWA = `Halo Bapak/Ibu Kepala Cabang,\n\nSaya mengajukan permohonan persetujuan:\n\n*No. Registrasi:* ${data.noCuti}\n*Nama Pegawai:* ${data.namaPegawai}\n*Jabatan:* ${data.jabatan}\n*Jenis Cuti:* ${jenis}\n*Tanggal:* ${formatTgl(data.tglMulai)} s/d ${formatTgl(data.tglSelesai)}\n*Alasan:* ${data.alasan || '-'}\n\n✅ *KLIK LINK DI BAWAH INI UNTUK MEMILIH STATUS PERSETUJUAN:*\n${magicLink}\n\nTerima kasih. 🙏`;
@@ -261,7 +255,6 @@ export default function CutiPage() {
     return { date: tgl.split('-').reverse().join('/'), time: '-' };
   };
 
-  // SAKTI: FUNGSI INI YANG TERTINGGAL TADI! Sekarang sudah aman!
   const formatTimeOnly = (isoString) => {
     if (!isoString) return '-';
     const dateObj = new Date(isoString);
@@ -275,37 +268,73 @@ export default function CutiPage() {
     if (!modal.isOpen) return null;
     return createPortal(
       <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })}></div>
-        <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md p-8 relative z-10 animate-in zoom-in-95 fade-in duration-300 border border-slate-100">
+        <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-md" onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })}></div>
+        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-[90%] sm:max-w-md p-6 sm:p-8 relative z-10 animate-in zoom-in-95 fade-in duration-300 border border-slate-100 overflow-hidden">
+          
+          {/* SAKTI: Hiasan Background Premium untuk Modal Action */}
+          {modal.type === 'action_select' && (
+            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-indigo-50 to-transparent -z-10"></div>
+          )}
+
           <div className="flex flex-col items-center text-center mt-2">
             
-            {/* SAKTI: Ikon dinamis menyesuaikan tipe modal */}
+            {/* SAKTI: Ikon Premium */}
             {modal.type === 'action_select' ? (
-              <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6 text-indigo-600 shadow-inner"><FileSignature className="w-10 h-10" /></div>
+              <div className="relative flex items-center justify-center mb-6">
+                 <div className="absolute w-24 h-24 bg-indigo-100/50 rounded-full animate-pulse"></div>
+                 <div className="relative w-20 h-20 bg-gradient-to-br from-indigo-100 to-indigo-50 border border-indigo-200 rounded-full flex items-center justify-center text-indigo-600 shadow-inner">
+                   <FileSignature className="w-10 h-10" />
+                 </div>
+              </div>
             ) : modal.type === 'success' || modal.type === 'success_delete' ? (
               <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6 text-emerald-600 shadow-inner"><CheckCircle2 className="w-10 h-10" /></div>
             ) : (
               <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-6 text-rose-600 shadow-inner"><AlertCircle className="w-10 h-10" /></div>
             )}
             
-            <h3 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">{modal.title}</h3>
-            <p className="text-slate-500 font-medium text-[15px] leading-relaxed mb-8 px-2">{modal.message}</p>
+            <h3 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">{modal.title}</h3>
+            <p className="text-slate-500 font-medium text-[14px] leading-relaxed mb-8 px-2">{modal.message}</p>
             
             <div className="flex w-full gap-3 justify-center">
-              {/* SAKTI: Tampilan 3 Tombol Pilihan Status untuk Kacab */}
               {modal.type === 'action_select' ? (
                 <div className="flex flex-col gap-3 w-full">
-                  <button onClick={() => executeActionStatus(modal.actionData, 'DISETUJUI')} className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 mr-2" /> Setujui Permohonan
+                  
+                  {/* SAKTI: Tombol Card Premium Setujui */}
+                  <button onClick={() => executeActionStatus(modal.actionData, 'DISETUJUI')} className="group relative w-full p-4 bg-white border border-slate-200 hover:border-emerald-500 rounded-2xl shadow-sm hover:shadow-md transition-all text-left flex items-center gap-4 focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
+                    <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
+                      <CheckCircle className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-[15px] font-extrabold text-slate-900 group-hover:text-emerald-700 transition-colors">Setujui Permohonan</h4>
+                      <p className="text-[11px] font-bold text-slate-400 mt-0.5">Izinkan dan validasi cuti/izin ini</p>
+                    </div>
                   </button>
-                  <button onClick={() => executeActionStatus(modal.actionData, 'DITOLAK')} className="w-full py-3.5 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center">
-                    <XCircle className="w-5 h-5 mr-2" /> Tolak Permohonan
+
+                  {/* SAKTI: Tombol Card Premium Tolak */}
+                  <button onClick={() => executeActionStatus(modal.actionData, 'DITOLAK')} className="group relative w-full p-4 bg-white border border-slate-200 hover:border-rose-500 rounded-2xl shadow-sm hover:shadow-md transition-all text-left flex items-center gap-4 focus:outline-none focus:ring-4 focus:ring-rose-500/10">
+                    <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 group-hover:scale-110 group-hover:bg-rose-500 group-hover:text-white transition-all duration-300">
+                      <XCircle className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-[15px] font-extrabold text-slate-900 group-hover:text-rose-700 transition-colors">Tolak Permohonan</h4>
+                      <p className="text-[11px] font-bold text-slate-400 mt-0.5">Tolak dan batalkan permohonan ini</p>
+                    </div>
                   </button>
-                  <button onClick={() => executeActionStatus(modal.actionData, 'DIPROSES')} className="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center">
-                    <Clock className="w-5 h-5 mr-2" /> Kembalikan ke Proses
+
+                  {/* SAKTI: Tombol Card Premium Proses */}
+                  <button onClick={() => executeActionStatus(modal.actionData, 'DIPROSES')} className="group relative w-full p-4 bg-white border border-slate-200 hover:border-amber-500 rounded-2xl shadow-sm hover:shadow-md transition-all text-left flex items-center gap-4 focus:outline-none focus:ring-4 focus:ring-amber-500/10">
+                    <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300">
+                      <Clock className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-[15px] font-extrabold text-slate-900 group-hover:text-amber-700 transition-colors">Tinjau Ulang</h4>
+                      <p className="text-[11px] font-bold text-slate-400 mt-0.5">Kembalikan status ke DIPROSES</p>
+                    </div>
                   </button>
-                  <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3 mt-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">
-                    Batal
+
+                  {/* SAKTI: Tombol Batal Elegan */}
+                  <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 mt-2 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-xs uppercase tracking-wider">
+                    Batal / Tutup
                   </button>
                 </div>
               ) : modal.type === 'confirm_delete' ? (
@@ -438,10 +467,8 @@ export default function CutiPage() {
                       const selesai = formatDateTime(null, row.tglSelesai).date;
                       const jenis = opsiCuti.find(o => o.value === row.jenisCuti)?.label || row.jenisCuti;
                       
-                      // SAKTI: Ambil waktu (Jam)
                       const jam = formatTimeOnly(row.created_at);
                       
-                      // SAKTI: Teks Status tanpa border/kotak (Murni Teks dan Icon)
                       const statusCuti = row.status || 'DIPROSES';
                       let statusText = '';
                       
@@ -457,7 +484,6 @@ export default function CutiPage() {
                         <tr key={index} className="hover:bg-indigo-50/40 transition-colors">
                           <td className="px-6 py-5 whitespace-nowrap">
                             <div className="font-bold text-slate-950">{row.noCuti}</div>
-                            {/* SAKTI: Jam Murni tanpa kotak abu-abu dikembalikan persis di bawah No Registrasi */}
                             <div className="flex items-center text-[11px] text-slate-500 font-medium mt-1">
                               <Clock className="w-3 h-3 mr-1" /> Jam: {jam}
                             </div>

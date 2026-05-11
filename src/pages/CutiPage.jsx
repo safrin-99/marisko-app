@@ -26,10 +26,8 @@ export default function CutiPage() {
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  // State Pencarian Tabel Riwayat
   const [searchTerm, setSearchTerm] = useState('');
 
-  // SAKTI: State Pencarian & Filter Tanggal KHUSUS Tabel Rekapitulasi
   const [rekapSearchTerm, setRekapSearchTerm] = useState('');
   const [rekapStartDate, setRekapStartDate] = useState('');
   const [rekapEndDate, setRekapEndDate] = useState('');
@@ -74,6 +72,44 @@ export default function CutiPage() {
     checkMagicLink();
     fetchHistory();
   }, [userRole]);
+
+  // =========================================================================
+  // SAKTI: MESIN NOTIFIKASI PUSH REAL-TIME KE HP/LAPTOP
+  // =========================================================================
+  useEffect(() => {
+    // 1. Minta Izin Munculkan Notifikasi di HP/Browser
+    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+      Notification.requestPermission();
+    }
+
+    // 2. Pasang Radar Realtime ke Database Supabase
+    const cutiSubscription = supabase
+      .channel('public:cuti_history')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'cuti_history' }, (payload) => {
+        const newData = payload.new;
+        const oldData = payload.old;
+        
+        // Jika statusnya berubah (misal dari DIPROSES ke DISETUJUI)
+        if (newData.status !== oldData.status) {
+          
+          // Tembak Notifikasi ke HP/Laptop
+          if ("Notification" in window && Notification.permission === "granted") {
+            new Notification(`Status Cuti: ${newData.status}`, {
+              body: `Permohonan atas nama ${newData.namaPegawai} telah ${newData.status}.`,
+              icon: "https://cdn-icons-png.flaticon.com/512/2645/2645897.png" // Ikon Notifikasi
+            });
+          }
+          
+          // Refresh tabel otomatis tanpa perlu klik tombol refresh
+          fetchHistory();
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(cutiSubscription);
+    };
+  }, []);
 
   const executeActionStatus = async (id, newStatus) => {
     setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
@@ -171,7 +207,7 @@ export default function CutiPage() {
   };
 
   const handleSendWA = (data) => {
-    const nomorWAKacab = "6282271461103"; 
+    const nomorWAKacab = "6282271470883"; 
     const formatTgl = (tgl) => tgl.split('-').reverse().join('/');
     const jenis = opsiCuti.find(o => o.value === data.jenisCuti)?.label || data.jenisCuti;
     const magicLink = `https://marisko-app.vercel.app/cuti?action=${encodeURIComponent(data.noCuti)}`;
@@ -288,13 +324,9 @@ export default function CutiPage() {
   const inputClass = "w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-slate-400";
   const labelClass = "block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider";
 
-  // =========================================================================
-  // SAKTI: LOGIKA MESIN PENGHITUNG CUTI VS IZIN DENGAN FILTER TANGGAL
-  // =========================================================================
   const rekapCutiData = Object.values(historyData.reduce((acc, row) => {
     if (row.status !== 'DISETUJUI') return acc; 
     
-    // SAKTI: Logika Filter Tanggal (Jika diisi oleh Admin)
     if (rekapStartDate && row.tglMulai < rekapStartDate) return acc;
     if (rekapEndDate && row.tglMulai > rekapEndDate) return acc;
     
@@ -334,16 +366,12 @@ export default function CutiPage() {
     
     return acc;
   }, {}))
-  // Filter by Search Term di Rekap
   .filter(item => {
     if (!rekapSearchTerm) return true;
     return item.nama.toLowerCase().includes(rekapSearchTerm.toLowerCase());
   })
   .sort((a, b) => b.totalCuti - a.totalCuti);
 
-  // =========================================================================
-  // SAKTI: FUNGSI EXPORT KE EXCEL SESUAI FILTER
-  // =========================================================================
   const exportToExcel = () => {
     let csvContent = "Peringkat,Nama Pegawai,Posisi / Jabatan,Total Cuti Terpakai (Hari),Sisa Cuti (Dari 12 Hari),Total Izin (Hari)\n";
 
@@ -621,7 +649,7 @@ export default function CutiPage() {
         </div>
 
         {/* =========================================================================
-            SAKTI: TABEL REKAPITULASI CUTI & IZIN DENGAN FITUR PENCARIAN DAN TANGGAL
+            SAKTI: TABEL REKAPITULASI (HANYA MUNCUL UNTUK BUKAN KARYAWAN)
             ========================================================================= */}
         {userRole !== 'KARYAWAN' && (
           <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
@@ -675,7 +703,7 @@ export default function CutiPage() {
                   />
                 </div>
 
-                {/* Tombol Clear Filter (Akan muncul jika ada filter yang aktif) */}
+                {/* Tombol Clear Filter */}
                 {(rekapSearchTerm || rekapStartDate || rekapEndDate) && (
                   <button 
                     onClick={() => { setRekapSearchTerm(''); setRekapStartDate(''); setRekapEndDate(''); }} 

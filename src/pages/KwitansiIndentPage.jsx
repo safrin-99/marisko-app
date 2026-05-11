@@ -344,7 +344,7 @@ export default function KwitansiIndentPage() {
             <form onSubmit={handleSubmit} className="space-y-8">
 
               <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div><label className={labelClass}>No. Invoice (Manual)</label><input type="text" value={noInvoice} onChange={(e)=>setNoInvoice(e.target.value)} required placeholder="IND-001" className={inputClass} /></div>
+                <div><label className={labelClass}>No. Invoice</label><input type="text" value={noInvoice} onChange={(e)=>setNoInvoice(e.target.value)} required placeholder="IND-001" className={inputClass} /></div>
                 <div><label className={labelClass}>Tanggal</label><input type="date" value={tanggal} onChange={(e)=>setTanggal(e.target.value)} required className={inputClass} /></div>
                 <div><label className={labelClass}>Di Terima Dari (Konsumen)</label><input type="text" value={diterimaDari} onChange={(e)=>setDiterimaDari(e.target.value)} required placeholder="NAMA LENGKAP" className={inputClass} /></div>
                 <div><label className={labelClass}>Nama Kasir</label><input type="text" value={kasir} onChange={(e)=>setKasir(e.target.value)} required placeholder="STELY ARSYAD" className={inputClass} /></div>
@@ -453,8 +453,8 @@ export default function KwitansiIndentPage() {
                       <td className="px-6 py-5 font-extrabold text-slate-900 whitespace-nowrap">{row?.noInvoice || '-'}</td>
                       <td className="px-6 py-5 whitespace-nowrap">
                         <div className="font-bold text-slate-700">{date}</div>
-                        <div className="flex items-center text-[11px] text-slate-400 mt-1 font-medium bg-slate-100/70 inline-flex px-2 py-0.5 rounded">
-                          <Clock className="w-3 h-3 mr-1" /> Jam: {time}
+                        <div className="flex items-center text-[11px] font-medium text-slate-400 mt-1">
+                          <Clock className="w-3.5 h-3.5 mr-1" /> Jam: {time}
                         </div>
                       </td>
                       <td className="px-6 py-5 font-bold text-slate-700 uppercase">{row?.diterimaDari || '-'}</td>

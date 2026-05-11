@@ -609,34 +609,40 @@ export default function NotaPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredHistoryData.length === 0 ? (
-                  <tr><td colSpan="4" className="text-center py-8 text-slate-400 font-medium">Tidak ada data nota yang ditemukan.</td></tr>
+                  <tr>
+                    <td colSpan="4" className="text-center py-8 text-slate-400 font-medium">
+                      Tidak ada data nota yang ditemukan.
+                    </td>
+                  </tr>
                 ) : (
                   filteredHistoryData.map((row) => {
                     const { date, time } = formatDateTime(row.created_at, row.tanggal);
                     return (
-                    <tr key={row.id} className="hover:bg-indigo-50/40 transition-colors">
-                      <td className="px-6 py-5 whitespace-nowrap">
-                        <div className="font-extrabold text-slate-900">{row.no_invoice}</div>
-                        <div className="flex items-center mt-1">
-                          <span className="text-[11px] font-bold text-slate-700 mr-2">{date}</span>
-                            <div className="flex items-center text-[11px] font-medium text-slate-400">
-                              <Clock className="w-3.5 h-3.5 mr-1" /> Jam: {time}
-                            </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 font-bold text-slate-700 uppercase whitespace-nowrap">
-                        {row.kasir} {row.penerima && <><br/><span className="text-xs text-slate-400">Penerima: {row.penerima}</span></>}
-                      </td>
-                      <td className="px-6 py-5 text-sm font-black text-indigo-700 whitespace-nowrap">Rp {formatRupiah(row.total)}</td>
-                      <td className="px-4 py-4 md:px-6 md:py-5 whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-2.5">
-                          <button onClick={() => generatePDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm"><FileText className="w-3.5 h-3.5" /> PDF</button>
-                          <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm"><Edit className="w-3.5 h-3.5" /> Edit</button>
-                          <button onClick={() => handleDeleteRequest(row.id)} className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm"><Trash2 className="w-3.5 h-3.5" /> Del</button>
-                        </div>
-                      </td>
-                    </tr>
-                )})}
+                      <tr key={row.id} className="hover:bg-indigo-50/40 transition-colors">
+                        <td className="px-6 py-5 whitespace-nowrap">
+                          <div className="font-extrabold text-slate-900">{row.no_invoice}</div>
+                          <div className="flex items-center mt-1">
+                            <span className="text-[11px] font-bold text-slate-700 mr-2">{date}</span>
+                              <div className="flex items-center text-[11px] font-medium text-slate-400">
+                                <Clock className="w-3.5 h-3.5 mr-1" /> Jam: {time}
+                              </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 font-bold text-slate-700 uppercase whitespace-nowrap">
+                          {row.kasir} {row.penerima && <><br/><span className="text-xs text-slate-400">Penerima: {row.penerima}</span></>}
+                        </td>
+                        <td className="px-6 py-5 text-sm font-black text-indigo-700 whitespace-nowrap">Rp {formatRupiah(row.total)}</td>
+                        <td className="px-4 py-4 md:px-6 md:py-5 whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-2.5">
+                            <button onClick={() => generatePDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm"><FileText className="w-3.5 h-3.5" /> PDF</button>
+                            <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm"><Edit className="w-3.5 h-3.5" /> Edit</button>
+                            <button onClick={() => handleDeleteRequest(row.id)} className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm"><Trash2 className="w-3.5 h-3.5" /> Del</button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

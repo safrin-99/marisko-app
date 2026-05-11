@@ -35,52 +35,45 @@ export default function CutiPage() {
   ];
 
   // =========================================================================
-  // SAKTI: MESIN PENDETEKSI MAGIC LINK APPROVAL (DARI WA KACAB) DENGAN 3 PILIHAN
+  // SAKTI: MESIN PENDETEKSI 1 MAGIC LINK & POPUP PERSETUJUAN
   // =========================================================================
   useEffect(() => {
-    const checkMagicLink = async () => {
+    const checkMagicLink = () => {
       const params = new URLSearchParams(window.location.search);
-      const approveId = params.get('approve');
-      const rejectId = params.get('reject');
-      const processId = params.get('process');
+      const actionId = params.get('action'); // Hanya menangkap 1 kata kunci: action
       
-      let targetId = null;
-      let newStatus = '';
-      let successMsg = '';
-
-      if (approveId) {
-          targetId = approveId; newStatus = 'DISETUJUI'; successMsg = `Surat izin/cuti No. ${approveId} telah berhasil DISETUJUI.`;
-      } else if (rejectId) {
-          targetId = rejectId; newStatus = 'DITOLAK'; successMsg = `Surat izin/cuti No. ${rejectId} telah DITOLAK.`;
-      } else if (processId) {
-          targetId = processId; newStatus = 'DIPROSES'; successMsg = `Surat izin/cuti No. ${processId} dikembalikan ke status DIPROSES.`;
-      }
-      
-      if (targetId) {
-        setIsLoading(true);
-        try {
-          const { error } = await supabase
-            .from('cuti_history')
-            .update({ status: newStatus })
-            .eq('noCuti', targetId);
-
-          if (!error) {
-            setModal({ isOpen: true, type: 'success', title: `Cuti ${newStatus}!`, message: successMsg, actionData: 'MAGIC_LINK' });
-            window.history.replaceState({}, document.title, window.location.pathname);
-            fetchHistory();
-          } else {
-            throw error;
-          }
-        } catch (err) {
-          setModal({ isOpen: true, type: 'error', title: 'Gagal Memperbarui Status', message: 'Terjadi kesalahan sistem.' });
-        }
-        setIsLoading(false);
+      if (actionId) {
+        // Tampilkan Popup Pilihan Status
+        setModal({ 
+          isOpen: true, 
+          type: 'action_select', 
+          title: 'Pilih Status Persetujuan', 
+          message: `Silakan pilih status untuk permohonan No. Registrasi: ${actionId}`, 
+          actionData: actionId 
+        });
+        // Hapus link dari URL agar tidak muncul terus kalau direfresh
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
     };
     
     checkMagicLink();
     fetchHistory();
   }, []);
+
+  // Fungsi Eksekusi Pilihan Status dari Popup
+  const executeActionStatus = async (id, newStatus) => {
+    setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.from('cuti_history').update({ status: newStatus }).eq('noCuti', id);
+      if (error) throw error;
+      setModal({ isOpen: true, type: 'success', title: `Berhasil ${newStatus}!`, message: `Status permohonan ${id} telah diperbarui menjadi ${newStatus}.`, actionData: 'MAGIC_LINK' });
+      fetchHistory();
+    } catch (err) {
+      setModal({ isOpen: true, type: 'error', title: 'Gagal', message: 'Gagal mengubah status di database.' });
+    }
+    setIsLoading(false);
+  };
 
   const fetchHistory = async () => {
     setIsLoading(true);
@@ -169,22 +162,15 @@ export default function CutiPage() {
     const formatTgl = (tgl) => tgl.split('-').reverse().join('/');
     const jenis = opsiCuti.find(o => o.value === data.jenisCuti)?.label || data.jenisCuti;
     
-    // SAKTI: 3 Pilihan Link untuk KACAB
-    const baseUrl = "https://marisko-app.vercel.app/cuti";
-    const encNoCuti = encodeURIComponent(data.noCuti);
-    const linkSetuju = `${baseUrl}?approve=${encNoCuti}`;
-    const linkTolak = `${baseUrl}?reject=${encNoCuti}`;
-    const linkProses = `${baseUrl}?process=${encNoCuti}`;
+    // SAKTI: HANYA 1 LINK UNTUK MEMUNCULKAN POPUP!
+    const magicLink = `https://marisko-app.vercel.app/cuti?action=${encodeURIComponent(data.noCuti)}`;
 
-    const teksWA = `Halo Bapak/Ibu Kepala Cabang,\n\nSaya mengajukan permohonan persetujuan:\n\n*No. Registrasi:* ${data.noCuti}\n*Nama Pegawai:* ${data.namaPegawai}\n*Jabatan:* ${data.jabatan}\n*Jenis Cuti:* ${jenis}\n*Tanggal:* ${formatTgl(data.tglMulai)} s/d ${formatTgl(data.tglSelesai)}\n*Alasan:* ${data.alasan || '-'}\n\n*SILAKAN KLIK SALAH SATU LINK DI BAWAH INI UNTUK MERUBAH STATUS:*\n\n✅ *SETUJUI CUTI:*\n${linkSetuju}\n\n❌ *TOLAK CUTI:*\n${linkTolak}\n\n⏳ *KEMBALIKAN KE PROSES:*\n${linkProses}\n\nTerima kasih. 🙏`;
+    const teksWA = `Halo Bapak/Ibu Kepala Cabang,\n\nSaya mengajukan permohonan persetujuan:\n\n*No. Registrasi:* ${data.noCuti}\n*Nama Pegawai:* ${data.namaPegawai}\n*Jabatan:* ${data.jabatan}\n*Jenis Cuti:* ${jenis}\n*Tanggal:* ${formatTgl(data.tglMulai)} s/d ${formatTgl(data.tglSelesai)}\n*Alasan:* ${data.alasan || '-'}\n\n✅ *KLIK LINK DI BAWAH INI UNTUK MEMILIH STATUS PERSETUJUAN:*\n${magicLink}\n\nTerima kasih. 🙏`;
 
     const waUrl = `https://wa.me/${nomorWAKacab}?text=${encodeURIComponent(teksWA)}`;
     window.open(waUrl, '_blank');
   };
 
-  // =========================================================================
-  // MESIN CETAK PDF 
-  // =========================================================================
   const generateCutiPDF = (data) => {
     const doc = new jsPDF();
     doc.setFont("helvetica", "normal");
@@ -275,6 +261,13 @@ export default function CutiPage() {
     return { date: tgl.split('-').reverse().join('/'), time: '-' };
   };
 
+  // SAKTI: Fungsi untuk mengambil jam dari created_at
+  const formatTimeOnly = (isoString) => {
+    if (!isoString) return '-';
+    const dateObj = new Date(isoString);
+    return dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  };
+
   const inputClass = "w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-slate-400";
   const labelClass = "block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider";
 
@@ -285,15 +278,37 @@ export default function CutiPage() {
         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })}></div>
         <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md p-8 relative z-10 animate-in zoom-in-95 fade-in duration-300 border border-slate-100">
           <div className="flex flex-col items-center text-center mt-2">
-            {modal.type === 'success' || modal.type === 'success_delete' ? (
-              <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6 text-indigo-600 shadow-inner"><CheckCircle2 className="w-10 h-10" /></div>
+            
+            {/* SAKTI: Ikon dinamis menyesuaikan tipe modal */}
+            {modal.type === 'action_select' ? (
+              <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6 text-indigo-600 shadow-inner"><ClipboardSignature className="w-10 h-10" /></div>
+            ) : modal.type === 'success' || modal.type === 'success_delete' ? (
+              <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6 text-emerald-600 shadow-inner"><CheckCircle2 className="w-10 h-10" /></div>
             ) : (
               <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-6 text-rose-600 shadow-inner"><AlertCircle className="w-10 h-10" /></div>
             )}
+            
             <h3 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">{modal.title}</h3>
             <p className="text-slate-500 font-medium text-[15px] leading-relaxed mb-8 px-2">{modal.message}</p>
+            
             <div className="flex w-full gap-3 justify-center">
-              {modal.type === 'confirm_delete' ? (
+              {/* SAKTI: Tampilan 3 Tombol Pilihan Status untuk Kacab */}
+              {modal.type === 'action_select' ? (
+                <div className="flex flex-col gap-3 w-full">
+                  <button onClick={() => executeActionStatus(modal.actionData, 'DISETUJUI')} className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 mr-2" /> Setujui Permohonan
+                  </button>
+                  <button onClick={() => executeActionStatus(modal.actionData, 'DITOLAK')} className="w-full py-3.5 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center">
+                    <XCircle className="w-5 h-5 mr-2" /> Tolak Permohonan
+                  </button>
+                  <button onClick={() => executeActionStatus(modal.actionData, 'DIPROSES')} className="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center">
+                    <Clock className="w-5 h-5 mr-2" /> Kembalikan ke Proses
+                  </button>
+                  <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3 mt-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">
+                    Batal
+                  </button>
+                </div>
+              ) : modal.type === 'confirm_delete' ? (
                 <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all duration-200 active:scale-95">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="flex-1 py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-lg shadow-rose-600/20 transition-all duration-200 active:scale-95">Ya, Hapus!</button></>
               ) : modal.actionData === 'MAGIC_LINK' ? (
                 <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg transition-all duration-200 active:scale-95">Tutup & Lanjutkan</button>
@@ -419,10 +434,12 @@ export default function CutiPage() {
                       return searchString.includes(keyword);
                     })
                     .map((row, index) => {
-                      // SAKTI: Hapus efek abu-abu pada jam (Hanya menampilkan tanggal murni)
                       const mulai = formatDateTime(null, row.tglMulai).date;
                       const selesai = formatDateTime(null, row.tglSelesai).date;
                       const jenis = opsiCuti.find(o => o.value === row.jenisCuti)?.label || row.jenisCuti;
+                      
+                      // SAKTI: Ambil waktu (Jam)
+                      const jam = formatTimeOnly(row.created_at);
                       
                       // SAKTI: Teks Status tanpa border/kotak (Murni Teks dan Icon)
                       const statusCuti = row.status || 'DIPROSES';
@@ -438,7 +455,13 @@ export default function CutiPage() {
 
                       return (
                         <tr key={index} className="hover:bg-indigo-50/40 transition-colors">
-                          <td className="px-6 py-5 font-bold text-slate-950 whitespace-nowrap">{row.noCuti}</td>
+                          <td className="px-6 py-5 whitespace-nowrap">
+                            <div className="font-bold text-slate-950">{row.noCuti}</div>
+                            {/* SAKTI: Jam Murni tanpa kotak abu-abu dikembalikan persis di bawah No Registrasi */}
+                            <div className="flex items-center text-[11px] text-slate-500 font-medium mt-1">
+                              <Clock className="w-3 h-3 mr-1" /> Jam: {jam}
+                            </div>
+                          </td>
                           <td className="px-6 py-5 whitespace-nowrap">
                               <div className="font-bold text-slate-950 uppercase">{row.namaPegawai}</div>
                               <div className="text-[11px] text-slate-500 font-bold mt-0.5">{row.jabatan}</div>

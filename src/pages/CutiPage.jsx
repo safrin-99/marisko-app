@@ -227,7 +227,6 @@ export default function CutiPage() {
     if (data.jenisCuti === 'TAHUNAN') { perihalStr = "cuti tahunan"; jenisKata = "CUTI"; }
     else if (data.jenisCuti === 'MENIKAH') { perihalStr = "cuti menikah"; jenisKata = "CUTI"; }
     else if (data.jenisCuti === 'MELAHIRKAN') { perihalStr = "cuti melahirkan"; jenisKata = "CUTI"; }
-    else if (data.jenisCuti === 'SAKIT') { perihalStr = "izin sakit"; jenisKata = "IZIN"; }
     else if (data.jenisCuti === 'DUKA') { perihalStr = "izin kedukaan"; jenisKata = "IZIN"; }
     else if (data.jenisCuti === 'SETENGAH_HARI_AWAL') { perihalStr = "izin setengah hari (08:00 - 13:00)"; jenisKata = "IZIN"; }
     else if (data.jenisCuti === 'SETENGAH_HARI_AKHIR') { perihalStr = "izin setengah hari (13:00 - 17:00)"; jenisKata = "IZIN"; }

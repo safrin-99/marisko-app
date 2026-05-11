@@ -195,7 +195,7 @@ export default function CutiPage() {
   };
 
   const handleSendWA = (data) => {
-    const nomorWAKacab = "6282271470883"; 
+    const nomorWAKacab = "6282271461103"; 
     const formatTgl = (tgl) => tgl.split('-').reverse().join('/');
     const jenis = opsiCuti.find(o => o.value === data.jenisCuti)?.label || data.jenisCuti;
     const magicLink = `https://marisko-app.vercel.app/cuti?action=${encodeURIComponent(data.noCuti)}`;

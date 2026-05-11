@@ -261,7 +261,7 @@ export default function CutiPage() {
     return { date: tgl.split('-').reverse().join('/'), time: '-' };
   };
 
-  // SAKTI: Fungsi untuk mengambil jam dari created_at
+  // SAKTI: FUNGSI INI YANG TERTINGGAL TADI! Sekarang sudah aman!
   const formatTimeOnly = (isoString) => {
     if (!isoString) return '-';
     const dateObj = new Date(isoString);
@@ -281,7 +281,7 @@ export default function CutiPage() {
             
             {/* SAKTI: Ikon dinamis menyesuaikan tipe modal */}
             {modal.type === 'action_select' ? (
-              <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6 text-indigo-600 shadow-inner"><ClipboardSignature className="w-10 h-10" /></div>
+              <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6 text-indigo-600 shadow-inner"><FileSignature className="w-10 h-10" /></div>
             ) : modal.type === 'success' || modal.type === 'success_delete' ? (
               <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6 text-emerald-600 shadow-inner"><CheckCircle2 className="w-10 h-10" /></div>
             ) : (

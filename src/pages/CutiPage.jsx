@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FileSignature, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, CalendarDays, Search, MessageCircle, CheckCircle } from 'lucide-react';
+import { FileSignature, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, CalendarDays, Search, MessageCircle, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from "jspdf";
 
@@ -35,33 +35,44 @@ export default function CutiPage() {
   ];
 
   // =========================================================================
-  // SAKTI: MESIN PENDETEKSI MAGIC LINK APPROVAL (DARI WA KACAB)
+  // SAKTI: MESIN PENDETEKSI MAGIC LINK APPROVAL (DARI WA KACAB) DENGAN 3 PILIHAN
   // =========================================================================
   useEffect(() => {
     const checkMagicLink = async () => {
-      // Mendeteksi apakah ada kata "?approve=..." di alamat URL (Browser)
       const params = new URLSearchParams(window.location.search);
       const approveId = params.get('approve');
+      const rejectId = params.get('reject');
+      const processId = params.get('process');
       
+      let targetId = null;
+      let newStatus = '';
+      let successMsg = '';
+
       if (approveId) {
+          targetId = approveId; newStatus = 'DISETUJUI'; successMsg = `Surat izin/cuti No. ${approveId} telah berhasil DISETUJUI.`;
+      } else if (rejectId) {
+          targetId = rejectId; newStatus = 'DITOLAK'; successMsg = `Surat izin/cuti No. ${rejectId} telah DITOLAK.`;
+      } else if (processId) {
+          targetId = processId; newStatus = 'DIPROSES'; successMsg = `Surat izin/cuti No. ${processId} dikembalikan ke status DIPROSES.`;
+      }
+      
+      if (targetId) {
         setIsLoading(true);
         try {
-          // Sistem menembak database untuk mengubah status jadi DISETUJUI
           const { error } = await supabase
             .from('cuti_history')
-            .update({ status: 'DISETUJUI' })
-            .eq('noCuti', approveId);
+            .update({ status: newStatus })
+            .eq('noCuti', targetId);
 
           if (!error) {
-            setModal({ isOpen: true, type: 'success', title: 'Cuti Disetujui!', message: `Surat izin/cuti dengan No. Registrasi ${approveId} telah berhasil DISETUJUI.`, actionData: 'MAGIC_LINK' });
-            // Membersihkan link agar tidak terus-terusan dieksekusi saat direfresh
+            setModal({ isOpen: true, type: 'success', title: `Cuti ${newStatus}!`, message: successMsg, actionData: 'MAGIC_LINK' });
             window.history.replaceState({}, document.title, window.location.pathname);
             fetchHistory();
           } else {
             throw error;
           }
         } catch (err) {
-          setModal({ isOpen: true, type: 'error', title: 'Gagal Menyetujui', message: 'Terjadi kesalahan sistem atau kolom "status" belum ditambahkan di Supabase.' });
+          setModal({ isOpen: true, type: 'error', title: 'Gagal Memperbarui Status', message: 'Terjadi kesalahan sistem.' });
         }
         setIsLoading(false);
       }
@@ -116,14 +127,13 @@ export default function CutiPage() {
           return;
         }
         
-        // SAKTI: Tambahkan status default saat insert
         await supabase.from('cuti_history').insert([{ ...formData, status: 'DIPROSES' }]);
         setModal({ isOpen: true, type: 'success', title: 'Berhasil Disimpan!', message: 'Surat Permohonan Cuti berhasil dibuat dan siap dicetak.', actionData: formData });
       }
       resetForm();
       fetchHistory();
     } catch (err) {
-      setModal({ isOpen: true, type: 'error', title: 'Kesalahan Sistem', message: 'Gagal menghubungi database. Pastikan kolom "status" sudah dibuat di Supabase.' });
+      setModal({ isOpen: true, type: 'error', title: 'Kesalahan Sistem', message: 'Gagal menghubungi database.' });
     }
     setIsSubmitting(false);
   };
@@ -133,7 +143,7 @@ export default function CutiPage() {
     setOriginalNoCuti(data.noCuti);
     setNoCuti(data.noCuti); setNamaPegawai(data.namaPegawai); setJabatan(data.jabatan);
     setJenisCuti(data.jenisCuti); setTglMulai(data.tglMulai); setTglSelesai(data.tglSelesai);
-    setAlasan(data.alasan);
+    setAlasan(data.alasan || '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -154,16 +164,19 @@ export default function CutiPage() {
   };
 
   const handleSendWA = (data) => {
-    // GANTI DENGAN NOMOR WA KACAB (AWALAN 62)
     const nomorWAKacab = "6282271470883"; 
     
     const formatTgl = (tgl) => tgl.split('-').reverse().join('/');
     const jenis = opsiCuti.find(o => o.value === data.jenisCuti)?.label || data.jenisCuti;
     
-    // SAKTI: Menggunakan URL Live Vercel agar link biru di WA dan bisa dibuka dari HP Kacab!
-    const magicLink = `https://marisko-app.vercel.app/cuti?approve=${encodeURIComponent(data.noCuti)}`;
+    // SAKTI: 3 Pilihan Link untuk KACAB
+    const baseUrl = "https://marisko-app.vercel.app/cuti";
+    const encNoCuti = encodeURIComponent(data.noCuti);
+    const linkSetuju = `${baseUrl}?approve=${encNoCuti}`;
+    const linkTolak = `${baseUrl}?reject=${encNoCuti}`;
+    const linkProses = `${baseUrl}?process=${encNoCuti}`;
 
-    const teksWA = `Halo Bapak/Ibu Kepala Cabang,\n\nSaya mengajukan permohonan persetujuan:\n\n*No. Registrasi:* ${data.noCuti}\n*Nama Pegawai:* ${data.namaPegawai}\n*Jabatan:* ${data.jabatan}\n*Jenis Cuti:* ${jenis}\n*Tanggal:* ${formatTgl(data.tglMulai)} s/d ${formatTgl(data.tglSelesai)}\n*Alasan:* ${data.alasan || '-'}\n\n✅ *KLIK LINK DI BAWAH INI UNTUK MENYETUJUI OTOMATIS:*\n${magicLink}\n\nTerima kasih. 🙏`;
+    const teksWA = `Halo Bapak/Ibu Kepala Cabang,\n\nSaya mengajukan permohonan persetujuan:\n\n*No. Registrasi:* ${data.noCuti}\n*Nama Pegawai:* ${data.namaPegawai}\n*Jabatan:* ${data.jabatan}\n*Jenis Cuti:* ${jenis}\n*Tanggal:* ${formatTgl(data.tglMulai)} s/d ${formatTgl(data.tglSelesai)}\n*Alasan:* ${data.alasan || '-'}\n\n*SILAKAN KLIK SALAH SATU LINK DI BAWAH INI UNTUK MERUBAH STATUS:*\n\n✅ *SETUJUI CUTI:*\n${linkSetuju}\n\n❌ *TOLAK CUTI:*\n${linkTolak}\n\n⏳ *KEMBALIKAN KE PROSES:*\n${linkProses}\n\nTerima kasih. 🙏`;
 
     const waUrl = `https://wa.me/${nomorWAKacab}?text=${encodeURIComponent(teksWA)}`;
     window.open(waUrl, '_blank');
@@ -406,13 +419,22 @@ export default function CutiPage() {
                       return searchString.includes(keyword);
                     })
                     .map((row, index) => {
+                      // SAKTI: Hapus efek abu-abu pada jam (Hanya menampilkan tanggal murni)
                       const mulai = formatDateTime(null, row.tglMulai).date;
                       const selesai = formatDateTime(null, row.tglSelesai).date;
                       const jenis = opsiCuti.find(o => o.value === row.jenisCuti)?.label || row.jenisCuti;
                       
-                      // SAKTI: Menampilkan badge status warna kuning (DIPROSES) atau hijau (DISETUJUI)
+                      // SAKTI: Teks Status tanpa border/kotak (Murni Teks dan Icon)
                       const statusCuti = row.status || 'DIPROSES';
-                      const statusColor = statusCuti === 'DISETUJUI' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-amber-50 text-amber-600 border border-amber-200';
+                      let statusText = '';
+                      
+                      if (statusCuti === 'DISETUJUI') {
+                        statusText = <div className="mt-1.5 text-[10px] font-extrabold text-emerald-600 uppercase tracking-wider flex items-center"><CheckCircle className="w-3.5 h-3.5 mr-1" /> DISETUJUI</div>;
+                      } else if (statusCuti === 'DITOLAK') {
+                        statusText = <div className="mt-1.5 text-[10px] font-extrabold text-rose-600 uppercase tracking-wider flex items-center"><XCircle className="w-3.5 h-3.5 mr-1" /> DITOLAK</div>;
+                      } else {
+                        statusText = <div className="mt-1.5 text-[10px] font-extrabold text-amber-500 uppercase tracking-wider flex items-center"><Clock className="w-3.5 h-3.5 mr-1" /> DIPROSES</div>;
+                      }
 
                       return (
                         <tr key={index} className="hover:bg-indigo-50/40 transition-colors">
@@ -423,19 +445,14 @@ export default function CutiPage() {
                           </td>
                           <td className="px-6 py-5 whitespace-nowrap">
                               <div className="font-bold text-indigo-700">{jenis}</div>
-                              <div className={`mt-1.5 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded flex items-center w-fit shadow-sm ${statusColor}`}>
-                                 {statusCuti === 'DISETUJUI' ? <CheckCircle className="w-3 h-3 mr-1" /> : <Clock className="w-3 h-3 mr-1" />}
-                                 {statusCuti}
-                              </div>
+                              {statusText}
                           </td>
                           <td className="px-6 py-5 whitespace-nowrap">
                             <div className="font-bold text-slate-700">{mulai} - {selesai}</div>
                           </td>
                           <td className="px-6 py-5 whitespace-nowrap">
                             <div className="flex items-center justify-end gap-2.5">
-                              {/* SAKTI: Tombol Kirim WA diletakkan tepat di sebelah kiri tombol Cetak PDF */}
                               <button onClick={() => handleSendWA(row)} className="flex items-center gap-1.5 px-3 py-2 bg-[#25D366]/10 text-[#075E54] hover:bg-[#25D366]/20 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-[#25D366]/30 shadow-sm"><MessageCircle className="w-3.5 h-3.5" /> Kirim WA</button>
-
                               <button onClick={() => generateCutiPDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm"><Printer className="w-3.5 h-3.5" /> PDF</button>
                               <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm"><Edit className="w-3.5 h-3.5" /> Edit</button>
                               <button onClick={() => handleDeleteRequest(row.noCuti)} className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm"><Trash2 className="w-3.5 h-3.5" /> Del</button>

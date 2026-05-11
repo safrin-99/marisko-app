@@ -11,12 +11,16 @@ export default function Layout({ children }) {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // SAKTI: Ambil Role dari localStorage untuk mendeteksi siapa yang masuk!
+  const userRole = localStorage.getItem('adminRole')?.toUpperCase() || '';
+
   const handleConfirmLogout = () => {
     localStorage.removeItem('isLoggedIn');
     navigate('/login');
   };
 
-  const menuSections = [
+  // SAKTI: Logika Penyembunyian Menu Berdasarkan Role
+  let menuSections = [
     {
       title: "Ringkasan",
       items: [
@@ -26,27 +30,35 @@ export default function Layout({ children }) {
     {
       title: "Modul Utama",
       items: [
-        { path: '/bastk', icon: FileText, label: 'Dokumen BASTK' },
-        { path: '/buku-servis', icon: BookOpen, label: 'Buku Servis' },
+        // Menu ini HANYA MUNCUL JIKA BUKAN KARYAWAN
+        ...(userRole !== 'KARYAWAN' ? [{ path: '/bastk', icon: FileText, label: 'Dokumen BASTK' }] : []),
+        ...(userRole !== 'KARYAWAN' ? [{ path: '/buku-servis', icon: BookOpen, label: 'Buku Servis' }] : []),
+        // Cuti selalu muncul untuk semua
         { path: '/cuti', icon: CalendarDays, label: 'Cuti & Izin' }
-      ]
-    },
-    {
-      title: "Modul Keuangan",
-      items: [
-        { path: '/kwitansi-kredit', icon: Receipt, label: 'Kwitansi Kredit' },
-        { path: '/kwitansi-cash', icon: Banknote, label: 'Kwitansi Cash' },
-        { path: '/kwitansi-indent', icon: ClipboardSignature, label: 'Kwitansi Indent' },
-        { path: '/nota', icon: ScrollText, label: 'Nota & Laporan' } 
-      ]
-    },
-    {
-      title: "Sistem",
-      items: [
-        { path: '/settings', icon: Settings, label: 'Pengaturan Akun' }
       ]
     }
   ];
+
+  // SAKTI: Menu Keuangan dan Sistem GHAIB JIKA KARYAWAN YANG MASUK
+  if (userRole !== 'KARYAWAN') {
+    menuSections.push(
+      {
+        title: "Modul Keuangan",
+        items: [
+          { path: '/kwitansi-kredit', icon: Receipt, label: 'Kwitansi Kredit' },
+          { path: '/kwitansi-cash', icon: Banknote, label: 'Kwitansi Cash' },
+          { path: '/kwitansi-indent', icon: ClipboardSignature, label: 'Kwitansi Indent' },
+          { path: '/nota', icon: ScrollText, label: 'Nota & Laporan' } 
+        ]
+      },
+      {
+        title: "Sistem",
+        items: [
+          { path: '/settings', icon: Settings, label: 'Pengaturan Akun' }
+        ]
+      }
+    );
+  }
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden relative">

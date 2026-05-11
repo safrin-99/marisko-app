@@ -167,6 +167,7 @@ export default function CutiPage() {
     const jenis = opsiCuti.find(o => o.value === data.jenisCuti)?.label || data.jenisCuti;
     const magicLink = `https://marisko-app.vercel.app/cuti?action=${encodeURIComponent(data.noCuti)}`;
 
+    // SAKTI: Teks sudah menggunakan "Salam Satu Hati Owner/Kepala Cabang,"
     const teksWA = `Salam Satu Hati Owner/Kepala Cabang,\n\nSaya mengajukan permohonan persetujuan:\n\n*No. Registrasi:* ${data.noCuti}\n*Nama Pegawai:* ${data.namaPegawai}\n*Jabatan:* ${data.jabatan}\n*Jenis Cuti:* ${jenis}\n*Tanggal:* ${formatTgl(data.tglMulai)} s/d ${formatTgl(data.tglSelesai)}\n*Alasan:* ${data.alasan || '-'}\n\n✅ *KLIK LINK DI BAWAH INI UNTUK MEMILIH STATUS PERSETUJUAN:*\n${magicLink}\n\nTerima kasih. 🙏`;
 
     const waUrl = `https://wa.me/${nomorWAKacab}?text=${encodeURIComponent(teksWA)}`;
@@ -505,10 +506,8 @@ export default function CutiPage() {
                               <button onClick={() => handleSendWA(row)} className="flex items-center gap-1.5 px-3 py-2 bg-[#25D366]/10 text-[#075E54] hover:bg-[#25D366]/20 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-[#25D366]/30 shadow-sm"><MessageCircle className="w-3.5 h-3.5" /> Kirim WA</button>
                               <button onClick={() => generateCutiPDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm"><Printer className="w-3.5 h-3.5" /> PDF</button>
                               
-                              {/* SAKTI: Karyawan dan Admin sama-sama bisa klik Edit */}
                               <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm"><Edit className="w-3.5 h-3.5" /> Edit</button>
                               
-                              {/* SAKTI: HANYA ADMIN YANG BISA MELIHAT TOMBOL DELETE! */}
                               {userRole !== 'KARYAWAN' && (
                                 <button onClick={() => handleDeleteRequest(row.noCuti)} className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm"><Trash2 className="w-3.5 h-3.5" /> Del</button>
                               )}

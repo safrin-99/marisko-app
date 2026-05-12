@@ -159,11 +159,11 @@ export default function Layout({ children }) {
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-indigo-500/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out z-0"></div>
                       )}
                       
-                      {/* Icon Menu */}
-                      <Icon className={`w-[22px] h-[22px] mr-3.5 transition-all duration-300 z-10 flex-shrink-0 ${
+                      {/* SAKTI: Ikon distabilkan, tidak ada lagi getaran/rotasi saat dihover */}
+                      <Icon className={`w-[22px] h-[22px] mr-3.5 transition-colors duration-300 z-10 flex-shrink-0 ${
                         isActive 
                           ? 'text-indigo-600' 
-                          : 'text-slate-400 group-hover:text-indigo-500 group-hover:scale-110 group-hover:-rotate-6'
+                          : 'text-slate-400 group-hover:text-indigo-500'
                       }`} />
                       <span className="z-10">{item.label}</span>
                     </Link>
@@ -178,7 +178,8 @@ export default function Layout({ children }) {
         <div className="flex-shrink-0 p-5 border-t border-slate-100 bg-white flex flex-col gap-3">
           <button onClick={() => setShowLogoutModal(true)} className="group relative w-full flex items-center justify-center gap-2.5 py-3.5 bg-rose-50 text-rose-600 rounded-xl font-bold text-[15px] transition-all duration-300 hover:bg-rose-100 hover:shadow-lg hover:shadow-rose-100/50 hover:-translate-y-0.5 active:scale-95 overflow-hidden border border-transparent hover:border-rose-200">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-rose-500/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out z-0"></div>
-            <LogOut className="w-[22px] h-[22px] transition-transform duration-300 group-hover:-translate-x-1 group-hover:scale-110 z-10" /> 
+            {/* SAKTI: Ikon Logout juga distabilkan */}
+            <LogOut className="w-[22px] h-[22px] transition-colors duration-300 z-10" /> 
             <span className="z-10">Keluar Aplikasi</span>
           </button>
           

@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Search, Printer, AlertCircle, RefreshCw } from 'lucide-react';
+import { BookOpen, Search, Printer, AlertCircle, RefreshCw, X, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function BukuServisPage() {
   const [bastkData, setBastkData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // SAKTI: State untuk Pencarian dan Filter Tanggal
   const [searchTerm, setSearchTerm] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     fetchBastkData();
@@ -61,7 +65,6 @@ export default function BukuServisPage() {
     // ====================================================================
     let namaCetak = data.namaKonsumen || '-';
     if (namaCetak.includes('/')) {
-      // Jika ada tanda "/", pecah namanya, lalu ambil bagian paling belakang (Nama STNK), lalu bersihkan spasinya.
       const namaParts = namaCetak.split('/');
       namaCetak = namaParts[namaParts.length - 1].trim(); 
     }
@@ -69,15 +72,13 @@ export default function BukuServisPage() {
     // ====================================================================
     // SAKTI 2: LOGIKA UKURAN FONT OTOMATIS (Mengecil jika kepanjangan)
     // ====================================================================
-    // Normal = 10pt. Jika lebih dari 20 karakter = 8pt. Jika lebih dari 25 karakter = 7pt.
-    let fontClassNama = "font-normal"; // bawaan 10pt
+    let fontClassNama = "font-normal"; 
     if (namaCetak.length > 25) {
-      fontClassNama = "font-sangat-kecil"; // 7pt
+      fontClassNama = "font-sangat-kecil"; 
     } else if (namaCetak.length > 18) {
-      fontClassNama = "font-agak-kecil"; // 8.5pt
+      fontClassNama = "font-agak-kecil"; 
     }
 
-    // HTML MURNI MENIRU SEL EXCEL PRESISI TINGGI
     const htmlContent = `
       <html>
         <head>
@@ -110,18 +111,14 @@ export default function BukuServisPage() {
               table-layout: fixed; 
             }
             
-            /* Jarak antar blok meniru baris kosong Excel persis 13pt */
             .table-1, .table-2 { margin-bottom: 13pt; } 
             
-            /* Tinggi baris dibedakan persis seperti data Excel fisik Anda! */
-            .row-sm { height: 12pt; } /* Area Identitas (Kotak Merah) */
-            .row-lg { height: 21pt; } /* Area Kupon KPB (Kotak Kuning) */
+            .row-sm { height: 12pt; } 
+            .row-lg { height: 21pt; } 
             
-            /* Perbedaan Font sesuai analisa Excel */
-            .font-normal { font-size: 10pt; } /* Teks biasa & Label */
-            .font-kecil { font-size: 9pt; }   /* Khusus Teks isian Kupon KPB */
+            .font-normal { font-size: 10pt; } 
+            .font-kecil { font-size: 9pt; }   
             
-            /* SAKTI: Class khusus untuk nama yang kepanjangan */
             .font-agak-kecil { font-size: 8.5pt; font-weight: bold; } 
             .font-sangat-kecil { font-size: 7.5pt; font-weight: bold; letter-spacing: -0.5px; } 
 
@@ -229,10 +226,59 @@ export default function BukuServisPage() {
     printWindow.document.close();
   };
 
-  const filteredData = bastkData.filter(item => 
-    item.namaKonsumen?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.noSurat?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // =========================================================================
+  // SAKTI: FUNGSI FILTER DATA BERDASARKAN TANGGAL & PENCARIAN
+  // =========================================================================
+  const getFilteredData = () => {
+    return bastkData.filter((row) => {
+      // 1. Filter Tanggal (Menggunakan tglSerah)
+      if (startDate && row.tglSerah < startDate) return false;
+      if (endDate && row.tglSerah > endDate) return false;
+      
+      // 2. Filter Teks Pencarian
+      if (!searchTerm) return true;
+      const keyword = searchTerm.toLowerCase();
+      const searchString = `${row?.noSurat || ''} ${row?.namaKonsumen || ''}`.toLowerCase();
+      return searchString.includes(keyword);
+    });
+  };
+
+  const filteredData = getFilteredData();
+
+  // =========================================================================
+  // SAKTI: FUNGSI EKSPOR KE EXCEL BERDASARKAN FILTER SAAT INI
+  // =========================================================================
+  const exportToExcel = () => {
+    if (filteredData.length === 0) {
+      alert('Tidak ada data untuk diekspor ke Excel.');
+      return;
+    }
+
+    let csvContent = `No. BASTK,Tanggal BASTK,Nama Konsumen,Tipe Kendaraan,Warna,No. Rangka,No. Mesin\n`;
+
+    filteredData.forEach((row) => {
+        const rowData = [
+            `"${row.noSurat}"`,
+            `"${row.tglSerah}"`,
+            `"${row.namaKonsumen}"`,
+            `"${row.tipeKendaraan}"`,
+            `"${row.warna}"`,
+            `"${row.noRangka}"`,
+            `"${row.noMesin}"`
+        ].join(",");
+        csvContent += rowData + "\n";
+    });
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Laporan_Buku_Servis_${new Date().toISOString().slice(0,10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 md:space-y-8 pb-12 animate-in fade-in duration-500">
@@ -241,23 +287,66 @@ export default function BukuServisPage() {
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center"><BookOpen className="w-8 h-8 mr-3 text-indigo-600" /> Cetak Buku Servis</h1>
           <p className="text-slate-500 font-medium mt-1">Cetak stiker identitas buku servis konsumen (terintegrasi otomatis dengan data BASTK).</p>
         </div>
-        <div className="relative w-full md:w-72">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Cari nama atau No. BASTK..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
-          />
+        
+        {/* SAKTI: Tombol Aksi di Header (Refresh & Ekspor Excel) */}
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <button onClick={fetchBastkData} className="flex-1 md:flex-none flex items-center justify-center text-sm font-bold text-slate-700 bg-slate-100 px-5 py-3 rounded-xl active:scale-95 shadow-sm hover:bg-slate-200 transition-all duration-200">
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+          </button>
+          <button onClick={exportToExcel} className="flex-1 md:flex-none flex items-center justify-center text-sm font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-5 py-3 rounded-xl active:scale-95 shadow-sm hover:bg-emerald-200 transition-all duration-200">
+            <Download className="w-4 h-4 mr-2" /> Ekspor Excel
+          </button>
         </div>
       </div>
 
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden antialiased">
-        {/* SAKTI: Penambahan max-h-[600px] dan overflow-y-auto untuk mengaktifkan scroll */}
+        
+        {/* SAKTI: Baris Pencarian & Filter Tanggal diletakkan di atas tabel */}
+        <div className="bg-slate-50/80 border-b border-slate-200 p-4 md:p-5 flex flex-col sm:flex-row items-center gap-3 w-full">
+          <div className="relative w-full sm:w-1/3">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Cari nama atau No. BASTK..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-sm"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Dari:</span>
+            <input 
+              type="date" 
+              value={startDate} 
+              onChange={(e) => setStartDate(e.target.value)} 
+              className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-sm" 
+            />
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Sampai:</span>
+            <input 
+              type="date" 
+              value={endDate} 
+              onChange={(e) => setEndDate(e.target.value)} 
+              className="w-full py-2 px-3 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-sm" 
+            />
+          </div>
+
+          {(searchTerm || startDate || endDate) && (
+            <button 
+              onClick={() => { setSearchTerm(''); setStartDate(''); setEndDate(''); }} 
+              className="p-2 text-rose-500 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all shadow-sm ml-auto sm:ml-0" 
+              title="Reset Filter"
+            >
+               <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
         <div className="overflow-y-auto overflow-x-auto max-h-[600px] scrollbar-thin">
           <table className="w-full text-left border-collapse min-w-[900px] lg:min-w-full">
-            {/* SAKTI: Penambahan sticky top-0 dan bg-slate-50 agar baris ini tidak ikut tergulung */}
             <thead className="sticky top-0 z-10 bg-slate-50 shadow-sm">
               <tr className="border-b border-slate-200 text-slate-500 text-xs uppercase tracking-widest">
                 <th className="p-5 font-extrabold whitespace-nowrap">No. BASTK</th>
@@ -279,7 +368,10 @@ export default function BukuServisPage() {
                       <div className="font-extrabold text-sm text-slate-900">{item.namaKonsumen}</div>
                       <div className="font-bold text-xs text-indigo-600 mt-1">{item.tipeKendaraan} • {item.warna}</div>
                     </td>
-                    <td className="p-5 font-bold text-sm text-slate-600 whitespace-nowrap">{item.tglSerah}</td>
+                    <td className="p-5 font-bold text-sm text-slate-600 whitespace-nowrap">
+                      {/* SAKTI: Ubah Format Tanggal Tabel menjadi DD/MM/YYYY */}
+                      {item.tglSerah ? item.tglSerah.split('-').reverse().join('/') : '-'}
+                    </td>
                     <td className="p-5 text-center whitespace-nowrap">
                       <button onClick={() => handlePrint(item)} className="inline-flex items-center justify-center px-4 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-xl font-bold text-xs transition-all active:scale-95 shadow-sm">
                         <Printer className="w-4 h-4 mr-2" /> Cetak Stiker

@@ -111,6 +111,12 @@ export default function CutiPage() {
     };
   }, [userRole]);
 
+  const testNotifikasi = () => {
+    const testData = { namaPegawai: "KARYAWAN DEMO", noCuti: "TEST/001/2026", status: "DISETUJUI" };
+    setLiveNotif(testData);
+    setTimeout(() => setLiveNotif(null), 15000);
+  };
+
   const executeActionStatus = async (id, newStatus) => {
     setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
     setIsLoading(true);
@@ -207,7 +213,7 @@ export default function CutiPage() {
   };
 
   const handleSendWA = (data) => {
-    const nomorWAKacab = "6282271470883"; 
+    const nomorWAKacab = "6282271461103"; 
     const formatTgl = (tgl) => tgl ? tgl.split('-').reverse().join('/') : '-';
     const jenis = opsiCuti.find(o => o.value === data.jenisCuti)?.label || data.jenisCuti;
     const magicLink = `https://marisko-app.vercel.app/cuti?action=${encodeURIComponent(data.noCuti)}`;
@@ -254,9 +260,6 @@ export default function CutiPage() {
     doc.text("Jabatan", leftMargin, currentY); doc.text(`: ${data.jabatan}`, leftMargin + 25, currentY); currentY += 7;
     doc.text("Pekerjaan", leftMargin, currentY); doc.text(`: Karyawan Dealer Honda Marisko Perkasa`, leftMargin + 25, currentY); currentY += 15;
 
-    // =========================================================================
-    // SAKTI: LOGIKA PINTAR UNTUK IZIN SETENGAH HARI
-    // =========================================================================
     const d1 = new Date(data.tglMulai);
     const d2 = new Date(data.tglSelesai);
     const diffTime = Math.abs(d2 - d1);
@@ -269,10 +272,8 @@ export default function CutiPage() {
     let tglKembaliStr = "";
 
     if (isSetengahHari) {
-        // Jika setengah hari, dia kembali di hari yang sama
         tglKembaliStr = "pada hari yang sama";
     } else {
-        // Jika cuti biasa, dia kembali besoknya
         dKembali.setDate(dKembali.getDate() + 1);
         const hariKembaliStr = daysLower[dKembali.getDay()];
         tglKembaliStr = `pada hari ${hariKembaliStr} ${dKembali.getDate()} ${monthsLower[dKembali.getMonth()]} ${dKembali.getFullYear()}`;
@@ -282,14 +283,22 @@ export default function CutiPage() {
     const endNum = d2.getDate();
     const endMonthYear = `${monthsLower[d2.getMonth()]} ${d2.getFullYear()}`;
     
+    // =========================================================================
+    // SAKTI: LOGIKA FORMAT TANGGAL YANG LEBIH PINTAR (HILANGKAN S/D JIKA SAMA)
+    // =========================================================================
     let tglRangeStr = "";
-    if(d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear()) { 
+    if (startNum === endNum && d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear()) {
+        tglRangeStr = `${startNum} ${monthsLower[d1.getMonth()]} ${d1.getFullYear()}`;
+    } else if(d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear()) { 
         tglRangeStr = `${startNum} s/d ${endNum} ${endMonthYear}`; 
     } else { 
         tglRangeStr = `${startNum} ${monthsLower[d1.getMonth()]} s/d ${endNum} ${endMonthYear}`; 
     }
     
-    const textParagraf1 = `Melalui surat ini saya mengajukan permohonan ${jenisKata} untuk tidak masuk kerja selama ${diffDaysText} pada tanggal ${tglRangeStr}, saya akan memulai bekerja kembali ${tglKembaliStr}.`;
+    // SAKTI: Perubahan kata kerja untuk Izin Setengah Hari
+    const kataKerjaKembali = isSetengahHari ? "bekerja kembali" : "memulai bekerja kembali";
+
+    const textParagraf1 = `Melalui surat ini saya mengajukan permohonan ${jenisKata} untuk tidak masuk kerja selama ${diffDaysText} pada tanggal ${tglRangeStr}, saya akan ${kataKerjaKembali} ${tglKembaliStr}.`;
     doc.text(textParagraf1, leftMargin, currentY, { maxWidth: contentWidth, align: "justify", lineHeightFactor: 1.5 });
     currentY += (doc.splitTextToSize(textParagraf1, contentWidth).length * 6.5) + 4;
 
@@ -308,14 +317,10 @@ export default function CutiPage() {
     currentY += 30; 
     doc.setFont("helvetica", "bold"); 
     
-    // =========================================================================
-    // SAKTI: POSISI TTD KACAB DIPERBAIKI AGAR PRESISI DI TENGAH (TIDAK MEPET)
-    // =========================================================================
     if (ttdBase64) {
       try {
         let imgFormat = 'PNG';
         if (ttdBase64.toLowerCase().includes('jpeg') || ttdBase64.toLowerCase().includes('jpg')) imgFormat = 'JPEG';
-        // Diturunkan sedikit dari -31 ke -26, tinggi disesuaikan jadi 22 agar pas!
         doc.addImage(ttdBase64, imgFormat, centerKiri - 15, currentY - 26, 30, 22);
       } catch (e) {}
     }

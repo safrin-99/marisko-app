@@ -227,9 +227,11 @@ export default function CutiPage() {
     const contentWidth = pageWidth - leftMargin - rightMargin; 
     let currentY = 30; 
 
-    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const monthsLower = ['januari', 'februari', 'maret', 'april', 'mei', 'juni', 'juli', 'agustus', 'september', 'oktober', 'november', 'desember'];
+    const daysLower = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
+    
     const createdDate = data.created_at ? new Date(data.created_at) : new Date();
-    const todayStr = `Buol, ${createdDate.getDate()} ${months[createdDate.getMonth()]} ${createdDate.getFullYear()}`;
+    const todayStr = `Buol, ${createdDate.getDate()} ${monthsLower[createdDate.getMonth()]} ${createdDate.getFullYear()}`;
 
     let perihalStr = ""; let jenisKata = "";
     if (data.jenisCuti === 'TAHUNAN') { perihalStr = "cuti tahunan"; jenisKata = "CUTI"; }
@@ -252,34 +254,42 @@ export default function CutiPage() {
     doc.text("Jabatan", leftMargin, currentY); doc.text(`: ${data.jabatan}`, leftMargin + 25, currentY); currentY += 7;
     doc.text("Pekerjaan", leftMargin, currentY); doc.text(`: Karyawan Dealer Honda Marisko Perkasa`, leftMargin + 25, currentY); currentY += 15;
 
+    // =========================================================================
+    // SAKTI: LOGIKA PINTAR UNTUK IZIN SETENGAH HARI
+    // =========================================================================
     const d1 = new Date(data.tglMulai);
     const d2 = new Date(data.tglSelesai);
     const diffTime = Math.abs(d2 - d1);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; 
 
-    let diffDaysText = `${diffDays} hari`;
-    if (data.jenisCuti === 'SETENGAH_HARI_AWAL' || data.jenisCuti === 'SETENGAH_HARI_AKHIR') {
-        diffDaysText = "setengah hari";
-    }
+    const isSetengahHari = data.jenisCuti === 'SETENGAH_HARI_AWAL' || data.jenisCuti === 'SETENGAH_HARI_AKHIR';
+    let diffDaysText = isSetengahHari ? "setengah hari" : `${diffDays} hari`;
 
     const dKembali = new Date(d2);
-    dKembali.setDate(dKembali.getDate() + 1);
+    let tglKembaliStr = "";
 
-    const daysLower = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
-    const monthsLower = ['januari', 'februari', 'maret', 'april', 'mei', 'juni', 'juli', 'agustus', 'september', 'oktober', 'november', 'desember'];
+    if (isSetengahHari) {
+        // Jika setengah hari, dia kembali di hari yang sama
+        tglKembaliStr = "pada hari yang sama";
+    } else {
+        // Jika cuti biasa, dia kembali besoknya
+        dKembali.setDate(dKembali.getDate() + 1);
+        const hariKembaliStr = daysLower[dKembali.getDay()];
+        tglKembaliStr = `pada hari ${hariKembaliStr} ${dKembali.getDate()} ${monthsLower[dKembali.getMonth()]} ${dKembali.getFullYear()}`;
+    }
 
     const startNum = d1.getDate();
     const endNum = d2.getDate();
     const endMonthYear = `${monthsLower[d2.getMonth()]} ${d2.getFullYear()}`;
     
     let tglRangeStr = "";
-    if(d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear()) { tglRangeStr = `${startNum} s/d ${endNum} ${endMonthYear}`; } 
-    else { tglRangeStr = `${startNum} ${monthsLower[d1.getMonth()]} s/d ${endNum} ${endMonthYear}`; }
+    if(d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear()) { 
+        tglRangeStr = `${startNum} s/d ${endNum} ${endMonthYear}`; 
+    } else { 
+        tglRangeStr = `${startNum} ${monthsLower[d1.getMonth()]} s/d ${endNum} ${endMonthYear}`; 
+    }
     
-    const hariKembaliStr = daysLower[dKembali.getDay()];
-    const tglKembaliFullStr = `${hariKembaliStr} ${dKembali.getDate()} ${monthsLower[dKembali.getMonth()]} ${dKembali.getFullYear()}`;
-
-    const textParagraf1 = `Melalui surat ini saya mengajukan permohonan ${jenisKata} untuk tidak masuk kerja selama ${diffDaysText} pada tanggal ${tglRangeStr}, saya akan memulai bekerja kembali pada hari ${tglKembaliFullStr}.`;
+    const textParagraf1 = `Melalui surat ini saya mengajukan permohonan ${jenisKata} untuk tidak masuk kerja selama ${diffDaysText} pada tanggal ${tglRangeStr}, saya akan memulai bekerja kembali ${tglKembaliStr}.`;
     doc.text(textParagraf1, leftMargin, currentY, { maxWidth: contentWidth, align: "justify", lineHeightFactor: 1.5 });
     currentY += (doc.splitTextToSize(textParagraf1, contentWidth).length * 6.5) + 4;
 
@@ -298,11 +308,15 @@ export default function CutiPage() {
     currentY += 30; 
     doc.setFont("helvetica", "bold"); 
     
+    // =========================================================================
+    // SAKTI: POSISI TTD KACAB DIPERBAIKI AGAR PRESISI DI TENGAH (TIDAK MEPET)
+    // =========================================================================
     if (ttdBase64) {
       try {
         let imgFormat = 'PNG';
         if (ttdBase64.toLowerCase().includes('jpeg') || ttdBase64.toLowerCase().includes('jpg')) imgFormat = 'JPEG';
-        doc.addImage(ttdBase64, imgFormat, centerKiri - 15, currentY - 31, 30, 25);
+        // Diturunkan sedikit dari -31 ke -26, tinggi disesuaikan jadi 22 agar pas!
+        doc.addImage(ttdBase64, imgFormat, centerKiri - 15, currentY - 26, 30, 22);
       } catch (e) {}
     }
 
@@ -509,7 +523,7 @@ export default function CutiPage() {
                     </div>
                     {isDropdownOpen && (
                       <><div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)}></div>
-                      <div className="absolute z-20 w-full mt-2.5 bg-white border border-slate-100 rounded-2xl shadow-2xl shadow-slate-950/10 overflow-hidden py-2.5 animate-in fade-in slide-in-from-top-3 duration-200">
+                      <div className="absolute z-20 w-full mt-2.5 bg-white border border-slate-100 rounded-2xl shadow-2xl shadow-slate-950/10 overflow-hidden py-2.5 animate-in fade-in slide-in-from-top-3 duration-300">
                         {opsiCuti.map((opt) => (<div key={opt.value} onClick={() => { setJenisCuti(opt.value); setIsDropdownOpen(false); }} className={`px-6 py-3.5 text-sm font-bold cursor-pointer transition-colors ${jenisCuti === opt.value ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-indigo-50/50 hover:text-indigo-600'}`}>{opt.label}</div>))}
                       </div></>
                     )}

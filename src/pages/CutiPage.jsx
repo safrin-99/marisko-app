@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FileSignature, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, CalendarDays, Search, MessageCircle, CheckCircle, XCircle, Users, Download } from 'lucide-react';
+import { FileSignature, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, CalendarDays, Search, MessageCircle, CheckCircle, XCircle, Users, Download, BellRing } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from "jspdf";
 
@@ -34,6 +34,8 @@ export default function CutiPage() {
   const [rekapStartDate, setRekapStartDate] = useState('');
   const [rekapEndDate, setRekapEndDate] = useState('');
 
+  const [ttdBase64, setTtdBase64] = useState('');
+
   const opsiCuti = [
     { value: 'TAHUNAN', label: 'Cuti Tahunan' },
     { value: 'MENIKAH', label: 'Cuti Menikah' },
@@ -45,6 +47,21 @@ export default function CutiPage() {
   ];
 
   useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const { data } = await supabase.from('dealer_settings').select('*').eq('id', 1).single();
+        const urlTtd = data?.ttd_url || data?.ttd_kacab || data?.signature_url || data?.ttd_kacab_url;
+        if (urlTtd) {
+          const response = await fetch(urlTtd, { cache: 'no-cache' });
+          const blob = await response.blob();
+          const reader = new FileReader();
+          reader.onloadend = () => setTtdBase64(reader.result);
+          reader.readAsDataURL(blob);
+        }
+      } catch (err) { }
+    };
+    fetchSettings();
+
     const checkMagicLink = () => {
       const params = new URLSearchParams(window.location.search);
       const actionId = params.get('action'); 
@@ -190,7 +207,7 @@ export default function CutiPage() {
   };
 
   const handleSendWA = (data) => {
-    const nomorWAKacab = "6282271461103"; 
+    const nomorWAKacab = "82271461103"; 
     const formatTgl = (tgl) => tgl ? tgl.split('-').reverse().join('/') : '-';
     const jenis = opsiCuti.find(o => o.value === data.jenisCuti)?.label || data.jenisCuti;
     const magicLink = `https://marisko-app.vercel.app/cuti?action=${encodeURIComponent(data.noCuti)}`;
@@ -210,9 +227,11 @@ export default function CutiPage() {
     const contentWidth = pageWidth - leftMargin - rightMargin; 
     let currentY = 30; 
 
-    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const monthsLower = ['januari', 'februari', 'maret', 'april', 'mei', 'juni', 'juli', 'agustus', 'september', 'oktober', 'november', 'desember'];
+    const daysLower = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
+    
     const createdDate = data.created_at ? new Date(data.created_at) : new Date();
-    const todayStr = `Buol, ${createdDate.getDate()} ${months[createdDate.getMonth()]} ${createdDate.getFullYear()}`;
+    const todayStr = `Buol, ${createdDate.getDate()} ${monthsLower[createdDate.getMonth()]} ${createdDate.getFullYear()}`;
 
     let perihalStr = ""; let jenisKata = "";
     if (data.jenisCuti === 'TAHUNAN') { perihalStr = "cuti tahunan"; jenisKata = "CUTI"; }
@@ -240,35 +259,43 @@ export default function CutiPage() {
     const diffTime = Math.abs(d2 - d1);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; 
 
-    let diffDaysText = `${diffDays} hari`;
-    if (data.jenisCuti === 'SETENGAH_HARI_AWAL' || data.jenisCuti === 'SETENGAH_HARI_AKHIR') {
-        diffDaysText = "setengah hari";
-    }
+    const isSetengahHari = data.jenisCuti === 'SETENGAH_HARI_AWAL' || data.jenisCuti === 'SETENGAH_HARI_AKHIR';
+    let diffDaysText = isSetengahHari ? "setengah hari" : `${diffDays} hari`;
 
     const dKembali = new Date(d2);
-    dKembali.setDate(dKembali.getDate() + 1);
+    let tglKembaliStr = "";
 
-    const daysLower = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
-    const monthsLower = ['januari', 'februari', 'maret', 'april', 'mei', 'juni', 'juli', 'agustus', 'september', 'oktober', 'november', 'desember'];
+    if (isSetengahHari) {
+        tglKembaliStr = "pada hari yang sama";
+    } else {
+        dKembali.setDate(dKembali.getDate() + 1);
+        const hariKembaliStr = daysLower[dKembali.getDay()];
+        tglKembaliStr = `pada hari ${hariKembaliStr} ${dKembali.getDate()} ${monthsLower[dKembali.getMonth()]} ${dKembali.getFullYear()}`;
+    }
 
     const startNum = d1.getDate();
     const endNum = d2.getDate();
     const endMonthYear = `${monthsLower[d2.getMonth()]} ${d2.getFullYear()}`;
     
     let tglRangeStr = "";
-    if(d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear()) { tglRangeStr = `${startNum} s/d ${endNum} ${endMonthYear}`; } 
-    else { tglRangeStr = `${startNum} ${monthsLower[d1.getMonth()]} s/d ${endNum} ${endMonthYear}`; }
+    if (startNum === endNum && d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear()) {
+        tglRangeStr = `${startNum} ${monthsLower[d1.getMonth()]} ${d1.getFullYear()}`;
+    } else if(d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear()) { 
+        tglRangeStr = `${startNum} s/d ${endNum} ${endMonthYear}`; 
+    } else { 
+        tglRangeStr = `${startNum} ${monthsLower[d1.getMonth()]} s/d ${endNum} ${endMonthYear}`; 
+    }
     
-    const hariKembaliStr = daysLower[dKembali.getDay()];
-    const tglKembaliFullStr = `${hariKembaliStr} ${dKembali.getDate()} ${monthsLower[dKembali.getMonth()]} ${dKembali.getFullYear()}`;
+    const kataKerjaKembali = isSetengahHari ? "bekerja kembali" : "memulai bekerja kembali";
 
-    const textParagraf1 = `Melalui surat ini saya mengajukan permohonan ${jenisKata} untuk tidak masuk kerja selama ${diffDaysText} pada tanggal ${tglRangeStr}, saya akan memulai bekerja kembali pada hari ${tglKembaliFullStr}.`;
+    const textParagraf1 = `Melalui surat ini saya mengajukan permohonan ${jenisKata} untuk tidak masuk kerja selama ${diffDaysText} pada tanggal ${tglRangeStr}, saya akan ${kataKerjaKembali} ${tglKembaliStr}.`;
     doc.text(textParagraf1, leftMargin, currentY, { maxWidth: contentWidth, align: "justify", lineHeightFactor: 1.5 });
     currentY += (doc.splitTextToSize(textParagraf1, contentWidth).length * 6.5) + 4;
 
     const textParagraf2 = `Demikian permohonan ${jenisKata} ini saya ajukan, dan atas ${jenisKata} yang diberikan saya ucapkan terima kasih.`;
     doc.text(textParagraf2, leftMargin, currentY, { maxWidth: contentWidth, align: "justify", lineHeightFactor: 1.5 });
-    currentY += 25;
+    
+    currentY += 20; 
 
     const centerKiri = leftMargin + 25;
     const centerKanan = pageWidth - rightMargin - 25;
@@ -277,8 +304,20 @@ export default function CutiPage() {
     doc.text("Hormat saya,", centerKanan, currentY, { align: "center" }); currentY += 6;
     doc.text("Kepala Cabang", centerKiri, currentY, { align: "center" });
 
-    currentY += 35; 
+    // SAKTI: Jarak Normal 30 agar nama tidak jatuh ke bawah
+    currentY += 30; 
     doc.setFont("helvetica", "bold"); 
+    
+    if (ttdBase64) {
+      try {
+        let imgFormat = 'PNG';
+        if (ttdBase64.toLowerCase().includes('jpeg') || ttdBase64.toLowerCase().includes('jpg')) imgFormat = 'JPEG';
+        
+        // SAKTI: Ukuran 40x26, posisi Y persis di -28 (Pas di tengah, tidak gepeng, tidak mepet nama)
+        doc.addImage(ttdBase64, imgFormat, centerKiri - 20, currentY - 28, 40, 26);
+      } catch (e) {}
+    }
+
     doc.text("BACHTIAR LATIEF", centerKiri, currentY, { align: "center" });
     const wKacab = doc.getTextWidth("BACHTIAR LATIEF");
     doc.setLineWidth(0.4);
@@ -291,20 +330,14 @@ export default function CutiPage() {
     window.open(URL.createObjectURL(doc.output('blob')), '_blank');
   };
 
-  const formatDateTime = (isoString, tgl) => {
-    if (!isoString) return { date: tgl, time: '-' };
-    return { date: tgl.split('-').reverse().join('/'), time: '-' };
-  };
-
   const formatTimeOnly = (isoString) => {
     if (!isoString) return '-';
     const dateObj = new Date(isoString);
     return dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   };
 
-  // SAKTI: Penyesuaian Gaya Input dan Label agar Kompak (Meniru Gambar 2)
-  const inputClass = "w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-slate-400";
-  const labelClass = "block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider";
+  const inputClass = "w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-slate-400";
+  const labelClass = "block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider";
 
   const rekapCutiData = Object.values(historyData.reduce((acc, row) => {
     if (row.status !== 'DISETUJUI') return acc; 
@@ -488,7 +521,7 @@ export default function CutiPage() {
                     </div>
                     {isDropdownOpen && (
                       <><div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)}></div>
-                      <div className="absolute z-20 w-full mt-2.5 bg-white border border-slate-100 rounded-2xl shadow-2xl shadow-slate-950/10 overflow-hidden py-2.5 animate-in fade-in slide-in-from-top-3 duration-200">
+                      <div className="absolute z-20 w-full mt-2.5 bg-white border border-slate-100 rounded-2xl shadow-2xl shadow-slate-950/10 overflow-hidden py-2.5 animate-in fade-in slide-in-from-top-3 duration-300">
                         {opsiCuti.map((opt) => (<div key={opt.value} onClick={() => { setJenisCuti(opt.value); setIsDropdownOpen(false); }} className={`px-6 py-3.5 text-sm font-bold cursor-pointer transition-colors ${jenisCuti === opt.value ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-indigo-50/50 hover:text-indigo-600'}`}>{opt.label}</div>))}
                       </div></>
                     )}

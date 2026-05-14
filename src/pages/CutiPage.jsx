@@ -35,6 +35,9 @@ export default function CutiPage() {
   const [rekapStartDate, setRekapStartDate] = useState('');
   const [rekapEndDate, setRekapEndDate] = useState('');
 
+  // SAKTI: State untuk Tanda Tangan Kacab
+  const [ttdBase64, setTtdBase64] = useState('');
+
   const opsiCuti = [
     { value: 'TAHUNAN', label: 'Cuti Tahunan' },
     { value: 'MENIKAH', label: 'Cuti Menikah' },
@@ -46,6 +49,22 @@ export default function CutiPage() {
   ];
 
   useEffect(() => {
+    // SAKTI: Menarik TTD Kacab dari Pengaturan Database saat halaman dimuat
+    const fetchSettings = async () => {
+      try {
+        const { data } = await supabase.from('dealer_settings').select('*').eq('id', 1).single();
+        const urlTtd = data?.ttd_url || data?.ttd_kacab || data?.signature_url || data?.ttd_kacab_url;
+        if (urlTtd) {
+          const response = await fetch(urlTtd, { cache: 'no-cache' });
+          const blob = await response.blob();
+          const reader = new FileReader();
+          reader.onloadend = () => setTtdBase64(reader.result);
+          reader.readAsDataURL(blob);
+        }
+      } catch (err) { }
+    };
+    fetchSettings();
+
     const checkMagicLink = () => {
       const params = new URLSearchParams(window.location.search);
       const actionId = params.get('action'); 
@@ -197,7 +216,7 @@ export default function CutiPage() {
   };
 
   const handleSendWA = (data) => {
-    const nomorWAKacab = "6282271461103"; 
+    const nomorWAKacab = "6282271470883"; 
     const formatTgl = (tgl) => tgl ? tgl.split('-').reverse().join('/') : '-';
     const jenis = opsiCuti.find(o => o.value === data.jenisCuti)?.label || data.jenisCuti;
     const magicLink = `https://marisko-app.vercel.app/cuti?action=${encodeURIComponent(data.noCuti)}`;
@@ -287,6 +306,16 @@ export default function CutiPage() {
     currentY += 35; 
     doc.setFont("helvetica", "bold"); 
     
+    // SAKTI: Cetak Tanda Tangan KACAB jika tersedia di database!
+    if (ttdBase64) {
+      try {
+        let imgFormat = 'PNG';
+        if (ttdBase64.toLowerCase().includes('jpeg') || ttdBase64.toLowerCase().includes('jpg')) imgFormat = 'JPEG';
+        // Posisi Y dikurangi 28 agar tepat berada di atas nama Kacab, ukuran 30x20
+        doc.addImage(ttdBase64, imgFormat, centerKiri - 15, currentY - 28, 30, 25);
+      } catch (e) {}
+    }
+
     doc.text("BACHTIAR LATIEF", centerKiri, currentY, { align: "center" });
     const wKacab = doc.getTextWidth("BACHTIAR LATIEF");
     doc.setLineWidth(0.4);
@@ -297,6 +326,11 @@ export default function CutiPage() {
     doc.line(centerKanan - (wKaryawan/2), currentY + 1, centerKanan + (wKaryawan/2), currentY + 1);
 
     window.open(URL.createObjectURL(doc.output('blob')), '_blank');
+  };
+
+  const formatDateTime = (isoString, tgl) => {
+    if (!isoString) return { date: tgl, time: '-' };
+    return { date: tgl.split('-').reverse().join('/'), time: '-' };
   };
 
   const formatTimeOnly = (isoString) => {
@@ -416,9 +450,8 @@ export default function CutiPage() {
   const renderModal = () => {
     if (!modal.isOpen) return null;
     return createPortal(
-      <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-md" onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })}></div>
-        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-[90%] sm:max-w-md p-6 sm:p-8 relative z-10 animate-in zoom-in-95 fade-in duration-300 border border-slate-100 overflow-hidden">
+      <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
+        <div className="bg-white rounded-4xl shadow-2xl w-full max-w-[90%] sm:max-w-md p-6 sm:p-8 relative z-10 animate-in zoom-in-95 fade-in duration-300 border border-slate-100 overflow-hidden">
           {modal.type === 'action_select' && <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-indigo-50 to-transparent -z-10"></div>}
           <div className="flex flex-col items-center text-center mt-2">
             {modal.type === 'action_select' ? (
@@ -540,7 +573,6 @@ export default function CutiPage() {
                     const statusCuti = row.status || 'DIPROSES';
                     let statusText = statusCuti === 'DISETUJUI' ? <div className="mt-1.5 text-[10px] font-extrabold text-emerald-600 uppercase tracking-wider flex items-center"><CheckCircle className="w-3.5 h-3.5 mr-1" /> DISETUJUI</div> : statusCuti === 'DITOLAK' ? <div className="mt-1.5 text-[10px] font-extrabold text-rose-600 uppercase tracking-wider flex items-center"><XCircle className="w-3.5 h-3.5 mr-1" /> DITOLAK</div> : <div className="mt-1.5 text-[10px] font-extrabold text-amber-500 uppercase tracking-wider flex items-center"><Clock className="w-3.5 h-3.5 mr-1" /> DIPROSES</div>;
                     
-                    // SAKTI: Logika Format Tanggal Diubah ke DD/MM/YYYY
                     const mulai = row.tglMulai ? row.tglMulai.split('-').reverse().join('/') : '-';
                     const selesai = row.tglSelesai ? row.tglSelesai.split('-').reverse().join('/') : '-';
 
@@ -555,12 +587,10 @@ export default function CutiPage() {
                             <button onClick={() => handleSendWA(row)} className="flex items-center gap-1.5 px-3 py-2 bg-[#25D366]/10 text-[#075E54] hover:bg-[#25D366]/20 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-[#25D366]/30 shadow-sm"><MessageCircle className="w-3.5 h-3.5" /> Kirim WA</button>
                             <button onClick={() => generateCutiPDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm"><Printer className="w-3.5 h-3.5" /> PDF</button>
                             
-                            {/* SAKTI: Tombol Edit Ghaib jika POS BUOL/KARYAWAN dan status sudah diputuskan */}
                             {(!isRestrictedRole || statusCuti === 'DIPROSES') && (
                               <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm"><Edit className="w-3.5 h-3.5" /> Edit</button>
                             )}
 
-                            {/* SAKTI: HANYA MUNCUL JIKA BUKAN ROLE TERBATAS */}
                             {!isRestrictedRole && (
                               <button onClick={() => handleDeleteRequest(row.noCuti)} className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm"><Trash2 className="w-3.5 h-3.5" /> Del</button>
                             )}
@@ -575,7 +605,6 @@ export default function CutiPage() {
           </div>
         </div>
 
-        {/* SAKTI: REKAPITULASI DISEMBUNYIKAN UNTUK KARYAWAN & POS BUOL */}
         {!isRestrictedRole && (
           <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
             <div className="bg-indigo-50/80 border-b border-indigo-100 p-4 md:p-5 flex flex-col justify-between items-start gap-4">

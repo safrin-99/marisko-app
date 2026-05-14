@@ -304,6 +304,7 @@ export default function CutiPage() {
     doc.text("Hormat saya,", centerKanan, currentY, { align: "center" }); currentY += 6;
     doc.text("Kepala Cabang", centerKiri, currentY, { align: "center" });
 
+    // SAKTI: Jarak Normal 30 agar nama tidak jatuh ke bawah
     currentY += 30; 
     doc.setFont("helvetica", "bold"); 
     
@@ -312,8 +313,8 @@ export default function CutiPage() {
         let imgFormat = 'PNG';
         if (ttdBase64.toLowerCase().includes('jpeg') || ttdBase64.toLowerCase().includes('jpg')) imgFormat = 'JPEG';
         
-        // SAKTI: Menaikkan sedikit (3 poin) dari Y=-28 menjadi Y=-31 agar pas di tengah dan tidak menyentuh nama.
-        doc.addImage(ttdBase64, imgFormat, centerKiri - 20, currentY - 31, 40, 26);
+        // SAKTI: Ukuran 40x26, posisi Y persis di -28 (Pas di tengah, tidak gepeng, tidak mepet nama)
+        doc.addImage(ttdBase64, imgFormat, centerKiri - 20, currentY - 28, 40, 26);
       } catch (e) {}
     }
 
@@ -335,7 +336,7 @@ export default function CutiPage() {
     return dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const inputClass = "w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:border-indigo-500).focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-slate-400";
+  const inputClass = "w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-slate-400";
   const labelClass = "block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider";
 
   const rekapCutiData = Object.values(historyData.reduce((acc, row) => {
@@ -520,7 +521,7 @@ export default function CutiPage() {
                     </div>
                     {isDropdownOpen && (
                       <><div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)}></div>
-                      <div className="absolute z-20 w-full mt-2.5 bg-white border border-slate-100 rounded-2xl shadow-2xl shadow-slate-950/10 overflow-hidden py-2.5 animate-in fade-in slide-in-from-top-3 duration-200">
+                      <div className="absolute z-20 w-full mt-2.5 bg-white border border-slate-100 rounded-2xl shadow-2xl shadow-slate-950/10 overflow-hidden py-2.5 animate-in fade-in slide-in-from-top-3 duration-300">
                         {opsiCuti.map((opt) => (<div key={opt.value} onClick={() => { setJenisCuti(opt.value); setIsDropdownOpen(false); }} className={`px-6 py-3.5 text-sm font-bold cursor-pointer transition-colors ${jenisCuti === opt.value ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-indigo-50/50 hover:text-indigo-600'}`}>{opt.label}</div>))}
                       </div></>
                     )}

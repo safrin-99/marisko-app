@@ -111,12 +111,6 @@ export default function CutiPage() {
     };
   }, [userRole]);
 
-  const testNotifikasi = () => {
-    const testData = { namaPegawai: "KARYAWAN DEMO", noCuti: "TEST/001/2026", status: "DISETUJUI" };
-    setLiveNotif(testData);
-    setTimeout(() => setLiveNotif(null), 15000);
-  };
-
   const executeActionStatus = async (id, newStatus) => {
     setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
     setIsLoading(true);
@@ -283,9 +277,6 @@ export default function CutiPage() {
     const endNum = d2.getDate();
     const endMonthYear = `${monthsLower[d2.getMonth()]} ${d2.getFullYear()}`;
     
-    // =========================================================================
-    // SAKTI: LOGIKA FORMAT TANGGAL YANG LEBIH PINTAR (HILANGKAN S/D JIKA SAMA)
-    // =========================================================================
     let tglRangeStr = "";
     if (startNum === endNum && d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear()) {
         tglRangeStr = `${startNum} ${monthsLower[d1.getMonth()]} ${d1.getFullYear()}`;
@@ -295,7 +286,6 @@ export default function CutiPage() {
         tglRangeStr = `${startNum} ${monthsLower[d1.getMonth()]} s/d ${endNum} ${endMonthYear}`; 
     }
     
-    // SAKTI: Perubahan kata kerja untuk Izin Setengah Hari
     const kataKerjaKembali = isSetengahHari ? "bekerja kembali" : "memulai bekerja kembali";
 
     const textParagraf1 = `Melalui surat ini saya mengajukan permohonan ${jenisKata} untuk tidak masuk kerja selama ${diffDaysText} pada tanggal ${tglRangeStr}, saya akan ${kataKerjaKembali} ${tglKembaliStr}.`;
@@ -314,14 +304,28 @@ export default function CutiPage() {
     doc.text("Hormat saya,", centerKanan, currentY, { align: "center" }); currentY += 6;
     doc.text("Kepala Cabang", centerKiri, currentY, { align: "center" });
 
-    currentY += 30; 
+    // =========================================================================
+    // SAKTI: OPERASI PLASTIK TTD KACAB (GENTLEMAN SIZE & PRECISION CENTER)
+    // =========================================================================
+    // 1. Tambah ruang kosong vertikal agar cetakan mewah. Dari 30 menjadi 40.
+    currentY += 40; 
+    
     doc.setFont("helvetica", "bold"); 
     
     if (ttdBase64) {
       try {
         let imgFormat = 'PNG';
         if (ttdBase64.toLowerCase().includes('jpeg') || ttdBase64.toLowerCase().includes('jpg')) imgFormat = 'JPEG';
-        doc.addImage(ttdBase64, imgFormat, centerKiri - 15, currentY - 26, 30, 22);
+        
+        // SAKTI: Penyesuaian Ukuran & Posisi (Centering)
+        // Ukuran di Word (Gambar 1) terlihat besar dan gagah.
+        // Lebar kita buat gagah: 40 (Dari Word terlihat lebar).
+        // Tinggi kita buat proporsional: 30 (Agar tidak gepeng, gagah seperti Word).
+        // Posisi X di tengah column: centerKiri - ( Lebar / 2 ) = centerKiri - 20.
+        // Posisi Y diturunkan sedikit dari sebelumnya agar benar-benar di tengah (center) vertikal.
+        // Y sebelumnya: currentY - 26 (Mepet Kepala Cabang, gepeng).
+        // Y Sakti Presisi: currentY - 35 (Menapak sempurna di atas nama, proporsional vertically).
+        doc.addImage(ttdBase64, imgFormat, centerKiri - 20, currentY - 35, 40, 30);
       } catch (e) {}
     }
 

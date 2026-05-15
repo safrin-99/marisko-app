@@ -34,16 +34,17 @@ export default function BukuServisPage() {
   const handlePrint = (data) => {
     const printWindow = window.open('', '_blank', 'width=1000,height=700');
     
-    // Logika Pemotongan Nama Motor
+    // ====================================================================
+    // SAKTI: Logika Pemotongan Nama Motor (Hanya Ambil Kode Tipe)
+    // Sekarang memotong murni dari garis miring "/", tidak peduli ada spasi atau tidak!
+    // ====================================================================
     let kodeTipeJenis = data.tipeKendaraan || '-';
-    if (kodeTipeJenis.includes(' / ')) {
-      const parts = kodeTipeJenis.split(' / ');
+    if (kodeTipeJenis.includes('/')) {
+      const parts = kodeTipeJenis.split('/');
       kodeTipeJenis = parts[parts.length - 1].trim(); 
     }
 
-    // ====================================================================
-    // SAKTI: LOGIKA UKURAN FONT OTOMATIS UNTUK TIPE KENDARAAN
-    // ====================================================================
+    // Logika Ukuran Font Otomatis untuk Tipe Kendaraan
     let fontClassTipe = "font-normal"; 
     if (kodeTipeJenis.length > 22) {
       fontClassTipe = "font-sangat-kecil"; 
@@ -69,18 +70,14 @@ export default function BukuServisPage() {
       }
     }
 
-    // ====================================================================
-    // SAKTI 1: LOGIKA PEMOTONGAN NAMA (PEMOHON / STNK)
-    // ====================================================================
+    // Logika Pemotongan Nama (PEMOHON / STNK)
     let namaCetak = data.namaKonsumen || '-';
     if (namaCetak.includes('/')) {
       const namaParts = namaCetak.split('/');
       namaCetak = namaParts[namaParts.length - 1].trim(); 
     }
 
-    // ====================================================================
-    // SAKTI 2: LOGIKA UKURAN FONT OTOMATIS NAMA (Mengecil jika kepanjangan)
-    // ====================================================================
+    // Logika Ukuran Font Otomatis Nama (Mengecil jika kepanjangan)
     let fontClassNama = "font-normal"; 
     if (namaCetak.length > 25) {
       fontClassNama = "font-sangat-kecil"; 

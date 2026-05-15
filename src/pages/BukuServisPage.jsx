@@ -35,14 +35,14 @@ export default function BukuServisPage() {
     const printWindow = window.open('', '_blank', 'width=1000,height=700');
     
     // ====================================================================
-    // SAKTI: Logika Pemotongan Nama Motor (Hanya Ambil Kode Tipe)
-    // Sekarang memotong berdasarkan garis miring "/" PERTAMA saja!
-    // Ini menyelamatkan tipe "A/T" dari pemotongan ganda.
+    // SAKTI: Logika Pemotongan Nama Motor (Hanya Ambil NAMA MOTOR SAJA)
+    // Mengambil teks yang berada SEBELUM garis miring "/" pertama.
+    // Contoh: "NEW SCOOPY STYLISH / F1C02N47S3 A/T" -> "NEW SCOOPY STYLISH"
     // ====================================================================
     let kodeTipeJenis = data.tipeKendaraan || '-';
     if (kodeTipeJenis.includes('/')) {
       const firstSlashIndex = kodeTipeJenis.indexOf('/');
-      kodeTipeJenis = kodeTipeJenis.substring(firstSlashIndex + 1).trim(); 
+      kodeTipeJenis = kodeTipeJenis.substring(0, firstSlashIndex).trim(); 
     }
 
     // Logika Ukuran Font Otomatis untuk Tipe Kendaraan

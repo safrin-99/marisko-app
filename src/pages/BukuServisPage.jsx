@@ -36,12 +36,13 @@ export default function BukuServisPage() {
     
     // ====================================================================
     // SAKTI: Logika Pemotongan Nama Motor (Hanya Ambil Kode Tipe)
-    // Sekarang memotong murni dari garis miring "/", tidak peduli ada spasi atau tidak!
+    // Sekarang memotong berdasarkan garis miring "/" PERTAMA saja!
+    // Ini menyelamatkan tipe "A/T" dari pemotongan ganda.
     // ====================================================================
     let kodeTipeJenis = data.tipeKendaraan || '-';
     if (kodeTipeJenis.includes('/')) {
-      const parts = kodeTipeJenis.split('/');
-      kodeTipeJenis = parts[parts.length - 1].trim(); 
+      const firstSlashIndex = kodeTipeJenis.indexOf('/');
+      kodeTipeJenis = kodeTipeJenis.substring(firstSlashIndex + 1).trim(); 
     }
 
     // Logika Ukuran Font Otomatis untuk Tipe Kendaraan

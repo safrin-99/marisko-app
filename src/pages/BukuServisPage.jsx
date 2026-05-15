@@ -6,7 +6,6 @@ export default function BukuServisPage() {
   const [bastkData, setBastkData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // SAKTI: State untuk Pencarian dan Filter Tanggal
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -42,6 +41,16 @@ export default function BukuServisPage() {
       kodeTipeJenis = parts[parts.length - 1].trim(); 
     }
 
+    // ====================================================================
+    // SAKTI: LOGIKA UKURAN FONT OTOMATIS UNTUK TIPE KENDARAAN
+    // ====================================================================
+    let fontClassTipe = "font-normal"; 
+    if (kodeTipeJenis.length > 22) {
+      fontClassTipe = "font-sangat-kecil"; 
+    } else if (kodeTipeJenis.length > 15) {
+      fontClassTipe = "font-agak-kecil"; 
+    }
+
     // Logika Pemotongan Alamat (Hanya mengambil bagian sebelum kata "KEC")
     let alamatCetak = data.alamat || '-';
     const upperAlamat = alamatCetak.toUpperCase();
@@ -70,7 +79,7 @@ export default function BukuServisPage() {
     }
 
     // ====================================================================
-    // SAKTI 2: LOGIKA UKURAN FONT OTOMATIS (Mengecil jika kepanjangan)
+    // SAKTI 2: LOGIKA UKURAN FONT OTOMATIS NAMA (Mengecil jika kepanjangan)
     // ====================================================================
     let fontClassNama = "font-normal"; 
     if (namaCetak.length > 25) {
@@ -137,9 +146,9 @@ export default function BukuServisPage() {
           
           <table class="table-1 font-normal">
             <tr class="row-sm">
-              <td class="col-label">Tipe/Jenis</td><td class="col-value">${kodeTipeJenis}</td>
+              <td class="col-label">Tipe/Jenis</td><td class="col-value ${fontClassTipe}">${kodeTipeJenis}</td>
               <td class="col-gap"></td>
-              <td class="col-label">Tipe/Jenis</td><td class="col-value">${kodeTipeJenis}</td>
+              <td class="col-label">Tipe/Jenis</td><td class="col-value ${fontClassTipe}">${kodeTipeJenis}</td>
             </tr>
             <tr class="row-sm">
               <td class="col-label">Warna</td><td class="col-value">${data.warna || '-'}</td>
@@ -226,16 +235,11 @@ export default function BukuServisPage() {
     printWindow.document.close();
   };
 
-  // =========================================================================
-  // SAKTI: FUNGSI FILTER DATA BERDASARKAN TANGGAL & PENCARIAN
-  // =========================================================================
   const getFilteredData = () => {
     return bastkData.filter((row) => {
-      // 1. Filter Tanggal (Menggunakan tglSerah)
       if (startDate && row.tglSerah < startDate) return false;
       if (endDate && row.tglSerah > endDate) return false;
       
-      // 2. Filter Teks Pencarian
       if (!searchTerm) return true;
       const keyword = searchTerm.toLowerCase();
       const searchString = `${row?.noSurat || ''} ${row?.namaKonsumen || ''}`.toLowerCase();
@@ -245,9 +249,6 @@ export default function BukuServisPage() {
 
   const filteredData = getFilteredData();
 
-  // =========================================================================
-  // SAKTI: FUNGSI EKSPOR KE EXCEL BERDASARKAN FILTER SAAT INI
-  // =========================================================================
   const exportToExcel = () => {
     if (filteredData.length === 0) {
       alert('Tidak ada data untuk diekspor ke Excel.');
@@ -288,7 +289,6 @@ export default function BukuServisPage() {
           <p className="text-slate-500 font-medium mt-1">Cetak stiker identitas buku servis konsumen (terintegrasi otomatis dengan data BASTK).</p>
         </div>
         
-        {/* SAKTI: Tombol Aksi di Header (Refresh & Ekspor Excel) */}
         <div className="flex items-center gap-3 w-full md:w-auto">
           <button onClick={fetchBastkData} className="flex-1 md:flex-none flex items-center justify-center text-sm font-bold text-slate-700 bg-slate-100 px-5 py-3 rounded-xl active:scale-95 shadow-sm hover:bg-slate-200 transition-all duration-200">
             <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
@@ -301,7 +301,6 @@ export default function BukuServisPage() {
 
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden antialiased">
         
-        {/* SAKTI: Baris Pencarian & Filter Tanggal diletakkan di atas tabel */}
         <div className="bg-slate-50/80 border-b border-slate-200 p-4 md:p-5 flex flex-col sm:flex-row items-center gap-3 w-full">
           <div className="relative w-full sm:w-1/3">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
@@ -369,7 +368,6 @@ export default function BukuServisPage() {
                       <div className="font-bold text-xs text-indigo-600 mt-1">{item.tipeKendaraan} • {item.warna}</div>
                     </td>
                     <td className="p-5 font-bold text-sm text-slate-600 whitespace-nowrap">
-                      {/* SAKTI: Ubah Format Tanggal Tabel menjadi DD/MM/YYYY */}
                       {item.tglSerah ? item.tglSerah.split('-').reverse().join('/') : '-'}
                     </td>
                     <td className="p-5 text-center whitespace-nowrap">

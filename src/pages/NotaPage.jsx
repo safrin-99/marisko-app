@@ -423,11 +423,17 @@ export default function NotaPage() {
         </div>, document.body
       )}
 
+      {/* =======================================================================
+          SAKTI: CARD LOADING SUDAH DISERAGAMKAN UKURANNYA! (max-w-sm w-full mx-4)
+          ======================================================================= */}
       {isSubmitting && createPortal(
-        <div className="fixed inset-0 z-[99998] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center animate-in zoom-in-95">
-            <div className="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-600/30 mb-6 animate-bounce"><ScrollText className="w-10 h-10 text-white animate-pulse" /></div>
+        <div className="fixed inset-0 z-[99998] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-300 border border-slate-100 max-w-sm w-full mx-4">
+            <div className="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-600/30 mb-6 animate-bounce">
+              <ScrollText className="w-10 h-10 text-white animate-pulse" />
+            </div>
             <h3 className="text-xl font-extrabold text-slate-900 tracking-tight mb-2">Memproses Nota...</h3>
+            <p className="text-sm font-medium text-slate-500 text-center">Menyimpan data dan menyiapkan PDF.</p>
           </div>
         </div>, document.body
       )}

@@ -84,8 +84,6 @@ export default function DashboardPage() {
     setIsLoading(false);
   };
 
-  const formatRupiah = (num) => new Intl.NumberFormat('id-ID').format(num);
-
   const timeAgo = (dateString) => {
     const past = new Date(dateString);
     const now = new Date();
@@ -105,26 +103,13 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* HEADER DASHBOARD */}
+      {/* SAKTI: HEADER DASHBOARD MINIMALIS (TanPA Kotak Pemasukan) */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
         <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-50 rounded-full blur-[80px] -mr-20 -mt-20 z-0 pointer-events-none"></div>
         
         <div className="relative z-10 flex-1">
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Selamat Datang, {adminName}! 👋</h1>
           <p className="text-sm md:text-base text-slate-500 font-medium mt-1">Ringkasan aktivitas MARISKO PERKASA hari ini.</p>
-        </div>
-
-        <div className="relative z-10 flex items-stretch gap-3">
-          <button onClick={fetchDashboardData} className="px-4 py-2 flex items-center justify-center bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 active:scale-95 transition-all text-slate-500 shadow-sm group">
-             <RefreshCw className={`w-5 h-5 group-hover:rotate-180 transition-transform duration-500 ${isLoading ? 'animate-spin text-indigo-600' : ''}`} />
-          </button>
-          
-          <div className="flex flex-col justify-center px-6 py-3 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 rounded-2xl border border-slate-800 shadow-xl shadow-indigo-900/20 min-w-[200px] relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 cursor-default">
-             <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-             <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-indigo-500 rounded-full blur-2xl opacity-30"></div>
-             <span className="text-[10px] md:text-xs font-extrabold text-indigo-200/80 uppercase tracking-widest relative z-10">Total Pemasukan Nota</span>
-             <span className="text-lg md:text-xl font-black text-white relative z-10 drop-shadow-md">Rp {isLoading ? '...' : formatRupiah(stats.pemasukan)}</span>
-          </div>
         </div>
       </div>
 

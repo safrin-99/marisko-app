@@ -37,7 +37,7 @@ export default function BastkPage() {
 
   const opsiPembiayaan = [
     { value: 'CASH', label: 'CASH (MARISKO PERKASA)' },
-    { value: 'ADIRA', label: 'PT. ADIRA MULTI FINANCE' },
+    { value: 'ADIRA', label: 'PT. 1204 ADIRA SYARIEF MANSYUR' },
     { value: 'FIF', label: 'PT. FEDERAL INTERNATIONAL FINANCE' },
     { value: 'MANDALA', label: 'PT. ADIRA DAHULU MANDALA' }
   ];

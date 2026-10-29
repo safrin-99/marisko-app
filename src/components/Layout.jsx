@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, FileText, BookOpen, CalendarDays, Receipt, Banknote, ClipboardSignature, ScrollText, Settings, LogOut, Menu, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import { signOutLocal } from '../lib/auth';
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -14,8 +15,8 @@ export default function Layout({ children }) {
 
   const userRole = localStorage.getItem('adminRole')?.toUpperCase() || '';
 
-  const handleConfirmLogout = () => {
-    localStorage.removeItem('isLoggedIn');
+  const handleConfirmLogout = async () => {
+    await signOutLocal();
     navigate('/login');
   };
 

@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { supabase } from './lib/supabase';
+import { loadProfile, clearLocalLogin, signOutLocal } from './lib/auth';
 
 // Import Komponen Layout (Ini yang berisi Sidebar)
 import Layout from './components/Layout';
@@ -17,15 +19,62 @@ import NotaPage from './pages/NotaPage';
 import SettingsPage from './pages/SettingsPage';
 
 // Komponen Sakti untuk Memblokir Akses (Protected Route)
+// Berbasis sesi Supabase Auth: mengisi localStorage secara manual tidak membuka halaman.
 const ProtectedRoute = ({ children }) => {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
   const location = useLocation();
+  const [status, setStatus] = useState('checking'); // checking | ok | denied
 
-  if (!isLoggedIn) {
+  useEffect(() => {
+    let active = true;
+
+    const verify = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        clearLocalLogin();
+        if (active) setStatus('denied');
+        return;
+      }
+
+      // Profil dibaca ulang dari database (token palsu/kedaluwarsa akan gagal di sini)
+      const profile = await loadProfile(session.user.id);
+      if (!active) return;
+      if (profile) {
+        setStatus('ok');
+        return;
+      }
+
+      // Tanpa internet profil tidak bisa dicek; pakai data terakhir agar tidak dilempar ke login
+      if (!navigator.onLine && localStorage.getItem('adminRole')) {
+        setStatus('ok');
+        return;
+      }
+
+      await signOutLocal();
+      if (active) setStatus('denied');
+    };
+    verify();
+
+    // Sesi berakhir (keluar / token tidak bisa diperbarui) → kembali ke login
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        clearLocalLogin();
+        setStatus('denied');
+      }
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  if (status === 'checking') return null;
+
+  if (status === 'denied') {
     // Melempar kembali ke login jika belum login
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
-  
+
   return children;
 };
 

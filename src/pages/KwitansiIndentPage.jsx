@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ClipboardSignature, Edit, Trash2, RefreshCw, Clock, X, CheckCircle2, AlertCircle, Printer, FileText, ChevronDown, Search, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { getLogosSignedUrl } from '../lib/storage';
 import { jsPDF } from "jspdf";
 
 export default function KwitansiIndentPage() {
@@ -38,8 +39,9 @@ export default function KwitansiIndentPage() {
   const fetchLogo = async () => {
     try {
       const { data } = await supabase.from('dealer_settings').select('*').eq('id', 1).single();
-      if (data?.logo_url) {
-        const response = await fetch(data.logo_url, { cache: 'no-cache' });
+      const logoUrl = await getLogosSignedUrl(data?.logo_url);
+      if (logoUrl) {
+        const response = await fetch(logoUrl, { cache: 'no-cache' });
         const blob = await response.blob();
         const reader = new FileReader();
         reader.onloadend = () => setLogoBase64(reader.result);

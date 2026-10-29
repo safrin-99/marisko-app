@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FileSignature, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, CalendarDays, Search, MessageCircle, CheckCircle, XCircle, Users, Download, BellRing } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { getLogosSignedUrl } from '../lib/storage';
 import { jsPDF } from "jspdf";
 
 export default function CutiPage() {
@@ -50,7 +51,7 @@ export default function CutiPage() {
     const fetchSettings = async () => {
       try {
         const { data } = await supabase.from('dealer_settings').select('*').eq('id', 1).single();
-        const urlTtd = data?.ttd_url || data?.ttd_kacab || data?.signature_url || data?.ttd_kacab_url;
+        const urlTtd = await getLogosSignedUrl(data?.ttd_url || data?.ttd_kacab || data?.signature_url || data?.ttd_kacab_url);
         if (urlTtd) {
           const response = await fetch(urlTtd, { cache: 'no-cache' });
           const blob = await response.blob();

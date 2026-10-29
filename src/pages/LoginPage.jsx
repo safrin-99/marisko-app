@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, ShieldCheck, RefreshCw, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { isAuthRetryableFetchError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { loadProfile, signOutLocal } from '../lib/auth';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -25,23 +27,30 @@ export default function LoginPage() {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('admin_accounts')
-        .select('*')
-        .eq('email', email)
-        .eq('password', password)
-        .single();
+      // SAKTI: Kata sandi dicek oleh Supabase Auth (tersimpan ter-hash), bukan dicocokkan di tabel
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
 
-      if (error || !data) {
+      if (isAuthRetryableFetchError(error)) {
+        setErrorMsg('Gagal terhubung ke server database.');
+      } else if (error || !data?.user) {
         setErrorMsg('Email atau Kata Sandi salah!');
       } else {
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('adminName', data.nama);
-        localStorage.setItem('adminRole', data.role);
-        
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 800);
+        const profile = await loadProfile(data.user.id);
+
+        if (!profile) {
+          // Akun Auth tanpa profil (mis. daftar sendiri) tidak boleh masuk
+          await signOutLocal();
+          setErrorMsg('Email atau Kata Sandi salah!');
+        } else {
+          localStorage.setItem('isLoggedIn', 'true');
+
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 800);
+        }
       }
     } catch (err) {
       setErrorMsg('Gagal terhubung ke server database.');

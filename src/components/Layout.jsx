@@ -9,6 +9,7 @@ export default function Layout({ children }) {
   const currentPath = location.pathname;
   
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLogoutClosing, setIsLogoutClosing] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const userRole = localStorage.getItem('adminRole')?.toUpperCase() || '';
@@ -16,6 +17,17 @@ export default function Layout({ children }) {
   const handleConfirmLogout = () => {
     localStorage.removeItem('isLoggedIn');
     navigate('/login');
+  };
+
+  // Popup keluar ditutup dengan animasi dulu (sama dengan durasi .ui-modal-closing), baru aksinya dijalankan
+  const closeLogoutModal = (afterClose) => {
+    if (isLogoutClosing) return;
+    setIsLogoutClosing(true);
+    setTimeout(() => {
+      setShowLogoutModal(false);
+      setIsLogoutClosing(false);
+      if (afterClose) afterClose();
+    }, 180);
   };
 
   let menuSections = [
@@ -59,8 +71,8 @@ export default function Layout({ children }) {
     <div className="flex h-screen bg-stone-50 text-stone-900 overflow-hidden relative">
 
       {showLogoutModal && createPortal(
-        <div className="ui-overlay">
-          <div className="ui-modal max-w-sm">
+        <div className={`ui-overlay ${isLogoutClosing ? 'ui-overlay-closing' : ''}`}>
+          <div className={`ui-modal max-w-sm ${isLogoutClosing ? 'ui-modal-closing' : ''}`}>
             <div className="flex flex-col items-center text-center">
               <div className="ui-modal-icon-danger">
                 <LogOut className="w-6 h-6" />
@@ -68,10 +80,10 @@ export default function Layout({ children }) {
               <h3 className="ui-modal-title">Keluar dari Aplikasi?</h3>
               <p className="ui-modal-text">Anda harus login kembali untuk mengakses sistem MARISKO.</p>
               <div className="flex w-full gap-3">
-                <button onClick={() => setShowLogoutModal(false)} className="ui-btn-secondary flex-1">
+                <button onClick={() => closeLogoutModal()} className="ui-btn-secondary flex-1">
                   Batal
                 </button>
-                <button onClick={handleConfirmLogout} className="ui-btn-danger flex-1">
+                <button onClick={() => closeLogoutModal(handleConfirmLogout)} className="ui-btn-danger flex-1">
                   Ya, Keluar
                 </button>
               </div>

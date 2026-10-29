@@ -102,7 +102,9 @@ export default function BastkPage() {
 
     try {
       if (isEditing) {
-        await supabase.from('bastk_history').update(formData).eq('noSurat', originalNoSurat);
+        const { data: updated, error } = await supabase.from('bastk_history').update(formData).eq('noSurat', originalNoSurat).select();
+        if (error) throw error;
+        if (!updated || updated.length === 0) throw new Error('Data tidak ditemukan di database. Muat ulang halaman lalu coba lagi.');
         setModal({ isOpen: true, type: 'success', title: 'Berhasil Diupdate!', message: 'Data BASTK telah berhasil diperbarui.', actionData: formData });
         setIsEditing(false);
       } else {
@@ -113,7 +115,8 @@ export default function BastkPage() {
           return;
         }
         
-        await supabase.from('bastk_history').insert([formData]);
+        const { error } = await supabase.from('bastk_history').insert([formData]);
+        if (error) throw error;
         setModal({ isOpen: true, type: 'success', title: 'Berhasil Disimpan!', message: 'Dokumen BASTK berhasil dibuat dan siap untuk dicetak.', actionData: formData });
       }
       resetForm();
@@ -140,8 +143,13 @@ export default function BastkPage() {
 
   const executeDelete = async (noSuratId) => {
     setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
-    await supabase.from('bastk_history').delete().eq('noSurat', noSuratId);
+    // SAKTI: Pastikan database benar-benar menghapus datanya sebelum bilang "Terhapus"
+    const { data: deleted, error } = await supabase.from('bastk_history').delete().eq('noSurat', noSuratId).select();
     fetchHistory();
+    if (error || !deleted || deleted.length === 0) {
+      setModal({ isOpen: true, type: 'error', title: 'Gagal Menghapus', message: `Dokumen BASTK No: ${noSuratId} belum terhapus. Periksa koneksi internet lalu coba lagi.`, actionData: null });
+      return;
+    }
     setModal({ isOpen: true, type: 'success_delete', title: 'Terhapus!', message: 'Data BASTK telah berhasil dihapus.', actionData: null });
   };
 

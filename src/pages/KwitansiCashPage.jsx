@@ -145,8 +145,9 @@ export default function KwitansiCashPage() {
     };
     try {
       if (isEditing) {
-        const { error } = await supabase.from('kwitansi_cash_history').update(formData).eq('noInvoice', originalNo);
+        const { data: updated, error } = await supabase.from('kwitansi_cash_history').update(formData).eq('noInvoice', originalNo).select();
         if (error) throw error;
+        if (!updated || updated.length === 0) throw new Error('Data tidak ditemukan di database. Muat ulang halaman lalu coba lagi.');
         setModal({ isOpen: true, type: 'success', title: 'Diperbarui!', message: 'Data Berhasil diupdate.', actionData: formData });
         setIsEditing(false);
       } else {
@@ -186,8 +187,12 @@ export default function KwitansiCashPage() {
 
   const executeDelete = async (id) => {
     setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
-    await supabase.from('kwitansi_cash_history').delete().eq('noInvoice', id);
+    // SAKTI: Pastikan database benar-benar menghapus datanya; beri tahu bila gagal
+    const { data: deleted, error } = await supabase.from('kwitansi_cash_history').delete().eq('noInvoice', id).select();
     fetchHistory();
+    if (error || !deleted || deleted.length === 0) {
+      setModal({ isOpen: true, type: 'error', title: 'Gagal Menghapus', message: `Invoice No: ${id} belum terhapus. Periksa koneksi internet lalu coba lagi.`, actionData: null });
+    }
   };
 
   const resetForm = () => {

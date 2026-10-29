@@ -69,8 +69,8 @@ export default function App() {
                 {/* Fallback jika URL tidak ditemukan (404) */}
                 <Route path="*" element={
                   <div className="flex flex-col items-center justify-center h-[80vh]">
-                    <h1 className="text-4xl font-black text-slate-300 mb-4">404</h1>
-                    <p className="text-slate-500 font-bold">Halaman Tidak Ditemukan</p>
+                    <h1 className="font-mono text-4xl font-semibold text-stone-300 mb-4">404</h1>
+                    <p className="text-stone-600 font-medium">Halaman Tidak Ditemukan</p>
                   </div>
                 } />
               </Routes>

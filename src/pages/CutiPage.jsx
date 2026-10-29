@@ -336,8 +336,8 @@ export default function CutiPage() {
     return dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const inputClass = "w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-slate-400";
-  const labelClass = "block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider";
+  const inputClass = "ui-input";
+  const labelClass = "ui-label";
 
   const rekapCutiData = Object.values(historyData.reduce((acc, row) => {
     if (row.status !== 'DISETUJUI') return acc; 
@@ -424,21 +424,18 @@ export default function CutiPage() {
     const IconComponent = isSetuju ? CheckCircle2 : isTolak ? XCircle : Clock;
 
     return createPortal(
-      <div className="fixed top-4 sm:top-6 left-1/2 transform -translate-x-1/2 z-[999999] w-[92%] sm:w-full max-w-sm animate-in slide-in-from-top-10 fade-in duration-500">
-        <div className="bg-white/95 backdrop-blur-xl border border-slate-200/60 shadow-2xl rounded-2xl sm:rounded-3xl p-3 sm:p-5 flex items-center sm:items-start gap-3 sm:gap-4">
-          <div className="relative shrink-0 flex items-center justify-center">
-             <div className={`absolute w-10 h-10 sm:w-12 sm:h-12 rounded-full opacity-50 animate-ping ${bgColor}`}></div>
-             <div className={`relative w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shadow-inner ${bgColor} ${iconColor}`}>
-                <IconComponent className="w-5 h-5 sm:w-6 sm:h-6" />
-             </div>
+      <div className="fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-[999999] w-[92%] sm:w-full max-w-sm">
+        <div className="bg-white border border-stone-200 shadow-lg rounded-xl p-4 flex items-start gap-3 font-sans">
+          <div className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${bgColor} ${iconColor}`}>
+             <IconComponent className="w-5 h-5" />
           </div>
-          <div className="flex-1 pt-0.5 sm:pt-1">
-             <h4 className="text-[14px] sm:text-[15px] font-black text-slate-900 leading-tight mb-0.5 sm:mb-1">Status Diperbarui!</h4>
-             <p className="text-[12px] sm:text-[13px] font-medium text-slate-500 leading-relaxed">
-               Permohonan <b className="text-slate-800">{liveNotif.namaPegawai}</b> kini <span className={`font-black ${textColor}`}>{liveNotif.status}</span>.
+          <div className="flex-1 pt-0.5">
+             <h4 className="text-sm font-semibold text-stone-900 leading-tight mb-1">Status Diperbarui!</h4>
+             <p className="text-[13px] text-stone-600 leading-relaxed">
+               Permohonan <b className="font-semibold text-stone-900">{liveNotif.namaPegawai}</b> kini <span className={`font-semibold ${textColor}`}>{liveNotif.status}</span>.
              </p>
           </div>
-          <button onClick={() => setLiveNotif(null)} className="shrink-0 p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 rounded-full transition-colors focus:outline-none"><X className="w-4 h-4" /></button>
+          <button onClick={() => setLiveNotif(null)} aria-label="Tutup notifikasi" className="shrink-0 p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-700 rounded-md transition-colors"><X className="w-4 h-4" /></button>
         </div>
       </div>, document.body
     );
@@ -447,44 +444,40 @@ export default function CutiPage() {
   const renderModal = () => {
     if (!modal.isOpen) return null;
     return createPortal(
-      <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
-        <div className="bg-white rounded-4xl shadow-2xl w-full max-w-[90%] sm:max-w-md p-6 sm:p-8 relative z-10 animate-in zoom-in-95 fade-in duration-300 border border-slate-100 overflow-hidden">
-          {modal.type === 'action_select' && <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-indigo-50 to-transparent -z-10"></div>}
-          <div className="flex flex-col items-center text-center mt-2">
+      <div className="ui-overlay">
+        <div className="ui-modal">
+          <div className="flex flex-col items-center text-center">
             {modal.type === 'action_select' ? (
-              <div className="relative flex items-center justify-center mb-6">
-                 <div className="absolute w-24 h-24 bg-indigo-100/50 rounded-full animate-pulse"></div>
-                 <div className="relative w-20 h-20 bg-gradient-to-br from-indigo-100 to-indigo-50 border border-indigo-200 rounded-full flex items-center justify-center text-indigo-600 shadow-inner"><FileSignature className="w-10 h-10" /></div>
-              </div>
+              <div className="ui-modal-icon-neutral"><FileSignature className="w-6 h-6" /></div>
             ) : modal.type === 'success' || modal.type === 'success_delete' ? (
-              <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6 text-emerald-600 shadow-inner"><CheckCircle2 className="w-10 h-10" /></div>
-            ) : (<div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-6 text-rose-600 shadow-inner"><AlertCircle className="w-10 h-10" /></div>)}
-            <h3 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">{modal.title}</h3>
-            <p className="text-slate-500 font-medium text-[14px] leading-relaxed mb-8 px-2">{modal.message}</p>
+              <div className="ui-modal-icon-success"><CheckCircle2 className="w-6 h-6" /></div>
+            ) : (<div className="ui-modal-icon-danger"><AlertCircle className="w-6 h-6" /></div>)}
+            <h3 className="ui-modal-title">{modal.title}</h3>
+            <p className="ui-modal-text">{modal.message}</p>
             <div className="flex w-full gap-3 justify-center">
               {modal.type === 'action_select' ? (
-                <div className="flex flex-col gap-3 w-full">
-                  <button onClick={() => executeActionStatus(modal.actionData, 'DISETUJUI')} className="group relative w-full p-4 bg-white border border-slate-200 hover:border-emerald-500 rounded-2xl shadow-sm hover:shadow-md transition-all text-left flex items-center gap-4 focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
-                    <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300"><CheckCircle className="w-6 h-6" /></div>
-                    <div className="flex-1"><h4 className="text-[15px] font-extrabold text-slate-900 group-hover:text-emerald-700 transition-colors">Setujui Permohonan</h4><p className="text-[11px] font-bold text-slate-400 mt-0.5">Izinkan dan validasi cuti/izin ini</p></div>
+                <div className="flex flex-col gap-2 w-full">
+                  <button onClick={() => executeActionStatus(modal.actionData, 'DISETUJUI')} className="w-full p-3 bg-white border border-stone-200 hover:border-green-600 hover:bg-green-50/40 rounded-lg transition-colors text-left flex items-center gap-3 focus:outline-none focus-visible:ring-3 focus-visible:ring-green-600/15">
+                    <div className="w-9 h-9 shrink-0 rounded-full bg-green-50 flex items-center justify-center text-green-700"><CheckCircle className="w-5 h-5" /></div>
+                    <div className="flex-1"><h4 className="text-sm font-semibold text-stone-900">Setujui Permohonan</h4><p className="text-xs text-stone-500 mt-0.5">Izinkan dan validasi cuti/izin ini</p></div>
                   </button>
-                  <button onClick={() => executeActionStatus(modal.actionData, 'DITOLAK')} className="group relative w-full p-4 bg-white border border-slate-200 hover:border-rose-500 rounded-2xl shadow-sm hover:shadow-md transition-all text-left flex items-center gap-4 focus:outline-none focus:ring-4 focus:ring-rose-500/10">
-                    <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 group-hover:scale-110 group-hover:bg-rose-500 group-hover:text-white transition-all duration-300"><XCircle className="w-6 h-6" /></div>
-                    <div className="flex-1"><h4 className="text-[15px] font-extrabold text-slate-900 group-hover:text-rose-700 transition-colors">Tolak Permohonan</h4><p className="text-[11px] font-bold text-slate-400 mt-0.5">Tolak dan batalkan permohonan ini</p></div>
+                  <button onClick={() => executeActionStatus(modal.actionData, 'DITOLAK')} className="w-full p-3 bg-white border border-stone-200 hover:border-red-600 hover:bg-red-50/40 rounded-lg transition-colors text-left flex items-center gap-3 focus:outline-none focus-visible:ring-3 focus-visible:ring-red-600/15">
+                    <div className="w-9 h-9 shrink-0 rounded-full bg-red-50 flex items-center justify-center text-red-700"><XCircle className="w-5 h-5" /></div>
+                    <div className="flex-1"><h4 className="text-sm font-semibold text-stone-900">Tolak Permohonan</h4><p className="text-xs text-stone-500 mt-0.5">Tolak dan batalkan permohonan ini</p></div>
                   </button>
-                  <button onClick={() => executeActionStatus(modal.actionData, 'DIPROSES')} className="group relative w-full p-4 bg-white border border-slate-200 hover:border-amber-500 rounded-2xl shadow-sm hover:shadow-md transition-all text-left flex items-center gap-4 focus:outline-none focus:ring-4 focus:ring-amber-500/10">
-                    <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300"><Clock className="w-6 h-6" /></div>
-                    <div className="flex-1"><h4 className="text-[15px] font-extrabold text-slate-900 group-hover:text-amber-700 transition-colors">Tinjau Ulang</h4><p className="text-[11px] font-bold text-slate-400 mt-0.5">Kembalikan status ke DIPROSES</p></div>
+                  <button onClick={() => executeActionStatus(modal.actionData, 'DIPROSES')} className="w-full p-3 bg-white border border-stone-200 hover:border-amber-600 hover:bg-amber-50/40 rounded-lg transition-colors text-left flex items-center gap-3 focus:outline-none focus-visible:ring-3 focus-visible:ring-amber-600/15">
+                    <div className="w-9 h-9 shrink-0 rounded-full bg-amber-50 flex items-center justify-center text-amber-700"><Clock className="w-5 h-5" /></div>
+                    <div className="flex-1"><h4 className="text-sm font-semibold text-stone-900">Tinjau Ulang</h4><p className="text-xs text-stone-500 mt-0.5">Kembalikan status ke DIPROSES</p></div>
                   </button>
-                  <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 mt-2 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 font-bold rounded-xl active:scale-95 transition-all text-xs uppercase tracking-wider">Batal / Tutup</button>
+                  <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="ui-btn-secondary w-full mt-2">Batal / Tutup</button>
                 </div>
               ) : modal.type === 'confirm_delete' ? (
-                <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all duration-200 active:scale-95">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="flex-1 py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-lg shadow-rose-600/20 transition-all duration-200 active:scale-95">Ya, Hapus!</button></>
+                <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="ui-btn-secondary flex-1">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="ui-btn-danger flex-1">Ya, Hapus!</button></>
               ) : modal.actionData === 'MAGIC_LINK' ? (
-                <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg transition-all duration-200 active:scale-95">Tutup & Lanjutkan</button>
+                <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="ui-btn-primary w-full">Tutup & Lanjutkan</button>
               ) : modal.type === 'success' ? (
-                <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all duration-200 active:scale-95">Tutup</button><button onClick={() => { generateCutiPDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="flex-1 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all duration-200 active:scale-95 flex items-center justify-center"><Printer className="w-4 h-4 mr-2" /> Buka PDF</button></>
-              ) : (<button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl shadow-lg transition-all duration-200 active:scale-95">Mengerti</button>)}
+                <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="ui-btn-secondary flex-1">Tutup</button><button onClick={() => { generateCutiPDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="ui-btn-primary flex-1"><Printer className="w-4 h-4" /> Buka PDF</button></>
+              ) : (<button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="ui-btn-primary w-full">Mengerti</button>)}
             </div>
           </div>
         </div>
@@ -497,32 +490,32 @@ export default function CutiPage() {
       {renderModal()}
       {renderLiveNotif()}
 
-      <div className="max-w-5xl mx-auto pb-12 space-y-8 relative">
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
-          <div className="p-6 md:p-8">
-            <div className="mb-8 flex justify-between items-start">
+      <div className="max-w-5xl mx-auto pb-12 space-y-6 relative">
+        <div className="ui-card overflow-hidden">
+          <div className="p-5 md:p-7">
+            <div className="mb-7 flex justify-between items-start gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">{isEditing ? 'Edit Permohonan Cuti' : 'Form Pengajuan Cuti & Izin'}</h2>
-                <p className="text-slate-500 text-sm">Ajukan permohonan cuti atau izin absen kerja melalui formulir di bawah ini.</p>
+                <h2 className="ui-page-title">{isEditing ? 'Edit Permohonan Cuti' : 'Form Pengajuan Cuti & Izin'}</h2>
+                <p className="ui-page-subtitle">Ajukan permohonan cuti atau izin absen kerja melalui formulir di bawah ini.</p>
               </div>
-              {isEditing && <span className="px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg text-xs font-bold flex items-center shadow-sm"><Edit className="w-3.5 h-3.5 mr-1.5" /> Mengedit Data</span>}
+              {isEditing && <span className="ui-badge-warning px-2 py-1 shrink-0"><Edit className="w-3.5 h-3.5" /> Mengedit Data</span>}
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
               <section>
-                <h3 className="flex items-center text-base font-bold text-slate-800 mb-5"><span className="bg-indigo-100 text-indigo-700 w-7 h-7 rounded-lg flex items-center justify-center mr-3 text-xs shadow-sm">1</span>Data Pegawai & Cuti</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <h3 className="ui-section-title"><span className="ui-step">1</span>Data Pegawai & Cuti</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
                   <div><label className={labelClass}>No. Registrasi / Cuti</label><input type="text" value={noCuti} onChange={(e)=>setNoCuti(e.target.value)} required placeholder="Contoh: CT/101/2026" className={inputClass} /></div>
                   <div className="relative">
                     <label className={labelClass}>Jenis Cuti / Izin</label>
-                    <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className={`${inputClass} flex items-center justify-between cursor-pointer select-none transition-all duration-200 active:scale-95 ${isDropdownOpen ? 'bg-white border-indigo-500 ring-4 ring-indigo-500/10' : ''}`}>
-                      <span className={jenisCuti ? 'text-slate-900 font-bold' : 'text-slate-400 font-normal'}>{jenisCuti ? opsiCuti.find(o => o.value === jenisCuti)?.label : '-- Pilih Kategori Cuti --'}</span>
-                      <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180 text-indigo-500' : ''}`} />
+                    <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className={`${inputClass} flex items-center justify-between cursor-pointer select-none ${isDropdownOpen ? 'border-brand ring-3 ring-brand/10' : ''}`}>
+                      <span className={jenisCuti ? 'text-stone-900 font-medium' : 'text-stone-500'}>{jenisCuti ? opsiCuti.find(o => o.value === jenisCuti)?.label : '-- Pilih Kategori Cuti --'}</span>
+                      <ChevronDown className={`w-4 h-4 text-stone-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </div>
                     {isDropdownOpen && (
                       <><div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)}></div>
-                      <div className="absolute z-20 w-full mt-2.5 bg-white border border-slate-100 rounded-2xl shadow-2xl shadow-slate-950/10 overflow-hidden py-2.5 animate-in fade-in slide-in-from-top-3 duration-300">
-                        {opsiCuti.map((opt) => (<div key={opt.value} onClick={() => { setJenisCuti(opt.value); setIsDropdownOpen(false); }} className={`px-6 py-3.5 text-sm font-bold cursor-pointer transition-colors ${jenisCuti === opt.value ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-indigo-50/50 hover:text-indigo-600'}`}>{opt.label}</div>))}
+                      <div className="ui-menu">
+                        {opsiCuti.map((opt) => (<div key={opt.value} onClick={() => { setJenisCuti(opt.value); setIsDropdownOpen(false); }} className={jenisCuti === opt.value ? 'ui-menu-item-active' : 'ui-menu-item'}>{opt.label}</div>))}
                       </div></>
                     )}
                   </div>
@@ -532,64 +525,64 @@ export default function CutiPage() {
               </section>
 
               <section>
-                <h3 className="flex items-center text-base font-bold text-slate-800 mb-5"><span className="bg-indigo-100 text-indigo-700 w-7 h-7 rounded-lg flex items-center justify-center mr-3 text-xs shadow-sm">2</span>Waktu & Keterangan</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <h3 className="ui-section-title"><span className="ui-step">2</span>Waktu & Keterangan</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
                   <div><label className={labelClass}>Tanggal Mulai Cuti</label><input type="date" value={tglMulai} onChange={(e)=>setTglMulai(e.target.value)} required className={inputClass} /></div>
                   <div><label className={labelClass}>Tanggal Selesai Cuti</label><input type="date" value={tglSelesai} onChange={(e)=>setTglSelesai(e.target.value)} required className={inputClass} /></div>
-                  <div className="md:col-span-2"><label className={labelClass}>Alasan / Keperluan Tambahan</label><textarea value={alasan} onChange={(e)=>setAlasan(e.target.value)} placeholder="Tuliskan keterangan detail jika diperlukan..." rows="3" className={`${inputClass} h-auto py-3 resize-none`} /></div>
+                  <div className="md:col-span-2"><label className={labelClass}>Alasan / Keperluan Tambahan</label><textarea value={alasan} onChange={(e)=>setAlasan(e.target.value)} placeholder="Tuliskan keterangan detail jika diperlukan..." rows="3" className={`${inputClass} h-auto py-2.5 resize-none`} /></div>
                 </div>
               </section>
 
-              <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-center items-center gap-4 transition-all duration-300">
-                {isEditing && <button type="button" disabled={isSubmitting} onClick={resetForm} className="px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-center w-full sm:w-auto"><X className="w-4 h-4 mr-2" /> Batal Edit</button>}
-                <button type="submit" disabled={isSubmitting} className={`px-12 py-3.5 text-white rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 shadow-lg shadow-slate-900/30 tracking-wide flex items-center justify-center w-full sm:w-auto ${isSubmitting ? 'bg-slate-400 cursor-not-allowed' : 'bg-slate-950 hover:bg-slate-800'}`}>{isSubmitting ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Memproses...</> : isEditing ? <><Edit className="w-4 h-4 mr-2" /> Update Permohonan</> : <><FileSignature className="w-4 h-4 mr-2" /> Ajukan Cuti & Cetak</>}</button>
+              <div className="pt-6 border-t border-stone-200 flex flex-col sm:flex-row justify-end items-center gap-3">
+                {isEditing && <button type="button" disabled={isSubmitting} onClick={resetForm} className="ui-btn-secondary w-full sm:w-auto"><X className="w-4 h-4" /> Batal Edit</button>}
+                <button type="submit" disabled={isSubmitting} className="ui-btn-primary w-full sm:w-auto px-8">{isSubmitting ? <><RefreshCw className="w-4 h-4 animate-spin" /> Memproses...</> : isEditing ? <><Edit className="w-4 h-4" /> Update Permohonan</> : <><FileSignature className="w-4 h-4" /> Ajukan Cuti & Cetak</>}</button>
               </div>
             </form>
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
-          <div className="bg-slate-50/80 border-b border-slate-200 p-4 md:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5">
+        <div className="ui-card overflow-hidden">
+          <div className="ui-card-header">
             <div className="flex items-center gap-3">
-              <h3 className="text-lg font-bold text-slate-800 flex items-center"><CalendarDays className="w-5 h-5 mr-2 text-indigo-600" /> Riwayat Permohonan</h3>
+              <h3 className="ui-card-title"><CalendarDays className="w-4 h-4 text-stone-500" /> Riwayat Permohonan</h3>
             </div>
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-              <div className="relative w-full sm:w-64"><Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" /><input type="text" placeholder="Cari Nama / No. Registrasi..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-4 py-2 sm:py-2.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm" /></div>
-              <button onClick={fetchHistory} className="w-full sm:w-auto flex items-center justify-center text-xs font-bold text-slate-700 bg-white border border-slate-300 px-4 py-2.5 rounded-xl active:scale-95 shadow-sm hover:bg-slate-100 transition-all duration-200"><RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Segarkan Data</button>
+            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+              <div className="relative w-full sm:w-64"><Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" /><input type="text" placeholder="Cari Nama / No. Registrasi..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="ui-search" /></div>
+              <button onClick={fetchHistory} className="ui-btn-sm w-full sm:w-auto"><RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} /> Segarkan Data</button>
             </div>
           </div>
-          <div className="overflow-y-auto overflow-x-auto max-h-[420px] scrollbar-thin">
-            <table className="w-full text-sm text-left border-collapse whitespace-nowrap">
-              <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10"><tr className="bg-slate-50 border-b border-slate-200 shadow-sm"><th className="px-6 py-4 font-bold tracking-wider">No. Registrasi</th><th className="px-6 py-4 font-bold tracking-wider">Nama & Jabatan</th><th className="px-6 py-4 font-bold tracking-wider">Jenis & Status</th><th className="px-6 py-4 font-bold tracking-wider">Tanggal Pelaksanaan</th><th className="px-6 py-4 font-bold tracking-wider text-right">Aksi</th></tr></thead>
-              <tbody className="divide-y divide-slate-100">
-                {historyData.length === 0 ? (<tr><td colSpan="5" className="text-center py-12 text-slate-400 font-medium">Belum ada data pengajuan cuti/izin.</td></tr>) : (
+          <div className="ui-table-wrap ui-scroll-thin">
+            <table className="ui-table whitespace-nowrap">
+              <thead className="ui-thead"><tr><th className="ui-th">No. Registrasi</th><th className="ui-th">Nama & Jabatan</th><th className="ui-th">Jenis & Status</th><th className="ui-th">Tanggal Pelaksanaan</th><th className="ui-th text-right">Aksi</th></tr></thead>
+              <tbody className="divide-y divide-stone-100">
+                {historyData.length === 0 ? (<tr><td colSpan="5" className="ui-empty">Belum ada data pengajuan cuti/izin.</td></tr>) : (
                   historyData.filter((row) => {
                     if (!searchTerm) return true;
                     return `${row?.noCuti || ''} ${row?.namaPegawai || ''} ${row?.jabatan || ''}`.toLowerCase().includes(searchTerm.toLowerCase());
                   }).map((row, index) => {
                     const statusCuti = row.status || 'DIPROSES';
-                    let statusText = statusCuti === 'DISETUJUI' ? <div className="mt-1.5 text-[10px] font-extrabold text-emerald-600 uppercase tracking-wider flex items-center"><CheckCircle className="w-3.5 h-3.5 mr-1" /> DISETUJUI</div> : statusCuti === 'DITOLAK' ? <div className="mt-1.5 text-[10px] font-extrabold text-rose-600 uppercase tracking-wider flex items-center"><XCircle className="w-3.5 h-3.5 mr-1" /> DITOLAK</div> : <div className="mt-1.5 text-[10px] font-extrabold text-amber-500 uppercase tracking-wider flex items-center"><Clock className="w-3.5 h-3.5 mr-1" /> DIPROSES</div>;
-                    
+                    let statusText = statusCuti === 'DISETUJUI' ? <div className="mt-1 ui-badge-success"><CheckCircle className="w-3 h-3" /> DISETUJUI</div> : statusCuti === 'DITOLAK' ? <div className="mt-1 ui-badge-danger"><XCircle className="w-3 h-3" /> DITOLAK</div> : <div className="mt-1 ui-badge-warning"><Clock className="w-3 h-3" /> DIPROSES</div>;
+
                     const mulai = row.tglMulai ? row.tglMulai.split('-').reverse().join('/') : '-';
                     const selesai = row.tglSelesai ? row.tglSelesai.split('-').reverse().join('/') : '-';
 
                     return (
-                      <tr key={index} className="hover:bg-indigo-50/40 transition-colors">
-                        <td className="px-6 py-5 whitespace-nowrap"><div className="font-bold text-slate-950">{row.noCuti}</div><div className="flex items-center text-[11px] text-slate-500 font-medium mt-1"><Clock className="w-3 h-3 mr-1" /> Jam: {formatTimeOnly(row.created_at)}</div></td>
-                        <td className="px-6 py-5 whitespace-nowrap"><div className="font-bold text-slate-950 uppercase">{row.namaPegawai}</div><div className="text-[11px] text-slate-500 font-bold mt-0.5">{row.jabatan}</div></td>
-                        <td className="px-6 py-5 whitespace-nowrap"><div className="font-bold text-indigo-700">{opsiCuti.find(o => o.value === row.jenisCuti)?.label || row.jenisCuti}</div>{statusText}</td>
-                        <td className="px-6 py-5 whitespace-nowrap"><div className="font-bold text-slate-700">{mulai} - {selesai}</div></td>
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-2.5">
-                            <button onClick={() => handleSendWA(row)} className="flex items-center gap-1.5 px-3 py-2 bg-[#25D366]/10 text-[#075E54] hover:bg-[#25D366]/20 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-[#25D366]/30 shadow-sm"><MessageCircle className="w-3.5 h-3.5" /> Kirim WA</button>
-                            <button onClick={() => generateCutiPDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm"><Printer className="w-3.5 h-3.5" /> PDF</button>
-                            
+                      <tr key={index} className="ui-tr">
+                        <td className="ui-td whitespace-nowrap"><div className="ui-docno">{row.noCuti}</div><div className="ui-meta"><Clock className="w-3 h-3" /> Jam: {formatTimeOnly(row.created_at)}</div></td>
+                        <td className="ui-td whitespace-nowrap"><div className="font-semibold text-stone-900 uppercase">{row.namaPegawai}</div><div className="text-xs text-stone-500 mt-0.5">{row.jabatan}</div></td>
+                        <td className="ui-td whitespace-normal min-w-[180px] max-w-[260px]"><div className="font-medium text-stone-900">{opsiCuti.find(o => o.value === row.jenisCuti)?.label || row.jenisCuti}</div>{statusText}</td>
+                        <td className="ui-td whitespace-nowrap"><div className="text-stone-700">{mulai} - {selesai}</div></td>
+                        <td className="ui-td whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1">
+                            <button onClick={() => handleSendWA(row)} className="ui-action"><MessageCircle className="w-3.5 h-3.5 text-green-700" /> Kirim WA</button>
+                            <button onClick={() => generateCutiPDF(row)} className="ui-action"><Printer className="w-3.5 h-3.5" /> PDF</button>
+
                             {(!isRestrictedRole || statusCuti === 'DIPROSES') && (
-                              <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm"><Edit className="w-3.5 h-3.5" /> Edit</button>
+                              <button onClick={() => handleEdit(row)} className="ui-action"><Edit className="w-3.5 h-3.5" /> Edit</button>
                             )}
 
                             {!isRestrictedRole && (
-                              <button onClick={() => handleDeleteRequest(row.noCuti)} className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm"><Trash2 className="w-3.5 h-3.5" /> Del</button>
+                              <button onClick={() => handleDeleteRequest(row.noCuti)} className="ui-action-danger"><Trash2 className="w-3.5 h-3.5" /> Del</button>
                             )}
                           </div>
                         </td>
@@ -603,27 +596,27 @@ export default function CutiPage() {
         </div>
 
         {!isRestrictedRole && (
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
-            <div className="bg-indigo-50/80 border-b border-indigo-100 p-4 md:p-5 flex flex-col justify-between items-start gap-4">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-3.5">
-                <div><h3 className="text-lg font-bold text-indigo-900 flex items-center"><Users className="w-5 h-5 mr-2 text-indigo-600" /> Rekapitulasi Cuti & Izin</h3><p className="text-[11px] font-medium text-indigo-700/70 mt-1">Pantau sisa jatah Cuti (Maks 12 Hari/Tahun) dan total Izin karyawan.</p></div>
-                <button onClick={exportToExcel} className="w-full sm:w-auto flex items-center justify-center text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-4 py-2.5 rounded-xl active:scale-95 shadow-sm hover:bg-emerald-200 transition-all duration-200"><Download className="w-4 h-4 mr-2" /> Ekspor ke Excel</button>
+          <div className="ui-card overflow-hidden">
+            <div className="border-b border-stone-200 px-5 py-3.5 flex flex-col justify-between items-start gap-3">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-3">
+                <div><h3 className="ui-card-title"><Users className="w-4 h-4 text-stone-500" /> Rekapitulasi Cuti & Izin</h3><p className="text-xs text-stone-500 mt-1">Pantau sisa jatah Cuti (Maks 12 Hari/Tahun) dan total Izin karyawan.</p></div>
+                <button onClick={exportToExcel} className="ui-btn-sm w-full sm:w-auto"><Download className="w-4 h-4" /> Ekspor ke Excel</button>
               </div>
-              <div className="flex flex-col sm:flex-row items-center gap-3 w-full bg-white p-3 rounded-2xl border border-indigo-100 shadow-sm">
-                <div className="relative w-full sm:w-1/3"><Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" /><input type="text" placeholder="Cari Nama Pegawai..." value={rekapSearchTerm} onChange={(e) => setRekapSearchTerm(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" /></div>
-                <div className="flex items-center gap-2 w-full sm:w-auto"><span className="text-xs font-bold text-slate-500 whitespace-nowrap">Dari:</span><input type="date" value={rekapStartDate} onChange={(e) => setRekapStartDate(e.target.value)} className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" /></div>
-                <div className="flex items-center gap-2 w-full sm:w-auto"><span className="text-xs font-bold text-slate-500 whitespace-nowrap">Sampai:</span><input type="date" value={rekapEndDate} onChange={(e) => setRekapEndDate(e.target.value)} className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" /></div>
-                {(rekapSearchTerm || rekapStartDate || rekapEndDate) && (<button onClick={() => { setRekapSearchTerm(''); setRekapStartDate(''); setRekapEndDate(''); }} className="p-2 text-rose-500 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all shadow-sm" title="Reset Filter"><X className="w-4 h-4" /></button>)}
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                <div className="relative w-full sm:w-1/3"><Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" /><input type="text" placeholder="Cari Nama Pegawai..." value={rekapSearchTerm} onChange={(e) => setRekapSearchTerm(e.target.value)} className="ui-search" /></div>
+                <div className="flex items-center gap-2 w-full sm:w-auto"><span className="ui-filter-label">Dari:</span><input type="date" value={rekapStartDate} onChange={(e) => setRekapStartDate(e.target.value)} className="ui-filter-date" /></div>
+                <div className="flex items-center gap-2 w-full sm:w-auto"><span className="ui-filter-label">Sampai:</span><input type="date" value={rekapEndDate} onChange={(e) => setRekapEndDate(e.target.value)} className="ui-filter-date" /></div>
+                {(rekapSearchTerm || rekapStartDate || rekapEndDate) && (<button onClick={() => { setRekapSearchTerm(''); setRekapStartDate(''); setRekapEndDate(''); }} className="ui-btn-icon" title="Reset Filter"><X className="w-4 h-4" /></button>)}
               </div>
             </div>
-            <div className="overflow-y-auto overflow-x-auto max-h-[420px] scrollbar-thin">
-              <table className="w-full text-sm text-left border-collapse whitespace-nowrap">
-                <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10"><tr className="bg-slate-50 border-b border-slate-200 shadow-sm"><th className="px-6 py-4 font-bold tracking-wider w-16 text-center">Peringkat</th><th className="px-6 py-4 font-bold tracking-wider">Nama Pegawai</th><th className="px-6 py-4 font-bold tracking-wider">Posisi / Jabatan</th><th className="px-6 py-4 font-bold tracking-wider text-center">Total Cuti Terpakai</th><th className="px-6 py-4 font-bold tracking-wider text-center">Sisa Cuti (12 Hari)</th><th className="px-6 py-4 font-bold tracking-wider text-center">Total Izin (Hari)</th></tr></thead>
-                <tbody className="divide-y divide-slate-100">
-                  {rekapCutiData.length === 0 ? (<tr><td colSpan="6" className="text-center py-8 text-slate-400 font-medium">Belum ada rekap data cuti/izin yang disetujui untuk filter tersebut.</td></tr>) : (
+            <div className="ui-table-wrap ui-scroll-thin">
+              <table className="ui-table whitespace-nowrap">
+                <thead className="ui-thead"><tr><th className="ui-th w-16 text-center">Peringkat</th><th className="ui-th">Nama Pegawai</th><th className="ui-th">Posisi / Jabatan</th><th className="ui-th text-center">Total Cuti Terpakai</th><th className="ui-th text-center">Sisa Cuti (12 Hari)</th><th className="ui-th text-center">Total Izin (Hari)</th></tr></thead>
+                <tbody className="divide-y divide-stone-100">
+                  {rekapCutiData.length === 0 ? (<tr><td colSpan="6" className="ui-empty">Belum ada rekap data cuti/izin yang disetujui untuk filter tersebut.</td></tr>) : (
                     rekapCutiData.map((item, idx) => {
                       const sisaCuti = 12 - item.totalCuti;
-                      return (<tr key={idx} className="hover:bg-indigo-50/40 transition-colors"><td className="px-6 py-4 font-black text-slate-400 text-center">{idx + 1}</td><td className="px-6 py-4 font-black text-slate-900">{item.nama}</td><td className="px-6 py-4 font-bold text-slate-500 text-[11px]">{item.jabatan}</td><td className="px-6 py-4 text-center font-bold text-slate-700">{item.totalCuti} Hari</td><td className="px-6 py-4 text-center"><span className={`px-3 py-1.5 rounded-lg text-xs font-black shadow-sm border ${sisaCuti <= 0 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>{sisaCuti} Hari</span></td><td className="px-6 py-4 text-center font-bold text-slate-700">{item.totalIzin} Hari</td></tr>)
+                      return (<tr key={idx} className="ui-tr"><td className="ui-td font-mono text-stone-500 text-center">{idx + 1}</td><td className="ui-td font-semibold text-stone-900">{item.nama}</td><td className="ui-td text-xs text-stone-600">{item.jabatan}</td><td className="ui-td text-center text-stone-800">{item.totalCuti} Hari</td><td className="ui-td text-center"><span className={`${sisaCuti <= 0 ? 'ui-badge-danger' : 'ui-badge-success'} normal-case tracking-normal text-xs`}>{sisaCuti} Hari</span></td><td className="ui-td text-center text-stone-800">{item.totalIzin} Hari</td></tr>)
                     })
                   )}
                 </tbody>

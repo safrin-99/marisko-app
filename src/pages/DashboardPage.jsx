@@ -95,143 +95,99 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 md:space-y-8 pb-12 animate-in fade-in duration-500 relative">
-      
+    <div className="max-w-6xl mx-auto space-y-6 md:space-y-8 pb-12 relative">
+
       {errorMsg && (
-        <div className="bg-rose-50 border border-rose-200 text-rose-600 px-6 py-4 rounded-2xl text-sm font-bold flex items-center animate-in shake shadow-sm">
-          <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0" /> {errorMsg}
+        <div className="ui-alert-danger">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" /> {errorMsg}
         </div>
       )}
 
       {/* SAKTI: HEADER DASHBOARD MINIMALIS (TanPA Kotak Pemasukan) */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-50 rounded-full blur-[80px] -mr-20 -mt-20 z-0 pointer-events-none"></div>
-        
-        <div className="relative z-10 flex-1">
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Selamat Datang, {adminName}! 👋</h1>
-          <p className="text-sm md:text-base text-slate-500 font-medium mt-1">Ringkasan aktivitas MARISKO PERKASA hari ini.</p>
-        </div>
+      <div>
+        <h1 className="ui-page-title md:text-[26px]">Selamat Datang, {adminName}! 👋</h1>
+        <p className="ui-page-subtitle">Ringkasan aktivitas MARISKO PERKASA hari ini.</p>
       </div>
 
-      {/* STATISTIK KARTU SAKTI: 3D Hover, Glow, Accent Border, Pulse Indicator */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        
+      {/* STATISTIK: satu strip, empat sel */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-stone-200 border border-stone-200 rounded-xl overflow-hidden">
+
         {/* CARD BASTK */}
-        <div className="bg-white p-5 md:p-6 rounded-3xl border border-slate-100 border-t-4 border-t-blue-500 shadow-sm hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1.5 transition-all duration-300 group relative overflow-hidden">
-          <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full blur-2xl opacity-20 bg-blue-500 pointer-events-none group-hover:scale-150 transition-transform duration-500"></div>
-          <div className="flex justify-between items-start mb-4 relative z-10">
-            <div className={`w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-100 border rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-inner`}>
-              <FileText className="w-6 h-6 md:w-7 md:h-7 text-blue-600 drop-shadow-sm" />
-            </div>
-            <div className="flex items-center gap-1.5 text-[10px] md:text-xs font-bold text-emerald-600 bg-emerald-50/80 px-2.5 py-1.5 rounded-lg border border-emerald-100/50 backdrop-blur-sm shadow-sm">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              Live DB
-            </div>
+        <div className="bg-white p-5">
+          <div className="flex items-center justify-between gap-2">
+            <p className="flex items-center gap-2 text-[13px] font-medium text-stone-600"><FileText className="w-4 h-4 text-stone-400" />Total Dokumen BASTK</p>
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-stone-600 whitespace-nowrap"><span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>Live DB</span>
           </div>
-          <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight relative z-10">{isLoading ? '-' : stats.bastk}</h3>
-          <p className="text-xs md:text-sm font-bold text-slate-500 mt-1 relative z-10">Total Dokumen BASTK</p>
+          <h3 className="mt-3 text-[32px] leading-none font-semibold tracking-tight text-stone-900 tabular-nums">{isLoading ? '-' : stats.bastk}</h3>
         </div>
-        
+
         {/* CARD KREDIT */}
-        <div className="bg-white p-5 md:p-6 rounded-3xl border border-slate-100 border-t-4 border-t-indigo-500 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1.5 transition-all duration-300 group relative overflow-hidden">
-          <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full blur-2xl opacity-20 bg-indigo-500 pointer-events-none group-hover:scale-150 transition-transform duration-500"></div>
-          <div className="flex justify-between items-start mb-4 relative z-10">
-            <div className={`w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-indigo-50 to-indigo-100/50 border-indigo-100 border rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:-rotate-3 transition-all duration-300 shadow-inner`}>
-              <Receipt className="w-6 h-6 md:w-7 md:h-7 text-indigo-600 drop-shadow-sm" />
-            </div>
-            <div className="flex items-center gap-1.5 text-[10px] md:text-xs font-bold text-emerald-600 bg-emerald-50/80 px-2.5 py-1.5 rounded-lg border border-emerald-100/50 backdrop-blur-sm shadow-sm">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              Live DB
-            </div>
+        <div className="bg-white p-5">
+          <div className="flex items-center justify-between gap-2">
+            <p className="flex items-center gap-2 text-[13px] font-medium text-stone-600"><Receipt className="w-4 h-4 text-stone-400" />Kwitansi Kredit</p>
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-stone-600 whitespace-nowrap"><span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>Live DB</span>
           </div>
-          <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight relative z-10">{isLoading ? '-' : stats.kredit}</h3>
-          <p className="text-xs md:text-sm font-bold text-slate-500 mt-1 relative z-10">Kwitansi Kredit</p>
+          <h3 className="mt-3 text-[32px] leading-none font-semibold tracking-tight text-stone-900 tabular-nums">{isLoading ? '-' : stats.kredit}</h3>
         </div>
-        
+
         {/* CARD CASH */}
-        <div className="bg-white p-5 md:p-6 rounded-3xl border border-slate-100 border-t-4 border-t-emerald-500 shadow-sm hover:shadow-xl hover:shadow-emerald-500/10 hover:-translate-y-1.5 transition-all duration-300 group relative overflow-hidden">
-          <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full blur-2xl opacity-20 bg-emerald-500 pointer-events-none group-hover:scale-150 transition-transform duration-500"></div>
-          <div className="flex justify-between items-start mb-4 relative z-10">
-            <div className={`w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-100 border rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-inner`}>
-              <Banknote className="w-6 h-6 md:w-7 md:h-7 text-emerald-600 drop-shadow-sm" />
-            </div>
-            <div className="flex items-center gap-1.5 text-[10px] md:text-xs font-bold text-emerald-600 bg-emerald-50/80 px-2.5 py-1.5 rounded-lg border border-emerald-100/50 backdrop-blur-sm shadow-sm">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              Live DB
-            </div>
+        <div className="bg-white p-5">
+          <div className="flex items-center justify-between gap-2">
+            <p className="flex items-center gap-2 text-[13px] font-medium text-stone-600"><Banknote className="w-4 h-4 text-stone-400" />Kwitansi Cash</p>
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-stone-600 whitespace-nowrap"><span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>Live DB</span>
           </div>
-          <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight relative z-10">{isLoading ? '-' : stats.cash}</h3>
-          <p className="text-xs md:text-sm font-bold text-slate-500 mt-1 relative z-10">Kwitansi Cash</p>
+          <h3 className="mt-3 text-[32px] leading-none font-semibold tracking-tight text-stone-900 tabular-nums">{isLoading ? '-' : stats.cash}</h3>
         </div>
 
         {/* CARD INDENT */}
-        <div className="bg-white p-5 md:p-6 rounded-3xl border border-slate-100 border-t-4 border-t-amber-500 shadow-sm hover:shadow-xl hover:shadow-amber-500/10 hover:-translate-y-1.5 transition-all duration-300 group relative overflow-hidden">
-          <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full blur-2xl opacity-20 bg-amber-500 pointer-events-none group-hover:scale-150 transition-transform duration-500"></div>
-          <div className="flex justify-between items-start mb-4 relative z-10">
-            <div className={`w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-100 border rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:-rotate-3 transition-all duration-300 shadow-inner`}>
-              <ClipboardSignature className="w-6 h-6 md:w-7 md:h-7 text-amber-600 drop-shadow-sm" />
-            </div>
-            <div className="flex items-center gap-1.5 text-[10px] md:text-xs font-bold text-emerald-600 bg-emerald-50/80 px-2.5 py-1.5 rounded-lg border border-emerald-100/50 backdrop-blur-sm shadow-sm">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              Live DB
-            </div>
+        <div className="bg-white p-5">
+          <div className="flex items-center justify-between gap-2">
+            <p className="flex items-center gap-2 text-[13px] font-medium text-stone-600"><ClipboardSignature className="w-4 h-4 text-stone-400" />Kwitansi Indent</p>
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-stone-600 whitespace-nowrap"><span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>Live DB</span>
           </div>
-          <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight relative z-10">{isLoading ? '-' : stats.indent}</h3>
-          <p className="text-xs md:text-sm font-bold text-slate-500 mt-1 relative z-10">Kwitansi Indent</p>
+          <h3 className="mt-3 text-[32px] leading-none font-semibold tracking-tight text-stone-900 tabular-nums">{isLoading ? '-' : stats.indent}</h3>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 items-start">
-        
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
         {/* AKTIVITAS TERBARU */}
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col h-[580px] overflow-hidden">
-          <div className="p-5 md:p-6 border-b border-slate-100 flex justify-between items-center bg-white/90 backdrop-blur-sm sticky top-0 z-10 flex-shrink-0">
-            <h2 className="text-base md:text-lg font-bold text-slate-900 flex items-center"><Activity className="w-5 h-5 mr-2 text-indigo-600" /> Live Data Terbaru</h2>
+        <div className="lg:col-span-2 ui-card flex flex-col overflow-hidden">
+          <div className="ui-card-header">
+            <h2 className="ui-card-title"><Activity className="w-4 h-4 text-stone-500" /> Live Data Terbaru</h2>
           </div>
-          
-          <div className="p-2 flex-1 overflow-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+
+          <div className="flex-1">
             {isLoading ? (
-               <div className="flex flex-col items-center justify-center h-full text-slate-400 py-12">
-                  <RefreshCw className="w-8 h-8 animate-spin mb-3 text-indigo-500" />
-                  <p className="font-bold text-sm">Menarik data dari database...</p>
+               <div className="flex flex-col items-center justify-center text-stone-500 py-16">
+                  <RefreshCw className="w-6 h-6 animate-spin mb-3 text-stone-400" />
+                  <p className="text-sm">Menarik data dari database...</p>
                </div>
             ) : recentActivities.length === 0 ? (
-               <div className="flex flex-col items-center justify-center h-full text-slate-400 py-12">
-                  <Activity className="w-8 h-8 mb-3 opacity-50" />
-                  <p className="font-bold text-sm">Belum ada aktivitas terekam.</p>
+               <div className="flex flex-col items-center justify-center text-stone-500 py-16">
+                  <Activity className="w-6 h-6 mb-3 text-stone-400" />
+                  <p className="text-sm">Belum ada aktivitas terekam.</p>
                </div>
             ) : (
-                <div className="w-full">
+                <div className="w-full divide-y divide-stone-100">
                     {recentActivities.slice(0, 6).map((act, idx) => {
                         const ActIcon = act.icon;
                         return (
-                        <div key={idx} className="flex items-center justify-between p-4 hover:bg-slate-50/80 rounded-2xl transition-colors cursor-default group border-b border-slate-50 last:border-0">
-                            <div className="flex items-center gap-3 md:gap-4">
-                            <div className={`w-10 h-10 md:w-12 md:h-12 ${act.bg} rounded-xl flex items-center justify-center flex-shrink-0 ${act.color} group-hover:scale-110 transition-transform duration-300 shadow-inner`}>
-                                <ActIcon className="w-4 h-4 md:w-5 md:h-5" />
+                        <div key={idx} className="flex items-center justify-between gap-4 px-5 py-3.5 hover:bg-stone-50 transition-colors">
+                            <div className="flex items-center gap-3.5 min-w-0">
+                            <div className="w-9 h-9 bg-stone-100 rounded-lg flex items-center justify-center flex-shrink-0 text-stone-600">
+                                <ActIcon className="w-4 h-4" />
                             </div>
-                            <div>
-                                <h4 className="font-extrabold text-sm md:text-base text-slate-900 truncate max-w-[150px] sm:max-w-[200px] transition-colors">{act.customer}</h4>
-                                <div className="flex items-center text-[10px] md:text-xs font-bold text-slate-500 mt-0.5">
-                                <span className={`${act.color} uppercase mr-1 md:mr-2`}>{act.type}</span> <span className="hidden sm:inline">•</span> <span className="ml-1 md:ml-2 truncate max-w-[100px] sm:max-w-none">{timeAgo(act.time)}</span>
+                            <div className="min-w-0">
+                                <h4 className="font-semibold text-sm text-stone-900 truncate">{act.customer}</h4>
+                                <div className="flex flex-wrap items-center text-xs text-stone-500 mt-0.5">
+                                <span className="font-semibold text-stone-700 uppercase tracking-[0.03em] mr-1.5">{act.type}</span> <span className="hidden sm:inline">•</span> <span className="ml-1.5 truncate">{timeAgo(act.time)}</span>
                                 </div>
                             </div>
                             </div>
-                            <div className="text-right flex-shrink-0 ml-4">
-                            <div className="font-black text-xs md:text-sm text-slate-900">{act.id}</div>
-                            <div className={`text-[9px] md:text-[10px] font-extrabold uppercase tracking-wider mt-1 px-2 py-0.5 rounded flex items-center justify-center w-fit ml-auto ${act.status === 'Sukses' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                            <div className="text-right flex-shrink-0">
+                            <div className="ui-docno">{act.id}</div>
+                            <div className={`mt-1 ${act.status === 'Sukses' ? 'ui-badge-success' : 'ui-badge-warning'}`}>
                                 {act.status}
                             </div>
                             </div>
@@ -243,61 +199,59 @@ export default function DashboardPage() {
         </div>
 
         {/* QUICK ACTIONS */}
-        <div className="bg-slate-950 rounded-3xl border border-slate-800 shadow-xl relative text-white h-[580px] flex flex-col overflow-hidden antialiased group">
-          
-          <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/10 to-transparent pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity duration-700"></div>
+        <div className="ui-card flex flex-col overflow-hidden">
 
-          <div className="p-5 md:p-6 border-b border-white/10 relative z-10 flex-shrink-0">
-            <h2 className="text-base md:text-lg font-bold text-white tracking-wide">Akses Cepat</h2>
+          <div className="ui-card-header">
+            <h2 className="ui-card-title">Akses Cepat</h2>
           </div>
-          
-          <div className="p-4 md:p-6 space-y-3 relative z-10 flex-1 flex flex-col justify-center">
-            
+
+          <div className="p-3 flex flex-col gap-1">
+
             {/* SAKTI: HANYA ADMIN YANG BISA MELIHAT DAN MENGKLIK BASTK */}
             {userRole !== 'KARYAWAN' && (
-              <Link to="/bastk" className="w-full flex items-center justify-between p-3 md:p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-colors group/btn cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-500/20 rounded-xl flex items-center justify-center text-blue-400 group-hover/btn:scale-110 group-hover/btn:bg-blue-500/30 transition-all shadow-inner"><FileText className="w-4 h-4 md:w-5 md:h-5" /></div>
-                  <span className="font-semibold text-xs md:text-sm text-slate-100 drop-shadow-sm group-hover/btn:text-white transition-colors">Buat BASTK Baru</span>
+              <Link to="/bastk" className="w-full flex items-center justify-between h-11 px-3 mb-1.5 bg-brand hover:bg-brand-hover text-brand-fg rounded-lg transition-colors group/btn">
+                <div className="flex items-center gap-2.5">
+                  <FileText className="w-4 h-4" />
+                  <span className="font-semibold text-sm">Buat BASTK Baru</span>
                 </div>
-                <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover/btn:text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-all" />
+                <ArrowUpRight className="w-4 h-4 opacity-70 group-hover/btn:opacity-100 transition-opacity" />
               </Link>
             )}
-            
+
             {/* Cuti & Izin selalu muncul untuk semua (Termasuk Karyawan) */}
-            <Link to="/cuti" className="w-full flex items-center justify-between p-3 md:p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-colors group/btn cursor-pointer">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-400 group-hover/btn:scale-110 group-hover/btn:bg-purple-500/30 transition-all shadow-inner"><CalendarDays className="w-4 h-4 md:w-5 md:h-5" /></div>
-                <span className="font-semibold text-xs md:text-sm text-slate-100 drop-shadow-sm group-hover/btn:text-white transition-colors">Ajukan Cuti & Izin</span>
+            <Link to="/cuti" className="w-full flex items-center justify-between h-11 px-3 rounded-lg text-stone-700 hover:bg-stone-100 hover:text-stone-900 transition-colors group/btn">
+              <div className="flex items-center gap-2.5">
+                <CalendarDays className="w-4 h-4 text-stone-500" />
+                <span className="font-medium text-sm">Ajukan Cuti & Izin</span>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover/btn:text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-all" />
+              <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover/btn:text-stone-900 transition-colors" />
             </Link>
-            
+
             {/* SAKTI: HANYA ADMIN YANG BISA MELIHAT SEMUA MENU KEUANGAN INI */}
             {userRole !== 'KARYAWAN' && (
               <>
-                <Link to="/kwitansi-kredit" className="w-full flex items-center justify-between p-3 md:p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-colors group/btn cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400 group-hover/btn:scale-110 group-hover/btn:bg-indigo-500/30 transition-all shadow-inner"><Receipt className="w-4 h-4 md:w-5 md:h-5" /></div>
-                    <span className="font-semibold text-xs md:text-sm text-slate-100 drop-shadow-sm group-hover/btn:text-white transition-colors">Cetak Kwitansi Kredit</span>
+                <Link to="/kwitansi-kredit" className="w-full flex items-center justify-between h-11 px-3 rounded-lg text-stone-700 hover:bg-stone-100 hover:text-stone-900 transition-colors group/btn">
+                  <div className="flex items-center gap-2.5">
+                    <Receipt className="w-4 h-4 text-stone-500" />
+                    <span className="font-medium text-sm">Cetak Kwitansi Kredit</span>
                   </div>
-                  <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover/btn:text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-all" />
+                  <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover/btn:text-stone-900 transition-colors" />
                 </Link>
-                
-                <Link to="/kwitansi-indent" className="w-full flex items-center justify-between p-3 md:p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-colors group/btn cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-amber-500/20 rounded-xl flex items-center justify-center text-amber-400 group-hover/btn:scale-110 group-hover/btn:bg-amber-500/30 transition-all shadow-inner"><ClipboardSignature className="w-4 h-4 md:w-5 md:h-5" /></div>
-                    <span className="font-semibold text-xs md:text-sm text-slate-100 drop-shadow-sm group-hover/btn:text-white transition-colors">Kwitansi Indent</span>
+
+                <Link to="/kwitansi-indent" className="w-full flex items-center justify-between h-11 px-3 rounded-lg text-stone-700 hover:bg-stone-100 hover:text-stone-900 transition-colors group/btn">
+                  <div className="flex items-center gap-2.5">
+                    <ClipboardSignature className="w-4 h-4 text-stone-500" />
+                    <span className="font-medium text-sm">Kwitansi Indent</span>
                   </div>
-                  <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover/btn:text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-all" />
+                  <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover/btn:text-stone-900 transition-colors" />
                 </Link>
-                
-                <Link to="/nota" className="w-full flex items-center justify-between p-3 md:p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-colors group/btn cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 md:w-10 md:h-10 bg-rose-500/20 rounded-xl flex items-center justify-center text-rose-400 group-hover/btn:scale-110 group-hover/btn:bg-rose-500/30 transition-all shadow-inner"><ScrollText className="w-4 h-4 md:w-5 md:h-5" /></div>
-                    <span className="font-semibold text-xs md:text-sm text-slate-100 drop-shadow-sm group-hover/btn:text-white transition-colors">Nota & Laporan</span>
+
+                <Link to="/nota" className="w-full flex items-center justify-between h-11 px-3 rounded-lg text-stone-700 hover:bg-stone-100 hover:text-stone-900 transition-colors group/btn">
+                  <div className="flex items-center gap-2.5">
+                    <ScrollText className="w-4 h-4 text-stone-500" />
+                    <span className="font-medium text-sm">Nota & Laporan</span>
                   </div>
-                  <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover/btn:text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-all" />
+                  <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover/btn:text-stone-900 transition-colors" />
                 </Link>
               </>
             )}

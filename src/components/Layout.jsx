@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, FileText, BookOpen, CalendarDays, Receipt, Banknote, ClipboardSignature, ScrollText, Settings, LogOut, Menu, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import { signOutLocal } from '../lib/auth';
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -14,8 +15,8 @@ export default function Layout({ children }) {
 
   const userRole = localStorage.getItem('adminRole')?.toUpperCase() || '';
 
-  const handleConfirmLogout = () => {
-    localStorage.removeItem('isLoggedIn');
+  const handleConfirmLogout = async () => {
+    await signOutLocal();
     navigate('/login');
   };
 
@@ -55,9 +56,15 @@ export default function Layout({ children }) {
           { path: '/kwitansi-kredit', icon: Receipt, label: 'Kwitansi Kredit' },
           { path: '/kwitansi-cash', icon: Banknote, label: 'Kwitansi Cash' },
           { path: '/kwitansi-indent', icon: ClipboardSignature, label: 'Kwitansi Indent' },
-          { path: '/nota', icon: ScrollText, label: 'Nota & Laporan' } 
+          { path: '/nota', icon: ScrollText, label: 'Nota & Laporan' }
         ]
-      },
+      }
+    );
+  }
+
+  // SAKTI: Logo & TTD hanya boleh diubah ADMIN (database juga menolak peran lain)
+  if (userRole === 'ADMIN') {
+    menuSections.push(
       {
         title: "Sistem",
         items: [

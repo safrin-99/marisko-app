@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, ShieldCheck, RefreshCw, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { isAuthRetryableFetchError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { loadProfile, signOutLocal } from '../lib/auth';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -25,23 +27,30 @@ export default function LoginPage() {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('admin_accounts')
-        .select('*')
-        .eq('email', email)
-        .eq('password', password)
-        .single();
+      // SAKTI: Kata sandi dicek oleh Supabase Auth (tersimpan ter-hash), bukan dicocokkan di tabel
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
 
-      if (error || !data) {
+      if (isAuthRetryableFetchError(error)) {
+        setErrorMsg('Gagal terhubung ke server database.');
+      } else if (error || !data?.user) {
         setErrorMsg('Email atau Kata Sandi salah!');
       } else {
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('adminName', data.nama);
-        localStorage.setItem('adminRole', data.role);
-        
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 800);
+        const profile = await loadProfile(data.user.id);
+
+        if (!profile) {
+          // Akun Auth tanpa profil (mis. daftar sendiri) tidak boleh masuk
+          await signOutLocal();
+          setErrorMsg('Email atau Kata Sandi salah!');
+        } else {
+          localStorage.setItem('isLoggedIn', 'true');
+
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 800);
+        }
       }
     } catch (err) {
       setErrorMsg('Gagal terhubung ke server database.');
@@ -63,7 +72,7 @@ export default function LoginPage() {
       <div className="w-full max-w-4xl bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row relative z-10 animate-page-in motion-reduce:animate-none">
 
           {/* SISI KIRI - BRANDING */}
-          <div className="w-full md:w-1/2 bg-brand p-10 lg:p-12 flex-col justify-between relative overflow-hidden hidden md:flex">
+          <div className="w-full md:w-1/2 bg-brand p-10 lg:p-12 flex-col justify-center relative overflow-hidden hidden md:flex">
 
             <div className="relative z-10">
               <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-brand font-bold text-xl mb-8">M</div>
@@ -75,16 +84,6 @@ export default function LoginPage() {
               <p className="text-stone-300 mt-4 text-[15px] leading-relaxed max-w-sm">
                   Platform Enterprise untuk mengelola BASTK, Kwitansi, Nota, dan Laporan Keuangan secara terpusat.
               </p>
-            </div>
-
-            <div className="relative z-10 mt-12">
-              <div className="flex items-center gap-3 border border-white/15 p-3.5 rounded-lg w-fit">
-                  <ShieldCheck className="w-5 h-5 text-stone-300" />
-                  <div className="text-left">
-                    <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-[0.08em]">Keamanan Server</p>
-                    <p className="text-sm font-medium text-brand-fg">Enkripsi Data 256-bit</p>
-                  </div>
-              </div>
             </div>
           </div>
 

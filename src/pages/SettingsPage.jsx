@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Settings, UploadCloud, Image as ImageIcon, CheckCircle2, AlertCircle, Trash2, RefreshCw, PenTool } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { getLogosSignedUrl } from '../lib/storage';
 
 // Gambar ditanam utuh ke setiap PDF, jadi file besar membuat PDF berat & lambat dibuat
 const MAX_FILE_SIZE_MB = 2;
@@ -28,8 +29,9 @@ export default function SettingsPage() {
         .single();
 
       if (data) {
-        if (data.logo_url) setLogoUrl(data.logo_url);
-        if (data.ttd_kacab_url) setTtdUrl(data.ttd_kacab_url);
+        // Bucket privat: pratinjau memakai URL bertanda tangan, data di database tetap URL aslinya
+        if (data.logo_url) setLogoUrl((await getLogosSignedUrl(data.logo_url)) || data.logo_url);
+        if (data.ttd_kacab_url) setTtdUrl((await getLogosSignedUrl(data.ttd_kacab_url)) || data.ttd_kacab_url);
       }
     } catch (err) {
       console.error("Belum ada data pengaturan.");
@@ -77,11 +79,12 @@ export default function SettingsPage() {
       const { error: updateError } = await supabase.from('dealer_settings').upsert({ id: 1, ...updateData });
       if (updateError) throw updateError;
 
+      const previewUrl = (await getLogosSignedUrl(publicUrl)) || publicUrl;
       if (type === 'logo') {
-        setLogoUrl(publicUrl);
+        setLogoUrl(previewUrl);
         setModal({ isOpen: true, type: 'success', title: 'Logo Tersimpan!', message: 'Logo Dealer berhasil diunggah.' });
       } else {
-        setTtdUrl(publicUrl);
+        setTtdUrl(previewUrl);
         setModal({ isOpen: true, type: 'success', title: 'TTD Tersimpan!', message: 'Tanda Tangan Kepala Cabang berhasil diunggah.' });
       }
     } catch (error) {

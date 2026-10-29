@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 // SAKTI: Menambahkan Search pada import lucide-react
 import { FileText, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { getLogosSignedUrl } from '../lib/storage';
 import { jsPDF } from "jspdf";
 
 export default function BastkPage() {
@@ -54,7 +55,9 @@ export default function BastkPage() {
   const fetchSettingsImages = async () => {
     try {
       const { data } = await supabase.from('dealer_settings').select('*').eq('id', 1).single();
-      if (data?.ttd_kacab_url) {
+      // URL bertanda tangan sudah unik tiap kali diminta, jadi tidak perlu penanda ?t= lagi
+      const ttdUrl = await getLogosSignedUrl(data?.ttd_kacab_url);
+      if (ttdUrl) {
         const img = new Image();
         img.crossOrigin = "Anonymous";
         img.onload = () => {
@@ -65,7 +68,7 @@ export default function BastkPage() {
           ctx.drawImage(img, 0, 0);
           setTtdBase64(canvas.toDataURL('image/png')); 
         };
-        img.src = `${data.ttd_kacab_url}?t=${new Date().getTime()}`;
+        img.src = ttdUrl;
       }
     } catch (err) { console.error("Gagal menarik TTD:", err); }
   };

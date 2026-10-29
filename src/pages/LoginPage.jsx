@@ -60,7 +60,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50 p-4 sm:p-6 relative">
 
       {/* Card Utama Login (Rasio 50:50) */}
-      <div className="w-full max-w-4xl bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row relative z-10">
+      <div className="w-full max-w-4xl bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row relative z-10 animate-page-in motion-reduce:animate-none">
 
           {/* SISI KIRI - BRANDING */}
           <div className="w-full md:w-1/2 bg-brand p-10 lg:p-12 flex-col justify-between relative overflow-hidden hidden md:flex">

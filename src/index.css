@@ -12,6 +12,19 @@
   --color-brand: #1c1917;
   --color-brand-hover: #0c0a09;
   --color-brand-fg: #ffffff;
+
+  /* Animasi popup & halaman (dipakai lewat kelas animate-*) */
+  --animate-overlay-in: overlay-in 200ms ease-out both;
+  --animate-overlay-out: overlay-out 180ms ease-in both;
+  --animate-modal-in: modal-in 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-modal-out: modal-out 180ms ease-in both;
+  --animate-page-in: page-in 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  @keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes overlay-out { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: none; } }
+  @keyframes modal-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(4px) scale(0.97); } }
+  @keyframes page-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 }
 
 @layer base {
@@ -80,8 +93,10 @@
   .ui-badge-neutral { @apply inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-stone-100 text-[11px] font-semibold uppercase tracking-[0.04em] text-stone-700; }
 
   /* ---------- Modal & notifikasi ---------- */
-  .ui-overlay { @apply fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-stone-950/40 backdrop-blur-[2px]; }
-  .ui-modal { @apply relative z-10 w-full max-w-md p-6 bg-white border border-stone-200 rounded-xl shadow-xl font-sans; }
+  .ui-overlay { @apply fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-stone-950/40 backdrop-blur-[2px] animate-overlay-in motion-reduce:animate-none; }
+  .ui-modal { @apply relative z-10 w-full max-w-md p-6 bg-white border border-stone-200 rounded-xl shadow-xl font-sans animate-modal-in motion-reduce:animate-none; }
+  .ui-overlay-closing { @apply animate-overlay-out motion-reduce:animate-none; }
+  .ui-modal-closing { @apply animate-modal-out motion-reduce:animate-none; }
   .ui-modal-icon-success { @apply w-12 h-12 mb-4 rounded-full flex items-center justify-center bg-green-50 text-green-700; }
   .ui-modal-icon-danger { @apply w-12 h-12 mb-4 rounded-full flex items-center justify-center bg-red-50 text-red-700; }
   .ui-modal-icon-neutral { @apply w-12 h-12 mb-4 rounded-full flex items-center justify-center bg-stone-100 text-stone-700; }

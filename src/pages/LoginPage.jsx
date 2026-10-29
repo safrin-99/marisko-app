@@ -57,122 +57,124 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 font-sans p-4 relative overflow-hidden">
-      
-      {/* Card Utama Login (Rasio 50:50) */}
-      <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative z-10 animate-in zoom-in-95 duration-500">
-          
-          {/* SISI KIRI - BRANDING */}
-          <div className="w-full md:w-1/2 bg-red-600 p-10 lg:p-12 flex-col justify-between relative overflow-hidden hidden md:flex">
-            <div className="absolute top-[-20%] left-[-10%] w-64 h-64 bg-white rounded-full blur-[80px] opacity-10 pointer-events-none z-0"></div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50 p-4 sm:p-6 relative">
 
-            <div className="relative z-10 mt-6">
-              <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-lg text-red-600 font-black text-2xl tracking-tighter mb-6">M</div>
-              
-              <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight antialiased drop-shadow-md">
-                  Sistem HRIS & <br/><span className="text-white">Keuangan</span>
+      {/* Card Utama Login (Rasio 50:50) */}
+      <div className="w-full max-w-4xl bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row relative z-10">
+
+          {/* SISI KIRI - BRANDING */}
+          <div className="w-full md:w-1/2 bg-brand p-10 lg:p-12 flex-col justify-between relative overflow-hidden hidden md:flex">
+
+            <div className="relative z-10">
+              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-brand font-bold text-xl mb-8">M</div>
+
+              <h1 className="text-3xl lg:text-[34px] font-semibold text-brand-fg tracking-tight leading-tight">
+                  Sistem HRIS & <br/><span className="text-brand-fg">Keuangan</span>
               </h1>
-              
-              <p className="text-white font-semibold mt-4 text-sm leading-relaxed antialiased drop-shadow-sm">
+
+              <p className="text-stone-300 mt-4 text-[15px] leading-relaxed max-w-sm">
                   Platform Enterprise untuk mengelola BASTK, Kwitansi, Nota, dan Laporan Keuangan secara terpusat.
               </p>
             </div>
 
-            <div className="relative z-10 mb-6 mt-12">
-              <div className="flex items-center gap-3 bg-red-700/80 border border-red-500/50 p-4 rounded-xl w-fit shadow-md">
-                  <ShieldCheck className="w-6 h-6 text-white drop-shadow-sm" />
-                  <div className="text-left antialiased">
-                    <p className="text-[10px] font-extrabold text-white uppercase tracking-widest drop-shadow-sm">Keamanan Server</p>
-                    <p className="text-xs font-black text-white drop-shadow-sm">Enkripsi Data 256-bit</p>
+            <div className="relative z-10 mt-12">
+              <div className="flex items-center gap-3 border border-white/15 p-3.5 rounded-lg w-fit">
+                  <ShieldCheck className="w-5 h-5 text-stone-300" />
+                  <div className="text-left">
+                    <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-[0.08em]">Keamanan Server</p>
+                    <p className="text-sm font-medium text-brand-fg">Enkripsi Data 256-bit</p>
                   </div>
               </div>
             </div>
           </div>
 
           {/* SISI KANAN - FORM LOGIN */}
-          <div className="w-full md:w-1/2 p-8 lg:p-12 flex flex-col justify-center bg-white">
-            
-            <div className="text-center lg:text-left mb-8">
+          <div className="w-full md:w-1/2 p-8 sm:p-10 lg:p-12 flex flex-col justify-center bg-white">
+
+            <div className="text-center md:text-left mb-8">
               <div className="flex justify-center mb-6 md:hidden">
-                <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center shadow-lg text-white font-black text-xl tracking-tighter">M</div>
+                <div className="w-11 h-11 bg-brand rounded-xl flex items-center justify-center text-brand-fg font-bold text-lg">M</div>
               </div>
-              <h2 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight antialiased">Selamat Datang</h2>
-              <p className="text-slate-500 font-medium mt-1 text-sm lg:text-base antialiased">Masuk ke akun MARISKO.APP Anda</p>
+              <h2 className="text-2xl lg:text-[28px] font-semibold text-stone-900 tracking-tight">Selamat Datang</h2>
+              <p className="text-stone-600 mt-1 text-[15px]">Masuk ke akun MARISKO.APP Anda</p>
             </div>
 
             {errorMsg && (
-              <div className="mb-6 bg-rose-50 border border-rose-200 text-rose-600 px-4 py-3 rounded-xl text-sm font-bold flex items-center animate-in shake">
-                <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0" /> {errorMsg}
-              </div>
-            )}
-            
-            {lupaSandiMsg && (
-              <div className="mb-6 bg-slate-50 border border-slate-200 text-slate-700 px-4 py-3 rounded-xl text-sm font-bold flex items-center animate-in fade-in">
-                <ShieldCheck className="w-4 h-4 mr-2 flex-shrink-0 text-red-500" /> {lupaSandiMsg}
+              <div className="ui-alert-danger mb-6">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" /> {errorMsg}
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div className="space-y-4">
+            {lupaSandiMsg && (
+              <div className="ui-alert-neutral mb-6">
+                <ShieldCheck className="w-4 h-4 flex-shrink-0 text-stone-500" /> {lupaSandiMsg}
+              </div>
+            )}
+
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div className="space-y-3">
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-slate-400 group-focus-within:text-red-500 transition-colors" />
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Mail className="h-[18px] w-[18px] text-stone-400 group-focus-within:text-stone-900 transition-colors" />
                   </div>
-                  <input 
-                    type="email" 
+                  <input
+                    type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Alamat Email" 
+                    placeholder="Alamat Email"
+                    aria-label="Alamat Email"
                     required
-                    className="block w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 outline-none transition-all placeholder:text-slate-400"
+                    className="ui-input h-12 pl-11 pr-4"
                   />
                 </div>
-                
+
                <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-red-500 transition-colors" />
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <Lock className="h-[18px] w-[18px] text-stone-400 group-focus-within:text-stone-900 transition-colors" />
                     </div>
-                    
+
                     {/* PERBAIKAN: Gunakan variabel showPassword untuk menentukan tipe input */}
-                    <input 
-                      type={showPassword ? "text" : "password"} 
+                    <input
+                      type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Kata Sandi" 
+                      placeholder="Kata Sandi"
+                      aria-label="Kata Sandi"
                       required
-                      className="block w-full pl-11 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-500/10 outline-none transition-all placeholder:text-slate-400"
+                      className="ui-input h-12 pl-11 pr-12"
                     />
 
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <div className="absolute inset-y-0 right-0 pr-2 flex items-center">
                       {/* PERBAIKAN: Pastikan onClick memicu setShowPassword */}
-                      <button 
-                        type="button" 
-                        onClick={() => setShowPassword(!showPassword)} 
-                        className="text-slate-400 hover:text-red-600 focus:outline-none p-1 rounded transition-colors"
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                        className="text-stone-500 hover:text-stone-900 hover:bg-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/20 p-2 rounded-md transition-colors"
                       >
-                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                       </button>
                     </div>
                   </div>
                 </div>
 
-              <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500/20 cursor-pointer" />
-                  <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900 transition-colors">Ingat saya</span>
+                  <input type="checkbox" className="w-4 h-4 rounded border-stone-300 accent-stone-900 cursor-pointer" />
+                  <span className="text-sm text-stone-700 group-hover:text-stone-900 transition-colors">Ingat saya</span>
                 </label>
-                <button type="button" onClick={handleLupaSandi} className="text-sm font-bold text-red-600 hover:text-red-800 transition-colors">Lupa sandi?</button>
+                <button type="button" onClick={handleLupaSandi} className="text-sm font-medium text-stone-900 underline underline-offset-4 decoration-stone-300 hover:decoration-stone-900 transition-colors">Lupa sandi?</button>
               </div>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={isLoading}
-                className={`w-full py-4 mt-2 bg-red-600 text-white rounded-xl font-bold shadow-xl shadow-red-600/30 flex items-center justify-center gap-2 transition-all duration-300 hover:bg-red-700 hover:shadow-red-600/40 active:scale-95 ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
+                className={`ui-btn-primary w-full h-12 mt-1 ${isLoading ? 'cursor-wait' : ''}`}
               >
                 {isLoading ? (
-                  <><RefreshCw className="w-5 h-5 animate-spin" /> Memverifikasi...</>
+                  <><RefreshCw className="w-[18px] h-[18px] animate-spin" /> Memverifikasi...</>
                 ) : (
-                  <>Masuk ke Sistem <ArrowRight className="w-5 h-5" /></>
+                  <>Masuk ke Sistem <ArrowRight className="w-[18px] h-[18px]" /></>
                 )}
               </button>
             </form>
@@ -180,11 +182,11 @@ export default function LoginPage() {
       </div>
 
       {/* FOOTER COPYRIGHT */}
-      <div className="absolute bottom-4 lg:bottom-8 left-0 w-full text-center z-0">
-        <p className="text-xs font-semibold text-slate-400">
+      <div className="mt-8 w-full text-center">
+        <p className="text-xs font-medium text-stone-600">
           &copy; {new Date().getFullYear()} CV. MARISKO PERKASA
         </p>
-        <p className="text-xs text-slate-400 mt-0.5">
+        <p className="text-xs text-stone-500 mt-0.5">
           Hak Cipta Dilindungi Undang-Undang.
         </p>
       </div>

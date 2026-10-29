@@ -1,20 +1,100 @@
 @import "tailwindcss";
 
-/* Ini cara baru Tailwind v4 menyimpan warna khusus MARISKO */
+/* =========================================================================
+   MARISKO — Sistem desain "Netral Dokumen"
+   Satu tempat untuk warna, font, dan gaya komponen.
+   Untuk mengganti warna aksen seluruh aplikasi, ubah --color-brand saja.
+   ========================================================================= */
 @theme {
-  --color-sidebarBg: #0B1120;
-  --color-primary: #0F172A;
-  --color-primaryBlue: #1A73E8;
-  --color-lightBlue: #E8F0FE;
-  --color-success: #10B981;
-  --font-inter: 'Inter', sans-serif;
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --color-brand: #1c1917;
+  --color-brand-hover: #0c0a09;
+  --color-brand-fg: #ffffff;
 }
 
 @layer base {
   body {
-    background-color: var(--color-slate-50);
-    color: var(--color-slate-800);
-    font-family: var(--font-inter);
-    -webkit-font-smoothing: antialiased;
+    @apply bg-stone-50 text-stone-900 font-sans antialiased;
   }
+}
+
+@layer components {
+  /* ---------- Permukaan & judul ---------- */
+  .ui-card { @apply bg-white border border-stone-200 rounded-xl; }
+  .ui-card-header { @apply flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-3.5 border-b border-stone-200; }
+  .ui-card-title { @apply flex items-center gap-2 text-[15px] font-semibold text-stone-900; }
+  .ui-page-title { @apply flex items-center gap-2.5 text-2xl font-semibold tracking-tight text-stone-900; }
+  .ui-page-subtitle { @apply mt-1 text-[15px] text-stone-600; }
+  .ui-section-title { @apply flex items-center gap-2.5 mb-4 text-[15px] font-semibold text-stone-900; }
+  .ui-step { @apply font-mono text-[13px] font-semibold text-stone-500; }
+  .ui-panel { @apply bg-stone-50 border border-stone-200 rounded-lg; }
+  .ui-caption { @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-stone-600; }
+
+  /* ---------- Formulir ---------- */
+  .ui-label { @apply block mb-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-stone-600; }
+  .ui-input { @apply w-full h-11 px-3 bg-white border border-stone-300 rounded-lg text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-500 focus:border-brand focus:ring-3 focus:ring-brand/10; }
+  .ui-input-number { @apply w-full h-11 px-3 bg-white border border-stone-300 rounded-lg font-mono text-base font-semibold text-right text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-brand focus:ring-3 focus:ring-brand/10; }
+  .ui-input-readonly { @apply w-full h-11 px-3 bg-stone-100 border border-stone-200 rounded-lg font-mono text-base font-semibold text-right text-stone-700 outline-none cursor-not-allowed; }
+  .ui-input-emphasis { @apply w-full h-11 px-3 bg-white border-2 border-brand rounded-lg font-mono text-base font-semibold text-right text-stone-900 outline-none focus:ring-3 focus:ring-brand/10; }
+  .ui-search { @apply w-full h-9 pl-9 pr-3 bg-white border border-stone-300 rounded-lg text-[13px] text-stone-900 outline-none transition-colors placeholder:text-stone-500 focus:border-brand focus:ring-3 focus:ring-brand/10; }
+  .ui-filter-date { @apply w-full h-9 px-2.5 bg-white border border-stone-300 rounded-lg text-[13px] text-stone-900 outline-none transition-colors focus:border-brand focus:ring-3 focus:ring-brand/10; }
+  .ui-filter-label { @apply text-xs font-medium text-stone-600 whitespace-nowrap; }
+
+  /* ---------- Dropdown kustom ---------- */
+  .ui-menu { @apply absolute z-20 w-full mt-1.5 py-1 bg-white border border-stone-200 rounded-lg shadow-lg overflow-hidden; }
+  .ui-menu-item { @apply px-3.5 py-2.5 text-sm text-stone-700 cursor-pointer transition-colors hover:bg-stone-100 hover:text-stone-900; }
+  .ui-menu-item-active { @apply px-3.5 py-2.5 text-sm font-semibold text-stone-900 bg-stone-100 cursor-pointer; }
+
+  /* ---------- Tombol ---------- */
+  .ui-btn-primary { @apply inline-flex items-center justify-center gap-2 h-11 px-6 rounded-lg bg-brand text-brand-fg text-sm font-semibold transition-colors hover:bg-brand-hover active:translate-y-px disabled:bg-stone-400 disabled:cursor-not-allowed; }
+  .ui-btn-secondary { @apply inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-white border border-stone-300 text-sm font-semibold text-stone-700 transition-colors hover:bg-stone-100 hover:text-stone-900 active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed; }
+  .ui-btn-danger { @apply inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-red-700 text-sm font-semibold text-white transition-colors hover:bg-red-800 active:translate-y-px; }
+  .ui-btn-sm { @apply inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg bg-white border border-stone-300 text-[13px] font-semibold text-stone-700 whitespace-nowrap transition-colors hover:bg-stone-100 hover:text-stone-900 active:translate-y-px; }
+  .ui-btn-icon { @apply inline-flex items-center justify-center w-9 h-9 flex-shrink-0 rounded-lg border border-stone-300 bg-white text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-900; }
+
+  /* ---------- Aksi pada baris tabel ---------- */
+  .ui-action { @apply inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-[13px] font-semibold text-stone-700 whitespace-nowrap transition-colors hover:bg-stone-100 hover:text-stone-900; }
+  .ui-action-danger { @apply inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-[13px] font-semibold text-red-700 whitespace-nowrap transition-colors hover:bg-red-50 hover:text-red-800; }
+
+  /* ---------- Pilihan kategori (tab) ---------- */
+  .ui-tabs { @apply flex flex-wrap gap-x-6 border-b border-stone-200; }
+  .ui-tab { @apply h-11 px-1 -mb-px border-b-2 border-transparent text-sm font-semibold text-stone-500 transition-colors hover:text-stone-900; }
+  .ui-tab-active { @apply h-11 px-1 -mb-px border-b-2 border-brand text-sm font-semibold text-stone-900; }
+
+  /* ---------- Tabel ---------- */
+  .ui-table-wrap { @apply overflow-auto max-h-[440px]; }
+  .ui-table { @apply w-full text-sm text-left border-collapse; }
+  .ui-thead { @apply sticky top-0 z-10 bg-stone-50; }
+  .ui-th { @apply px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-stone-600 whitespace-nowrap shadow-[inset_0_-1px_0_var(--color-stone-200)]; }
+  .ui-td { @apply px-5 py-3 align-middle; }
+  .ui-tr { @apply transition-colors hover:bg-stone-50; }
+  .ui-empty { @apply px-5 py-10 text-center text-sm text-stone-500; }
+  .ui-docno { @apply font-mono text-[13px] font-semibold text-stone-900 whitespace-nowrap; }
+  .ui-meta { @apply flex items-center gap-1 mt-0.5 text-xs text-stone-500; }
+
+  /* ---------- Badge status ---------- */
+  .ui-badge-success { @apply inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-50 text-[11px] font-semibold uppercase tracking-[0.04em] text-green-800; }
+  .ui-badge-warning { @apply inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-[11px] font-semibold uppercase tracking-[0.04em] text-amber-800; }
+  .ui-badge-danger { @apply inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-50 text-[11px] font-semibold uppercase tracking-[0.04em] text-red-800; }
+  .ui-badge-neutral { @apply inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-stone-100 text-[11px] font-semibold uppercase tracking-[0.04em] text-stone-700; }
+
+  /* ---------- Modal & notifikasi ---------- */
+  .ui-overlay { @apply fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-stone-950/40 backdrop-blur-[2px]; }
+  .ui-modal { @apply relative z-10 w-full max-w-md p-6 bg-white border border-stone-200 rounded-xl shadow-xl font-sans; }
+  .ui-modal-icon-success { @apply w-12 h-12 mb-4 rounded-full flex items-center justify-center bg-green-50 text-green-700; }
+  .ui-modal-icon-danger { @apply w-12 h-12 mb-4 rounded-full flex items-center justify-center bg-red-50 text-red-700; }
+  .ui-modal-icon-neutral { @apply w-12 h-12 mb-4 rounded-full flex items-center justify-center bg-stone-100 text-stone-700; }
+  .ui-modal-title { @apply mb-1.5 text-lg font-semibold text-stone-900; }
+  .ui-modal-text { @apply mb-6 text-sm leading-relaxed text-stone-600; }
+  .ui-alert-danger { @apply flex items-center gap-2.5 px-4 py-3 rounded-lg border border-red-200 bg-red-50 text-sm font-medium text-red-800; }
+  .ui-alert-neutral { @apply flex items-center gap-2.5 px-4 py-3 rounded-lg border border-stone-200 bg-stone-50 text-sm font-medium text-stone-700; }
+
+  /* ---------- Scrollbar tipis ---------- */
+  .ui-scroll-thin { scrollbar-width: thin; scrollbar-color: var(--color-stone-300) transparent; }
+
+  /* ---------- Navigasi samping ---------- */
+  .ui-nav-link { @apply flex items-center gap-2.5 h-9 px-2.5 rounded-lg border border-transparent text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100 hover:text-stone-900; }
+  .ui-nav-link-active { @apply flex items-center gap-2.5 h-9 px-2.5 rounded-lg border border-stone-200 bg-white text-sm font-semibold text-stone-900 shadow-xs; }
 }

@@ -377,14 +377,14 @@ export default function KwitansiCashPage() {
   const renderModal = () => {
     if (!modal.isOpen) return null;
     return createPortal(
-      <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
-        <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md p-8 animate-in zoom-in-95 duration-300 border border-slate-100">
-          <div className="flex flex-col items-center text-center mt-2">
-            {modal.type === 'success' ? <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6 text-emerald-600 shadow-inner"><CheckCircle2 className="w-10 h-10" /></div> : <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-6 text-rose-600 shadow-inner"><AlertCircle className="w-10 h-10" /></div>}
-            <h3 className="text-2xl font-extrabold text-slate-900 mb-2">{modal.title}</h3>
-            <p className="text-slate-500 font-medium mb-8">{modal.message}</p>
+      <div className="ui-overlay">
+        <div className="ui-modal">
+          <div className="flex flex-col items-center text-center">
+            {modal.type === 'success' ? <div className="ui-modal-icon-success"><CheckCircle2 className="w-6 h-6" /></div> : <div className="ui-modal-icon-danger"><AlertCircle className="w-6 h-6" /></div>}
+            <h3 className="ui-modal-title">{modal.title}</h3>
+            <p className="ui-modal-text">{modal.message}</p>
             <div className="flex w-full gap-3 justify-center">
-              {modal.type === 'confirm_delete' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="flex-1 py-3.5 bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Ya, Hapus!</button></> : modal.type === 'success' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">Tutup</button><button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="flex-1 py-3.5 bg-emerald-600 text-white font-bold rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-all"><Printer className="w-4 h-4 mr-2" /> Cetak PDF</button></> : <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="w-full py-3.5 bg-slate-950 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Mengerti</button>}
+              {modal.type === 'confirm_delete' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="ui-btn-secondary flex-1">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="ui-btn-danger flex-1">Ya, Hapus!</button></> : modal.type === 'success' ? <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="ui-btn-secondary flex-1">Tutup</button><button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="ui-btn-primary flex-1"><Printer className="w-4 h-4" /> Cetak PDF</button></> : <button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="ui-btn-primary w-full">Mengerti</button>}
             </div>
           </div>
         </div>
@@ -392,49 +392,49 @@ export default function KwitansiCashPage() {
     );
   };
 
-  const inputClass = "w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:bg-white focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400";
-  const numInputClass = "w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-lg font-black text-emerald-900 text-right focus:bg-white focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400";
-  const labelClass = "block text-[11px] font-bold text-slate-500 mb-2 uppercase tracking-wider";
+  const inputClass = "ui-input";
+  const numInputClass = "ui-input-number";
+  const labelClass = "ui-label";
 
   return (
     <>
       {renderModal()}
       {isSubmitting && createPortal(
-        <div className="fixed inset-0 z-[99998] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-300 border border-slate-100 max-w-sm w-full mx-4">
-            <div className="w-20 h-20 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-xl shadow-emerald-600/30 mb-6 animate-bounce">
-              <Banknote className="w-10 h-10 text-white animate-pulse" />
+        <div className="ui-overlay z-[99998]">
+          <div className="ui-modal max-w-sm flex flex-col items-center text-center">
+            <div className="w-12 h-12 bg-brand rounded-xl flex items-center justify-center mb-4">
+              <Banknote className="w-6 h-6 text-brand-fg animate-pulse" />
             </div>
-            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight mb-2">Memproses CASH...</h3>
-            <p className="text-sm font-medium text-slate-500 text-center">Menyimpan data dan menyiapkan PDF.</p>
+            <h3 className="ui-modal-title">Memproses CASH...</h3>
+            <p className="text-sm text-stone-600 text-center">Menyimpan data dan menyiapkan PDF.</p>
           </div>
         </div>, document.body
       )}
 
-      <div className="max-w-5xl mx-auto pb-12 space-y-8 relative">
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-6 md:p-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-8 flex items-center"><Banknote className="w-7 h-7 mr-3 text-emerald-500" /> {isEditing ? 'Edit Kwitansi Cash' : 'Form Kwitansi Cash'}</h2>
-            <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="max-w-5xl mx-auto pb-12 space-y-6 relative">
+        <div className="ui-card overflow-hidden">
+          <div className="p-5 md:p-7">
+            <h2 className="ui-page-title mb-7"><Banknote className="w-6 h-6 text-stone-500" /> {isEditing ? 'Edit Kwitansi Cash' : 'Form Kwitansi Cash'}</h2>
+            <form onSubmit={handleSubmit} className="space-y-7">
               {!isEditing && (
-                <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100 relative">
-                  <label className="block text-xs font-extrabold text-emerald-800 mb-3 uppercase tracking-wider flex items-center"><Search className="w-3.5 h-3.5 mr-1.5" /> Helper BASTK :</label>
+                <div className="ui-panel p-4 relative">
+                  <label className="ui-label flex items-center"><Search className="w-3.5 h-3.5 mr-1.5" /> Helper BASTK :</label>
                   <div className="relative w-full">
-                    <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="w-full h-12 px-4 bg-white border border-emerald-200 hover:border-emerald-400 rounded-xl text-sm font-bold text-slate-800 flex items-center justify-between cursor-pointer transition-all shadow-sm">
+                    <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="ui-input flex items-center justify-between cursor-pointer hover:border-stone-400">
                       <span className="truncate">{pilihBastk ? `${bastkList.find(b => b?.noSurat === pilihBastk)?.namaKonsumen || ''} - ${pilihBastk}` : '-- Cari BASTK --'}</span>
-                      <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`w-4 h-4 text-stone-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </div>
                     {isDropdownOpen && (
-                      <div className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-72 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div className="p-3 border-b border-slate-100 bg-slate-50">
-                          <input autoFocus type="text" className="w-full h-10 px-4 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-emerald-500 font-medium" placeholder="Ketik Nama/No BASTK..." value={dropdownSearch} onChange={(e) => setDropdownSearch(e.target.value)} />
+                      <div className="absolute z-50 w-full mt-1.5 bg-white border border-stone-200 rounded-lg shadow-lg max-h-72 flex flex-col overflow-hidden">
+                        <div className="p-2 border-b border-stone-200 bg-stone-50">
+                          <input autoFocus type="text" className="w-full h-9 px-3 bg-white border border-stone-300 rounded-md text-sm outline-none focus:border-brand" placeholder="Ketik Nama/No BASTK..." value={dropdownSearch} onChange={(e) => setDropdownSearch(e.target.value)} />
                         </div>
-                        <div className="overflow-y-auto p-2">
-                          <div className="px-4 py-3 text-sm font-bold text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors" onClick={() => handleSelectBastk('')}><X className="w-4 h-4 inline mr-2" /> Batal / Kosongkan Pilihan</div>
+                        <div className="overflow-y-auto p-1 ui-scroll-thin">
+                          <div className="px-3 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50 rounded-md cursor-pointer transition-colors" onClick={() => handleSelectBastk('')}><X className="w-4 h-4 inline mr-2" /> Batal / Kosongkan Pilihan</div>
                           {filteredBastk.map((b, idx) => (
-                            <div key={`${b?.noSurat}-${idx}`} className="px-4 py-3 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg cursor-pointer transition-colors" onClick={() => handleSelectBastk(b?.noSurat)}>
-                              <span className="font-extrabold block text-slate-900">{b?.namaKonsumen}</span>
-                              <span className="text-xs text-slate-500 block">{b?.noSurat}</span>
+                            <div key={`${b?.noSurat}-${idx}`} className="px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-100 rounded-md cursor-pointer transition-colors" onClick={() => handleSelectBastk(b?.noSurat)}>
+                              <span className="font-semibold block text-stone-900">{b?.namaKonsumen}</span>
+                              <span className="font-mono text-xs text-stone-500 block">{b?.noSurat}</span>
                             </div>
                           ))}
                         </div>
@@ -444,7 +444,7 @@ export default function KwitansiCashPage() {
                 </div>
               )}
               
-              <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <section className="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">
                 <div><label className={labelClass}>No. Invoice</label><input type="text" value={noInvoice} onChange={(e)=>setNoInvoice(e.target.value)} required placeholder="CSH-001" className={inputClass} /></div>
                 <div><label className={labelClass}>No. BASTK</label><input type="text" value={noBastk} onChange={(e)=>setNoBastk(e.target.value)} placeholder="001/..." className={inputClass} /></div>
                 <div><label className={labelClass}>Tanggal</label><input type="date" value={tanggal} onChange={(e)=>setTanggal(e.target.value)} required className={inputClass} /></div>
@@ -453,11 +453,11 @@ export default function KwitansiCashPage() {
                 <div className="md:col-span-2"><label className={labelClass}>Nama Motor & Warna</label><input type="text" value={tipeMotor} onChange={(e)=>setTipeMotor(e.target.value)} required placeholder="(PCX160 ABS / BLUE)" className={inputClass} /></div>
               </section>
               
-              <section className="bg-slate-50 p-6 rounded-2xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <section className="ui-panel p-5 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-4">
                     <div><label className={labelClass}>3. OTR</label><input type="text" value={otr === 0 ? '' : formatRupiah(otr)} onChange={handleInputChange(setOtr)} className={numInputClass} placeholder="0" /></div>
                     <div><label className={labelClass}>2. BBN</label><input type="text" value={bbn === 0 ? '' : formatRupiah(bbn)} onChange={handleInputChange(setBbn)} className={numInputClass} placeholder="0" /></div>
-                    <div><label className={labelClass}>1. Off The Road (Auto)</label><input type="text" value={offTheRoad === 0 ? '' : formatRupiah(offTheRoad)} readOnly className="w-full h-12 px-4 bg-emerald-50 border border-emerald-200 rounded-xl text-lg font-black text-emerald-900 text-right cursor-not-allowed outline-none" /></div>
+                    <div><label className={labelClass}>1. Off The Road (Auto)</label><input type="text" value={offTheRoad === 0 ? '' : formatRupiah(offTheRoad)} readOnly className="ui-input-readonly" /></div>
                     <div><label className={labelClass}>7. Accesoris</label><input type="text" value={accesoris === 0 ? '' : formatRupiah(accesoris)} onChange={handleInputChange(setAccesoris)} className={numInputClass} placeholder="0" /></div>
                     <div><label className={labelClass}>8. Potongan Lecet</label><input type="text" value={potonganLecet === 0 ? '' : formatRupiah(potonganLecet)} onChange={handleInputChange(setPotonganLecet)} className={numInputClass} placeholder="0" /></div>
                 </div>
@@ -465,111 +465,112 @@ export default function KwitansiCashPage() {
                     <div><label className={labelClass}>4. Indent</label><input type="text" value={indent === 0 ? '' : formatRupiah(indent)} onChange={handleInputChange(setIndent)} className={numInputClass} placeholder="0" /></div>
                     <div><label className={labelClass}>5. Diskon</label><input type="text" value={diskon === 0 ? '' : formatRupiah(diskon)} onChange={handleInputChange(setDiskon)} className={numInputClass} placeholder="0" /></div>
                     <div><label className={labelClass}>6. Transfer</label><input type="text" value={transfer === 0 ? '' : formatRupiah(transfer)} onChange={handleInputChange(setTransfer)} className={numInputClass} placeholder="0" /></div>
-                    <div><label className={labelClass}>9. Sisa Uang Muka (Auto / Manual)</label><input type="text" value={sisaUangMuka === 0 ? '' : formatRupiah(sisaUangMuka)} onChange={handleInputChange(setSisaUangMuka)} className="w-full h-12 px-4 bg-white border-2 border-emerald-400 rounded-xl text-base sm:text-lg font-black text-emerald-800 text-right outline-none transition-all focus:ring-4 focus:ring-emerald-500/20" placeholder="0" /></div>
+                    <div><label className={labelClass}>9. Sisa Uang Muka (Auto / Manual)</label><input type="text" value={sisaUangMuka === 0 ? '' : formatRupiah(sisaUangMuka)} onChange={handleInputChange(setSisaUangMuka)} className="ui-input-emphasis" placeholder="0" /></div>
                 </div>
               </section>
 
-              <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-center items-center gap-4 transition-all duration-300">
+              <div className="pt-6 border-t border-stone-200 flex flex-col sm:flex-row justify-end items-center gap-3">
                 {isEditing && (
-                  <button type="button" onClick={resetForm} className="px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-center w-full sm:w-auto">
-                    <X className="w-4 h-4 mr-2" /> Batal Edit
+                  <button type="button" onClick={resetForm} className="ui-btn-secondary w-full sm:w-auto">
+                    <X className="w-4 h-4" /> Batal Edit
                   </button>
                 )}
-                <button type="submit" disabled={isSubmitting} className={`px-12 py-3.5 text-white rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 shadow-lg tracking-wide flex items-center justify-center w-full sm:w-auto ${isSubmitting ? 'bg-slate-400 cursor-not-allowed' : 'bg-slate-950 hover:bg-slate-800'}`}>
+                <button type="submit" disabled={isSubmitting} className="ui-btn-primary w-full sm:w-auto px-8">
                   {isSubmitting ? (
-                    <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Memproses...</>
+                    <><RefreshCw className="w-4 h-4 animate-spin" /> Memproses...</>
                   ) : isEditing ? (
-                    <><Edit className="w-4 h-4 mr-2" /> Update Cash</>
+                    <><Edit className="w-4 h-4" /> Update Cash</>
                   ) : (
-                    <><Banknote className="w-4 h-4 mr-2" /> Simpan & Cetak Kwitansi</>
+                    <><Banknote className="w-4 h-4" /> Simpan & Cetak Kwitansi</>
                   )}
                 </button>
               </div>
             </form>
           </div>
         </div>
-        
+
         {/* =========================================================================
             SAKTI: UI TABEL RIWAYAT DENGAN FILTER TANGGAL & EKSPOR EXCEL
             ========================================================================= */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="bg-slate-50/80 border-b border-slate-200 p-4 md:p-5 flex flex-col justify-between items-start gap-4">
-            
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-3.5">
-              <h3 className="text-lg font-bold text-slate-800 flex items-center shrink-0">
-                <Banknote className="w-5 h-5 mr-2 text-emerald-600" /> Riwayat Kwitansi Cash
+        <div className="ui-card overflow-hidden">
+
+          <div className="border-b border-stone-200 px-5 py-3.5 flex flex-col justify-between items-start gap-3">
+
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-3">
+              <h3 className="ui-card-title shrink-0">
+                <Banknote className="w-4 h-4 text-stone-500" /> Riwayat Kwitansi Cash
               </h3>
-              
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <button onClick={fetchHistory} className="flex-1 sm:flex-none flex items-center justify-center text-xs font-bold text-slate-700 bg-white border border-slate-300 px-4 py-2.5 rounded-xl active:scale-95 shadow-sm hover:bg-slate-100 transition-all duration-200">
-                  <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button onClick={fetchHistory} className="ui-btn-sm flex-1 sm:flex-none">
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
                 </button>
-                <button onClick={exportToExcel} className="flex-1 sm:flex-none flex items-center justify-center text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-4 py-2.5 rounded-xl active:scale-95 shadow-sm hover:bg-emerald-200 transition-all duration-200">
-                  <Download className="w-4 h-4 mr-2" /> Ekspor ke Excel
+                <button onClick={exportToExcel} className="ui-btn-sm flex-1 sm:flex-none">
+                  <Download className="w-4 h-4" /> Ekspor ke Excel
                 </button>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full bg-white p-3 rounded-2xl border border-emerald-100 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
               <div className="relative w-full sm:w-1/3">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
                 <input
                   type="text"
                   placeholder="Cari Nama / No. Invoice..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-sm"
+                  className="ui-search"
                 />
               </div>
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Dari:</span>
-                <input 
-                  type="date" 
-                  value={startDate} 
-                  onChange={(e) => setStartDate(e.target.value)} 
-                  className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all" 
+                <span className="ui-filter-label">Dari:</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="ui-filter-date"
                 />
               </div>
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Sampai:</span>
-                <input 
-                  type="date" 
-                  value={endDate} 
-                  onChange={(e) => setEndDate(e.target.value)} 
-                  className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all" 
+                <span className="ui-filter-label">Sampai:</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="ui-filter-date"
                 />
               </div>
 
               {(searchTerm || startDate || endDate) && (
-                <button 
-                  onClick={() => { setSearchTerm(''); setStartDate(''); setEndDate(''); }} 
-                  className="p-2 text-rose-500 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all shadow-sm" 
+                <button
+                  onClick={() => { setSearchTerm(''); setStartDate(''); setEndDate(''); }}
+                  className="ui-btn-icon"
                   title="Reset Filter"
                 >
                    <X className="w-4 h-4" />
                 </button>
               )}
             </div>
-            
+
           </div>
-          
-          <div className="overflow-x-auto max-h-[420px] scrollbar-thin">
-            <table className="w-full text-sm text-left border-collapse">
-              <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
-                <tr className="border-b border-slate-200">
-                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">No. Invoice</th>
-                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">Tanggal</th>
-                  <th className="px-6 py-4 font-bold tracking-wider">Diterima Dari</th>
-                  <th className="px-6 py-4 font-bold tracking-wider">Tipe Kendaraan</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-right whitespace-nowrap">Aksi</th>
+
+          <div className="ui-table-wrap ui-scroll-thin">
+            <table className="ui-table min-w-[820px] lg:min-w-full">
+              <thead className="ui-thead">
+                <tr>
+                  <th className="ui-th">No. Invoice</th>
+                  <th className="ui-th">Tanggal</th>
+                  <th className="ui-th">Diterima Dari</th>
+                  <th className="ui-th">Tipe Kendaraan</th>
+                  <th className="ui-th text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-stone-100">
                 {filteredHistoryData.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="text-center py-8 text-slate-400 font-medium">
+                    <td colSpan="5" className="ui-empty">
                       Tidak ada data Kwitansi Cash yang ditemukan.
                     </td>
                   </tr>
@@ -577,25 +578,25 @@ export default function KwitansiCashPage() {
                   filteredHistoryData.map((row, idx) => {
                     const { date, time } = formatDateTime(row.created_at, row.tanggal);
                     return (
-                      <tr key={`${row?.noInvoice || idx}-${idx}`} className="hover:bg-emerald-50/40 transition-colors">
-                        <td className="px-6 py-5 font-extrabold text-slate-900 whitespace-nowrap">{row?.noInvoice || '-'}</td>
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <div className="font-bold text-slate-700">{date}</div>
-                          <div className="flex items-center text-[11px] font-medium text-slate-400 mt-1">
-                            <Clock className="w-3.5 h-3.5 mr-1" /> Jam: {time}
+                      <tr key={`${row?.noInvoice || idx}-${idx}`} className="ui-tr">
+                        <td className="ui-td ui-docno">{row?.noInvoice || '-'}</td>
+                        <td className="ui-td whitespace-nowrap">
+                          <div className="font-medium text-stone-800">{date}</div>
+                          <div className="ui-meta">
+                            <Clock className="w-3.5 h-3.5" /> Jam: {time}
                           </div>
                         </td>
-                        <td className="px-6 py-5 font-bold text-slate-700 uppercase">{row?.diterimaDari || '-'}</td>
-                        <td className="px-6 py-5 text-xs font-bold text-slate-500 uppercase">{row?.tipeMotor || '-'}</td>
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-2.5">
-                            <button onClick={() => generatePDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm">
+                        <td className="ui-td font-semibold text-stone-900 uppercase">{row?.diterimaDari || '-'}</td>
+                        <td className="ui-td text-xs text-stone-600 uppercase">{row?.tipeMotor || '-'}</td>
+                        <td className="ui-td whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1">
+                            <button onClick={() => generatePDF(row)} className="ui-action">
                               <FileText className="w-3.5 h-3.5" /> PDF
                             </button>
-                            <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm">
+                            <button onClick={() => handleEdit(row)} className="ui-action">
                               <Edit className="w-3.5 h-3.5" /> Edit
                             </button>
-                            <button onClick={() => handleDeleteRequest(row.noInvoice)} className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm">
+                            <button onClick={() => handleDeleteRequest(row.noInvoice)} className="ui-action-danger">
                               <Trash2 className="w-3.5 h-3.5" /> Del
                             </button>
                           </div>

@@ -402,21 +402,21 @@ export default function NotaPage() {
     document.body.removeChild(link);
   };
 
-  const inputClass = "w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-slate-400";
-  const tableInputClass = "w-full h-10 px-3 bg-transparent border-0 border-b border-transparent focus:border-indigo-300 focus:bg-white rounded outline-none transition-all font-medium text-slate-700";
+  const inputClass = "ui-input";
+  const tableInputClass = "w-full h-10 px-2.5 bg-transparent border border-transparent rounded-md outline-none transition-colors text-stone-800 placeholder:text-stone-400 hover:border-stone-200 focus:border-brand focus:bg-white focus:ring-3 focus:ring-brand/10";
 
   return (
     <>
       {modal.isOpen && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setModal({ isOpen: false })}></div>
-          <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md p-8 relative z-10 animate-in zoom-in-95 fade-in duration-300">
-            <div className="flex flex-col items-center text-center mt-2">
-              {modal.type === 'success' || modal.type === 'success_delete' ? <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6 text-indigo-600"><CheckCircle2 className="w-10 h-10" /></div> : <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-6 text-rose-600"><AlertCircle className="w-10 h-10" /></div>}
-              <h3 className="text-2xl font-extrabold text-slate-900 mb-2">{modal.title}</h3>
-              <p className="text-slate-500 font-medium mb-8">{modal.message}</p>
+        <div className="ui-overlay">
+          <div className="absolute inset-0" onClick={() => setModal({ isOpen: false })}></div>
+          <div className="ui-modal">
+            <div className="flex flex-col items-center text-center">
+              {modal.type === 'success' || modal.type === 'success_delete' ? <div className="ui-modal-icon-success"><CheckCircle2 className="w-6 h-6" /></div> : <div className="ui-modal-icon-danger"><AlertCircle className="w-6 h-6" /></div>}
+              <h3 className="ui-modal-title">{modal.title}</h3>
+              <p className="ui-modal-text">{modal.message}</p>
               <div className="flex w-full gap-3 justify-center flex-col sm:flex-row">
-                {modal.type === 'confirm_delete' ? <><button onClick={() => setModal({ isOpen: false })} className="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="flex-1 py-3.5 bg-rose-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Ya, Hapus!</button></> : modal.type === 'success' ? <><button onClick={() => setModal({ isOpen: false })} className="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-xl active:scale-95 transition-all">Tutup</button><button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false }); }} className="flex-1 py-3.5 bg-indigo-600 text-white font-bold rounded-xl shadow-lg flex items-center justify-center active:scale-95 transition-all"><Printer className="w-4 h-4 mr-2" /> Cetak PDF</button></> : <button onClick={() => setModal({ isOpen: false })} className="w-full py-3.5 bg-slate-950 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Mengerti</button>}
+                {modal.type === 'confirm_delete' ? <><button onClick={() => setModal({ isOpen: false })} className="ui-btn-secondary flex-1">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="ui-btn-danger flex-1">Ya, Hapus!</button></> : modal.type === 'success' ? <><button onClick={() => setModal({ isOpen: false })} className="ui-btn-secondary flex-1">Tutup</button><button onClick={() => { generatePDF(modal.actionData); setModal({ isOpen: false }); }} className="ui-btn-primary flex-1"><Printer className="w-4 h-4" /> Cetak PDF</button></> : <button onClick={() => setModal({ isOpen: false })} className="ui-btn-primary w-full">Mengerti</button>}
               </div>
             </div>
           </div>
@@ -427,90 +427,88 @@ export default function NotaPage() {
           SAKTI: CARD LOADING SUDAH DISERAGAMKAN UKURANNYA! (max-w-sm w-full mx-4)
           ======================================================================= */}
       {isSubmitting && createPortal(
-        <div className="fixed inset-0 z-[99998] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center animate-in zoom-in-95 duration-300 border border-slate-100 max-w-sm w-full mx-4">
-            <div className="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-600/30 mb-6 animate-bounce">
-              <ScrollText className="w-10 h-10 text-white animate-pulse" />
+        <div className="ui-overlay z-[99998]">
+          <div className="ui-modal max-w-sm flex flex-col items-center text-center">
+            <div className="w-12 h-12 bg-brand rounded-xl flex items-center justify-center mb-4">
+              <ScrollText className="w-6 h-6 text-brand-fg animate-pulse" />
             </div>
-            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight mb-2">Memproses Nota...</h3>
-            <p className="text-sm font-medium text-slate-500 text-center">Menyimpan data dan menyiapkan PDF.</p>
+            <h3 className="ui-modal-title">Memproses Nota...</h3>
+            <p className="text-sm text-stone-600 text-center">Menyimpan data dan menyiapkan PDF.</p>
           </div>
         </div>, document.body
       )}
 
-      <div className="max-w-5xl mx-auto pb-12 space-y-8 relative">
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-6 md:p-8">
-            <div className="mb-8 flex justify-between items-start">
-              <div><h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center"><ScrollText className="w-7 h-7 mr-3 text-indigo-600" /> {isEditing ? `Edit Nota ${kategoriNota}` : 'Pembuatan Nota'}</h2></div>
-              {isEditing && <span className="px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg text-xs font-bold flex items-center"><Edit className="w-3.5 h-3.5 mr-1.5" /> Sedang Mengedit</span>}
+      <div className="max-w-5xl mx-auto pb-12 space-y-6 relative">
+        <div className="ui-card overflow-hidden">
+          <div className="p-5 md:p-7">
+            <div className="mb-7 flex justify-between items-start gap-4">
+              <div><h2 className="ui-page-title"><ScrollText className="w-6 h-6 text-stone-500" /> {isEditing ? `Edit Nota ${kategoriNota}` : 'Pembuatan Nota'}</h2></div>
+              {isEditing && <span className="ui-badge-warning px-2 py-1"><Edit className="w-3.5 h-3.5" /> Sedang Mengedit</span>}
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-8">
-              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <form onSubmit={handleSubmit} className="space-y-7">
+              <div className="ui-tabs">
                   {tabs.map(tab => (
-                    <button key={tab} type="button" onClick={() => { if(!isEditing) setKategoriNota(tab); }} className={`h-12 rounded-xl font-bold text-xs transition-all border ${kategoriNota === tab ? 'bg-slate-950 text-white border-slate-900 shadow-xl' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'} ${isEditing && kategoriNota !== tab ? 'opacity-50 cursor-not-allowed' : ''}`}>{tab}</button>
+                    <button key={tab} type="button" onClick={() => { if(!isEditing) setKategoriNota(tab); }} className={`${kategoriNota === tab ? 'ui-tab-active' : 'ui-tab'} ${isEditing && kategoriNota !== tab ? 'opacity-40 cursor-not-allowed hover:text-stone-500' : ''}`}>{tab}</button>
                   ))}
-                </div>
               </div>
 
-              <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase">No. Invoice</label><input type="text" value={noInvoice} onChange={(e)=>setNoInvoice(e.target.value)} required placeholder="INV-001" className={inputClass} /></div>
-                <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase">Tanggal</label><input type="date" value={tanggal} onChange={(e)=>setTanggal(e.target.value)} required className={inputClass} /></div>
-                
+              <section className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
+                <div><label className="ui-label">No. Invoice</label><input type="text" value={noInvoice} onChange={(e)=>setNoInvoice(e.target.value)} required placeholder="INV-001" className={inputClass} /></div>
+                <div><label className="ui-label">Tanggal</label><input type="date" value={tanggal} onChange={(e)=>setTanggal(e.target.value)} required className={inputClass} /></div>
+
                 {kategoriNota === 'INSENTIF' && (
-                  <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase">No. BASTK (Opsional)</label><input type="text" value={noBastk} onChange={(e)=>setNoBastk(e.target.value)} placeholder="001/..." className={inputClass} /></div>
+                  <div><label className="ui-label">No. BASTK (Opsional)</label><input type="text" value={noBastk} onChange={(e)=>setNoBastk(e.target.value)} placeholder="001/..." className={inputClass} /></div>
                 )}
-                
+
                 {(kategoriNota === 'PENGELUARAN' || kategoriNota === 'INSENTIF') && (
-                  <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase">Nama Penerima</label><input type="text" value={penerima} onChange={(e)=>setPenerima(e.target.value)} placeholder="EVA" className={inputClass} /></div>
+                  <div><label className="ui-label">Nama Penerima</label><input type="text" value={penerima} onChange={(e)=>setPenerima(e.target.value)} placeholder="EVA" className={inputClass} /></div>
                 )}
-                
-                <div><label className="block text-[11px] font-bold text-slate-500 mb-2 uppercase">Nama Kasir</label><input type="text" value={kasir} onChange={(e)=>setKasir(e.target.value)} required placeholder="STELY ARSYAD" className={inputClass} /></div>
+
+                <div><label className="ui-label">Nama Kasir</label><input type="text" value={kasir} onChange={(e)=>setKasir(e.target.value)} required placeholder="STELY ARSYAD" className={inputClass} /></div>
               </section>
 
-              <div className="mt-8">
-                <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Rincian Barang / Transaksi</h3>
-                <div className="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-inner">
-                    <div className="overflow-x-auto scrollbar-thin">
+              <div className="mt-7">
+                <h3 className="ui-label mb-2.5">Rincian Barang / Transaksi</h3>
+                <div className="border border-stone-200 rounded-lg overflow-hidden">
+                    <div className="overflow-x-auto ui-scroll-thin">
                       <table className="w-full text-sm text-left min-w-[600px] whitespace-nowrap">
-                         <thead className="bg-slate-100 text-[11px] uppercase text-slate-500 font-extrabold border-b border-slate-200">
+                         <thead className="bg-stone-50 text-[11px] uppercase tracking-[0.06em] text-stone-600 font-semibold border-b border-stone-200">
                             <tr>
-                               <th className="px-4 py-3 w-12 text-center">No</th>
-                               <th className="px-4 py-3 border-l border-slate-200">Nama Barang</th>
+                               <th className="px-4 py-2.5 w-12 text-center">No</th>
+                               <th className="px-4 py-2.5 border-l border-stone-200">Nama Barang</th>
                                {kategoriNota === 'INSENTIF' ? (
                                   <>
-                                    <th className="px-4 py-3 w-32 border-l border-slate-200">Warna</th>
-                                    <th className="px-4 py-3 w-32 border-l border-slate-200">Leasing</th>
+                                    <th className="px-4 py-2.5 w-32 border-l border-stone-200">Warna</th>
+                                    <th className="px-4 py-2.5 w-32 border-l border-stone-200">Leasing</th>
                                   </>
                                ) : (
-                                  <th className="px-4 py-3 w-28 text-center border-l border-slate-200">Jumlah</th>
+                                  <th className="px-4 py-2.5 w-28 text-center border-l border-stone-200">Jumlah</th>
                                )}
-                               <th className="px-4 py-3 w-48 text-right border-l border-slate-200">Harga (Rp)</th>
+                               <th className="px-4 py-2.5 w-48 text-right border-l border-stone-200">Harga (Rp)</th>
                             </tr>
                          </thead>
-                         <tbody className="divide-y divide-slate-200">
+                         <tbody className="divide-y divide-stone-100">
                             {items.map((item, index) => (
-                               <tr key={index} className="bg-white hover:bg-slate-50/50 transition-colors">
-                                  <td className="px-4 py-2 text-center font-bold text-slate-400 border-r border-slate-100">{index + 1}</td>
-                                  <td className="px-2 py-1 border-r border-slate-100"><input value={item.nama} onChange={(e) => handleItemChange(index, 'nama', e.target.value)} className={tableInputClass} placeholder="..." /></td>
+                               <tr key={index} className="bg-white">
+                                  <td className="px-4 py-1.5 text-center font-mono text-xs text-stone-500 border-r border-stone-100">{index + 1}</td>
+                                  <td className="px-1.5 py-1 border-r border-stone-100"><input value={item.nama} onChange={(e) => handleItemChange(index, 'nama', e.target.value)} className={tableInputClass} placeholder="..." /></td>
                                   {kategoriNota === 'INSENTIF' ? (
                                       <>
-                                        <td className="px-2 py-1 border-r border-slate-100"><input value={item.warna} onChange={(e) => handleItemChange(index, 'warna', e.target.value)} className={tableInputClass} placeholder="..." /></td>
-                                        <td className="px-2 py-1 border-r border-slate-100"><input value={item.leasing} onChange={(e) => handleItemChange(index, 'leasing', e.target.value)} className={tableInputClass} placeholder="..." /></td>
+                                        <td className="px-1.5 py-1 border-r border-stone-100"><input value={item.warna} onChange={(e) => handleItemChange(index, 'warna', e.target.value)} className={tableInputClass} placeholder="..." /></td>
+                                        <td className="px-1.5 py-1 border-r border-stone-100"><input value={item.leasing} onChange={(e) => handleItemChange(index, 'leasing', e.target.value)} className={tableInputClass} placeholder="..." /></td>
                                       </>
                                   ) : (
-                                        <td className="px-2 py-1 border-r border-slate-100"><input value={item.jumlah} onChange={(e) => handleItemChange(index, 'jumlah', e.target.value)} className={`${tableInputClass} text-center`} placeholder="0" /></td>
+                                        <td className="px-1.5 py-1 border-r border-stone-100"><input value={item.jumlah} onChange={(e) => handleItemChange(index, 'jumlah', e.target.value)} className={`${tableInputClass} text-center`} placeholder="0" /></td>
                                   )}
-                                  <td className="px-2 py-1"><input value={item.harga === 0 ? '' : formatRupiah(item.harga)} onChange={(e) => handleItemChange(index, 'harga', e.target.value)} className={`${tableInputClass} text-right font-bold text-indigo-700`} placeholder="0" /></td>
+                                  <td className="px-1.5 py-1"><input value={item.harga === 0 ? '' : formatRupiah(item.harga)} onChange={(e) => handleItemChange(index, 'harga', e.target.value)} className={`${tableInputClass} text-right font-mono font-semibold text-stone-900`} placeholder="0" /></td>
                                </tr>
                             ))}
                          </tbody>
-                         <tfoot className="bg-indigo-50/50 font-bold text-slate-700 border-t-2 border-slate-200">
+                         <tfoot className="bg-stone-50 border-t border-stone-200">
                             <tr>
-                               <td colSpan={kategoriNota === 'INSENTIF' ? 4 : 3} className="px-6 py-4 text-right tracking-widest text-xs">TOTAL KESELURUHAN</td>
-                               <td className="px-5 py-4 text-right text-indigo-700 text-lg">Rp {formatRupiah(totalHarga)}</td>
+                               <td colSpan={kategoriNota === 'INSENTIF' ? 4 : 3} className="px-5 py-3.5 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-stone-600">TOTAL KESELURUHAN</td>
+                               <td className="px-4 py-3.5 text-right font-mono text-base font-semibold text-stone-900">Rp {formatRupiah(totalHarga)}</td>
                             </tr>
                          </tfoot>
                       </table>
@@ -518,105 +516,105 @@ export default function NotaPage() {
                 </div>
               </div>
 
-              <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-center items-center gap-4 transition-all duration-300">
+              <div className="pt-6 border-t border-stone-200 flex flex-col sm:flex-row justify-end items-center gap-3">
                 {isEditing && (
-                  <button type="button" onClick={resetForm} className="px-4 sm:px-8 py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all duration-200 active:scale-95 shadow-sm flex items-center justify-center w-full sm:w-auto">
-                    <X className="w-4 h-4 mr-2" /> Batal Edit
+                  <button type="button" onClick={resetForm} className="ui-btn-secondary w-full sm:w-auto">
+                    <X className="w-4 h-4" /> Batal Edit
                   </button>
                 )}
-                <button type="submit" disabled={isSubmitting} className={`px-4 sm:px-12 py-3.5 text-white rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 shadow-lg tracking-wide flex items-center justify-center w-full sm:w-auto ${isSubmitting ? 'bg-slate-400 cursor-not-allowed' : 'bg-slate-950 hover:bg-slate-800'}`}>
+                <button type="submit" disabled={isSubmitting} className="ui-btn-primary w-full sm:w-auto px-8">
                   {isSubmitting ? (
-                    <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Memproses...</>
+                    <><RefreshCw className="w-4 h-4 animate-spin" /> Memproses...</>
                   ) : (
-                    <><ScrollText className="w-4 h-4 mr-2" /> {isEditing ? `Update Nota` : `Simpan & Cetak Nota ${kategoriNota}`}</>
+                    <><ScrollText className="w-4 h-4" /> {isEditing ? `Update Nota` : `Simpan & Cetak Nota ${kategoriNota}`}</>
                   )}
                 </button>
               </div>
             </form>
           </div>
         </div>
-        
+
         {/* =========================================================================
             SAKTI: UI TABEL RIWAYAT DENGAN FILTER TANGGAL & EKSPOR EXCEL
             ========================================================================= */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          
-          <div className="bg-slate-50/80 border-b border-slate-200 p-4 md:p-5 flex flex-col justify-between items-start gap-4">
-            
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-3.5">
-              <h3 className="text-lg font-bold text-slate-800 flex items-center">
-                <ScrollText className="w-5 h-5 mr-2 text-indigo-600" /> Riwayat Nota {kategoriNota}
+        <div className="ui-card overflow-hidden">
+
+          <div className="border-b border-stone-200 px-5 py-3.5 flex flex-col justify-between items-start gap-3">
+
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-3">
+              <h3 className="ui-card-title">
+                <ScrollText className="w-4 h-4 text-stone-500" /> Riwayat Nota {kategoriNota}
               </h3>
-              
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <button onClick={fetchHistory} className="flex-1 sm:flex-none flex items-center justify-center text-xs font-bold text-slate-700 bg-white border border-slate-300 px-4 py-2.5 rounded-xl active:scale-95 shadow-sm hover:bg-slate-100 transition-all duration-200">
-                  <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button onClick={fetchHistory} className="ui-btn-sm flex-1 sm:flex-none">
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
                 </button>
-                <button onClick={exportToExcel} className="flex-1 sm:flex-none flex items-center justify-center text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-4 py-2.5 rounded-xl active:scale-95 shadow-sm hover:bg-emerald-200 transition-all duration-200">
-                  <Download className="w-4 h-4 mr-2" /> Ekspor ke Excel
+                <button onClick={exportToExcel} className="ui-btn-sm flex-1 sm:flex-none">
+                  <Download className="w-4 h-4" /> Ekspor ke Excel
                 </button>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full bg-white p-3 rounded-2xl border border-indigo-100 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
               <div className="relative w-full sm:w-1/3">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
                 <input
                   type="text"
                   placeholder="Cari No / Penerima / Kasir..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  className="ui-search"
                 />
               </div>
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Dari:</span>
-                <input 
-                  type="date" 
-                  value={startDate} 
-                  onChange={(e) => setStartDate(e.target.value)} 
-                  className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" 
+                <span className="ui-filter-label">Dari:</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="ui-filter-date"
                 />
               </div>
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Sampai:</span>
-                <input 
-                  type="date" 
-                  value={endDate} 
-                  onChange={(e) => setEndDate(e.target.value)} 
-                  className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" 
+                <span className="ui-filter-label">Sampai:</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="ui-filter-date"
                 />
               </div>
 
               {(searchTerm || startDate || endDate) && (
-                <button 
-                  onClick={() => { setSearchTerm(''); setStartDate(''); setEndDate(''); }} 
-                  className="p-2 text-rose-500 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all shadow-sm" 
+                <button
+                  onClick={() => { setSearchTerm(''); setStartDate(''); setEndDate(''); }}
+                  className="ui-btn-icon"
                   title="Reset Filter"
                 >
                    <X className="w-4 h-4" />
                 </button>
               )}
             </div>
-            
+
           </div>
-          
-          <div className="overflow-x-auto max-h-[420px] scrollbar-thin">
-            <table className="w-full text-sm text-left border-collapse min-w-[900px] lg:min-w-full">
-              <thead className="text-[11px] text-slate-500 uppercase sticky top-0 z-10 bg-slate-100 shadow-sm">
-                <tr className="border-b border-slate-200">
-                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">No. Invoice & Waktu</th>
-                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">Kasir / Penerima</th>
-                  <th className="px-6 py-4 font-bold tracking-wider whitespace-nowrap">Total Nominal</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-right whitespace-nowrap">Aksi</th>
+
+          <div className="ui-table-wrap ui-scroll-thin">
+            <table className="ui-table min-w-[900px] lg:min-w-full">
+              <thead className="ui-thead">
+                <tr>
+                  <th className="ui-th">No. Invoice & Waktu</th>
+                  <th className="ui-th">Kasir / Penerima</th>
+                  <th className="ui-th">Total Nominal</th>
+                  <th className="ui-th text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-stone-100">
                 {filteredHistoryData.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="text-center py-8 text-slate-400 font-medium">
+                    <td colSpan="4" className="ui-empty">
                       Tidak ada data nota yang ditemukan.
                     </td>
                   </tr>
@@ -624,25 +622,25 @@ export default function NotaPage() {
                   filteredHistoryData.map((row) => {
                     const { date, time } = formatDateTime(row.created_at, row.tanggal);
                     return (
-                      <tr key={row.id} className="hover:bg-indigo-50/40 transition-colors">
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <div className="font-extrabold text-slate-900">{row.no_invoice}</div>
-                          <div className="flex items-center mt-1">
-                            <span className="text-[11px] font-bold text-slate-700 mr-2">{date}</span>
-                              <div className="flex items-center text-[11px] font-medium text-slate-400">
+                      <tr key={row.id} className="ui-tr">
+                        <td className="ui-td whitespace-nowrap">
+                          <div className="ui-docno">{row.no_invoice}</div>
+                          <div className="flex items-center mt-0.5">
+                            <span className="text-xs text-stone-600 mr-2">{date}</span>
+                              <div className="flex items-center text-xs text-stone-500">
                                 <Clock className="w-3.5 h-3.5 mr-1" /> Jam: {time}
                               </div>
                           </div>
                         </td>
-                        <td className="px-6 py-5 font-bold text-slate-700 uppercase whitespace-nowrap">
-                          {row.kasir} {row.penerima && <><br/><span className="text-xs text-slate-400">Penerima: {row.penerima}</span></>}
+                        <td className="ui-td font-semibold text-stone-900 uppercase whitespace-nowrap">
+                          {row.kasir} {row.penerima && <><br/><span className="text-xs font-normal text-stone-500">Penerima: {row.penerima}</span></>}
                         </td>
-                        <td className="px-6 py-5 text-sm font-black text-indigo-700 whitespace-nowrap">Rp {formatRupiah(row.total)}</td>
-                        <td className="px-4 py-4 md:px-6 md:py-5 whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-2.5">
-                            <button onClick={() => generatePDF(row)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-emerald-200 shadow-sm"><FileText className="w-3.5 h-3.5" /> PDF</button>
-                            <button onClick={() => handleEdit(row)} className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-indigo-200 shadow-sm"><Edit className="w-3.5 h-3.5" /> Edit</button>
-                            <button onClick={() => handleDeleteRequest(row.id)} className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition-all duration-200 active:scale-95 font-bold text-xs border border-rose-200 shadow-sm"><Trash2 className="w-3.5 h-3.5" /> Del</button>
+                        <td className="ui-td font-mono text-sm font-semibold text-stone-900 whitespace-nowrap">Rp {formatRupiah(row.total)}</td>
+                        <td className="ui-td whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1">
+                            <button onClick={() => generatePDF(row)} className="ui-action"><FileText className="w-3.5 h-3.5" /> PDF</button>
+                            <button onClick={() => handleEdit(row)} className="ui-action"><Edit className="w-3.5 h-3.5" /> Edit</button>
+                            <button onClick={() => handleDeleteRequest(row.id)} className="ui-action-danger"><Trash2 className="w-3.5 h-3.5" /> Del</button>
                           </div>
                         </td>
                       </tr>

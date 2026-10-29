@@ -35,6 +35,10 @@ export default function BastkPage() {
   // SAKTI: State baru untuk fitur pencarian
   const [searchTerm, setSearchTerm] = useState('');
 
+  // SAKTI: State baru untuk Filter Tanggal
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
   const opsiPembiayaan = [
     { value: 'CASH', label: 'CASH (MARISKO PERKASA)' },
     { value: 'ADIRA', label: 'PT. ADIRA MULTI FINANCE' },
@@ -250,6 +254,25 @@ export default function BastkPage() {
     return { date: `${tglSplit[2]}/${tglSplit[1]}/${tglSplit[0]}`, time };
   };
 
+  // =========================================================================
+  // SAKTI: FUNGSI FILTER DATA BERDASARKAN TANGGAL & PENCARIAN
+  // =========================================================================
+  const getFilteredData = () => {
+    return historyData.filter((row) => {
+      // 1. Filter Tanggal (berdasarkan Tanggal Serah Terima)
+      if (startDate && row.tglSerah < startDate) return false;
+      if (endDate && row.tglSerah > endDate) return false;
+
+      // 2. Filter Teks Pencarian
+      if (!searchTerm) return true;
+      const keyword = searchTerm.toLowerCase();
+      const searchString = `${row?.noSurat || ''} ${row?.namaKonsumen || ''}`.toLowerCase();
+      return searchString.includes(keyword);
+    });
+  };
+
+  const filteredHistoryData = getFilteredData();
+
   const inputClass = "ui-input";
   const labelClass = "ui-label";
 
@@ -374,12 +397,21 @@ export default function BastkPage() {
 
         <div className="ui-card overflow-hidden">
 
-          {/* SAKTI: Bagian Judul dan Tombol Segarkan Data disesuaikan untuk layar HP dan Desktop + FITUR SEARCH */}
-          <div className="ui-card-header">
-            <h3 className="ui-card-title">Riwayat {kategori}</h3>
+          {/* SAKTI: Judul + Tombol Segarkan Data, lalu baris FITUR SEARCH & FILTER TANGGAL (sama seperti Kwitansi) */}
+          <div className="border-b border-stone-200 px-5 py-3.5 flex flex-col justify-between items-start gap-3">
 
-            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-              <div className="relative w-full sm:w-64">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-3">
+              <h3 className="ui-card-title shrink-0">Riwayat {kategori}</h3>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button onClick={fetchHistory} className="ui-btn-sm flex-1 sm:flex-none">
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+              <div className="relative w-full sm:w-1/3">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
                 <input
                   type="text"
@@ -389,10 +421,38 @@ export default function BastkPage() {
                   className="ui-search"
                 />
               </div>
-              <button onClick={fetchHistory} className="ui-btn-sm w-full sm:w-auto">
-                <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
-              </button>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <span className="ui-filter-label">Dari:</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="ui-filter-date"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <span className="ui-filter-label">Sampai:</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="ui-filter-date"
+                />
+              </div>
+
+              {(searchTerm || startDate || endDate) && (
+                <button
+                  onClick={() => { setSearchTerm(''); setStartDate(''); setEndDate(''); }}
+                  className="ui-btn-icon"
+                  title="Reset Filter"
+                >
+                   <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
+
           </div>
 
           <div className="ui-table-wrap ui-scroll-thin">
@@ -406,14 +466,14 @@ export default function BastkPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
-                {historyData
-                  .filter((row) => {
-                    if (!searchTerm) return true;
-                    const keyword = searchTerm.toLowerCase();
-                    const searchString = `${row?.noSurat || ''} ${row?.namaKonsumen || ''}`.toLowerCase();
-                    return searchString.includes(keyword);
-                  })
-                  .map((row, index) => {
+                {filteredHistoryData.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className="ui-empty">
+                      Tidak ada data BASTK yang ditemukan.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredHistoryData.map((row, index) => {
                     const { date, time } = formatDateTime(row.created_at, row.tglSerah);
                     return (
                       <tr key={index} className="ui-tr">
@@ -441,7 +501,7 @@ export default function BastkPage() {
                       </tr>
                     )
                   })
-                }
+                )}
               </tbody>
             </table>
           </div>

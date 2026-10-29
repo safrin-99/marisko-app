@@ -95,7 +95,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 md:space-y-8 pb-12 relative">
+    <div className="max-w-6xl mx-auto space-y-6 pb-2 relative">
 
       {errorMsg && (
         <div className="ui-alert-danger">
@@ -105,7 +105,7 @@ export default function DashboardPage() {
 
       {/* SAKTI: HEADER DASHBOARD MINIMALIS (TanPA Kotak Pemasukan) */}
       <div>
-        <h1 className="ui-page-title md:text-[26px]">Selamat Datang, {adminName}! 👋</h1>
+        <h1 className="ui-page-title">Selamat Datang, {adminName}! 👋</h1>
         <p className="ui-page-subtitle">Ringkasan aktivitas MARISKO PERKASA hari ini.</p>
       </div>
 
@@ -113,7 +113,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-stone-200 border border-stone-200 rounded-xl overflow-hidden">
 
         {/* CARD BASTK */}
-        <div className="bg-white p-5">
+        <div className="bg-white px-5 py-4">
           <div className="flex items-center justify-between gap-2">
             <p className="flex items-center gap-2 text-[13px] font-medium text-stone-600"><FileText className="w-4 h-4 text-stone-400" />Total Dokumen BASTK</p>
             <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-stone-600 whitespace-nowrap"><span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>Live DB</span>
@@ -122,7 +122,7 @@ export default function DashboardPage() {
         </div>
 
         {/* CARD KREDIT */}
-        <div className="bg-white p-5">
+        <div className="bg-white px-5 py-4">
           <div className="flex items-center justify-between gap-2">
             <p className="flex items-center gap-2 text-[13px] font-medium text-stone-600"><Receipt className="w-4 h-4 text-stone-400" />Kwitansi Kredit</p>
             <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-stone-600 whitespace-nowrap"><span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>Live DB</span>
@@ -131,7 +131,7 @@ export default function DashboardPage() {
         </div>
 
         {/* CARD CASH */}
-        <div className="bg-white p-5">
+        <div className="bg-white px-5 py-4">
           <div className="flex items-center justify-between gap-2">
             <p className="flex items-center gap-2 text-[13px] font-medium text-stone-600"><Banknote className="w-4 h-4 text-stone-400" />Kwitansi Cash</p>
             <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-stone-600 whitespace-nowrap"><span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>Live DB</span>
@@ -140,7 +140,7 @@ export default function DashboardPage() {
         </div>
 
         {/* CARD INDENT */}
-        <div className="bg-white p-5">
+        <div className="bg-white px-5 py-4">
           <div className="flex items-center justify-between gap-2">
             <p className="flex items-center gap-2 text-[13px] font-medium text-stone-600"><ClipboardSignature className="w-4 h-4 text-stone-400" />Kwitansi Indent</p>
             <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-stone-600 whitespace-nowrap"><span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>Live DB</span>
@@ -173,7 +173,7 @@ export default function DashboardPage() {
                     {recentActivities.slice(0, 6).map((act, idx) => {
                         const ActIcon = act.icon;
                         return (
-                        <div key={idx} className="flex items-center justify-between gap-4 px-5 py-3.5 hover:bg-stone-50 transition-colors">
+                        <div key={idx} className="flex items-center justify-between gap-4 px-5 py-2.5 hover:bg-stone-50 transition-colors">
                             <div className="flex items-center gap-3.5 min-w-0">
                             <div className="w-9 h-9 bg-stone-100 rounded-lg flex items-center justify-center flex-shrink-0 text-stone-600">
                                 <ActIcon className="w-4 h-4" />

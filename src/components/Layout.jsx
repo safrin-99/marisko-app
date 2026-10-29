@@ -99,7 +99,7 @@ export default function Layout({ children }) {
         />
       )}
 
-      <div className={`fixed inset-y-0 left-0 z-[100] w-64 h-screen bg-stone-50 border-r border-stone-200 lg:border-r-0 flex flex-col flex-shrink-0 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'}`}>
+      <div className={`fixed inset-y-0 left-0 z-[100] w-64 h-screen bg-stone-50 border-r border-stone-200 flex flex-col flex-shrink-0 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'}`}>
 
         <div className="h-16 px-5 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center">
@@ -161,7 +161,7 @@ export default function Layout({ children }) {
         </div>
       </div>
 
-      <main className="flex-1 h-screen overflow-hidden relative flex flex-col lg:py-2 lg:pr-2">
+      <main className="flex-1 h-screen overflow-hidden relative flex flex-col bg-white">
 
         <div className="lg:hidden flex items-center justify-between h-14 px-4 bg-white border-b border-stone-200 flex-shrink-0 z-40">
           <div className="flex items-center">
@@ -179,7 +179,7 @@ export default function Layout({ children }) {
           </button>
         </div>
 
-        <div className="flex-1 w-full h-full overflow-y-auto ui-scroll-thin p-4 md:p-8 bg-white lg:border lg:border-stone-200 lg:rounded-xl">
+        <div className="flex-1 w-full h-full overflow-y-auto ui-scroll-thin p-4 md:px-8 md:py-6 bg-white">
           {children}
         </div>
       </main>

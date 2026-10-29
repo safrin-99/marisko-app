@@ -302,11 +302,11 @@ export default function BastkPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
-              <div>
-                <label className="ui-label">Pilih Kategori BASTK</label>
-                <div className="ui-tabs">
-                  <button type="button" onClick={() => setKategori('BASTK INDUK')} className={kategori === 'BASTK INDUK' ? 'ui-tab-active' : 'ui-tab'}>1. BASTK INDUK</button>
-                  <button type="button" onClick={() => setKategori('BASTK POS BUOL')} className={kategori === 'BASTK POS BUOL' ? 'ui-tab-active' : 'ui-tab'}>2. BASTK POS BUOL</button>
+              <div className="ui-panel p-4 sm:p-5">
+                <label className="ui-label mb-3 text-center md:text-left">Pilih Kategori BASTK</label>
+                <div className="grid grid-cols-2 gap-2 md:gap-3">
+                  <button type="button" onClick={() => setKategori('BASTK INDUK')} className={kategori === 'BASTK INDUK' ? 'ui-choice-active' : 'ui-choice'}>1. BASTK INDUK</button>
+                  <button type="button" onClick={() => setKategori('BASTK POS BUOL')} className={kategori === 'BASTK POS BUOL' ? 'ui-choice-active' : 'ui-choice'}>2. BASTK POS BUOL</button>
                 </div>
               </div>
 

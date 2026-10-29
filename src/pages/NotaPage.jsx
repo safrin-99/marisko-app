@@ -447,10 +447,12 @@ export default function NotaPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-7">
-              <div className="ui-tabs">
+              <div className="ui-panel p-4 sm:p-5">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
                   {tabs.map(tab => (
-                    <button key={tab} type="button" onClick={() => { if(!isEditing) setKategoriNota(tab); }} className={`${kategoriNota === tab ? 'ui-tab-active' : 'ui-tab'} ${isEditing && kategoriNota !== tab ? 'opacity-40 cursor-not-allowed hover:text-stone-500' : ''}`}>{tab}</button>
+                    <button key={tab} type="button" onClick={() => { if(!isEditing) setKategoriNota(tab); }} className={`${kategoriNota === tab ? 'ui-choice-active' : 'ui-choice'} ${isEditing && kategoriNota !== tab ? 'opacity-40 cursor-not-allowed hover:bg-white' : ''}`}>{tab}</button>
                   ))}
+                </div>
               </div>
 
               <section className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">

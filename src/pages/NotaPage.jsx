@@ -122,7 +122,9 @@ export default function NotaPage() {
 
     try {
       if (isEditing) {
-        await supabase.from('nota_history').update(formData).eq('id', originalId);
+        const { data: updated, error } = await supabase.from('nota_history').update(formData).eq('id', originalId).select();
+        if (error) throw error;
+        if (!updated || updated.length === 0) throw new Error('Data tidak ditemukan di database. Muat ulang halaman lalu coba lagi.');
         setModal({ isOpen: true, type: 'success', title: 'Berhasil Diupdate!', message: `Data Nota ${kategoriNota} diperbarui.`, actionData: formData });
         setIsEditing(false);
       } else {
@@ -132,7 +134,8 @@ export default function NotaPage() {
           setModal({ isOpen: true, type: 'error', title: 'Duplikasi!', message: `No. Invoice "${cleanNo}" sudah ada!` });
           return;
         }
-        await supabase.from('nota_history').insert([formData]);
+        const { error } = await supabase.from('nota_history').insert([formData]);
+        if (error) throw error;
         setModal({ isOpen: true, type: 'success', title: 'Berhasil Disimpan!', message: `Nota ${kategoriNota} siap dicetak.`, actionData: formData });
       }
       resetForm();
@@ -174,8 +177,13 @@ export default function NotaPage() {
 
   const executeDelete = async (id) => {
     setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
-    await supabase.from('nota_history').delete().eq('id', id);
+    // SAKTI: Pastikan database benar-benar menghapus datanya sebelum bilang "Terhapus"
+    const { data: deleted, error } = await supabase.from('nota_history').delete().eq('id', id).select();
     fetchHistory();
+    if (error || !deleted || deleted.length === 0) {
+      setModal({ isOpen: true, type: 'error', title: 'Gagal Menghapus', message: 'Nota belum terhapus. Periksa koneksi internet lalu coba lagi.', actionData: null });
+      return;
+    }
     setModal({ isOpen: true, type: 'success_delete', title: 'Terhapus!', message: 'Data Nota dihapus.', actionData: null });
   };
 

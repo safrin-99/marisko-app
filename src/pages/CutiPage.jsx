@@ -115,8 +115,9 @@ export default function CutiPage() {
     setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
     setIsLoading(true);
     try {
-      const { error } = await supabase.from('cuti_history').update({ status: newStatus }).eq('noCuti', id);
+      const { data: updated, error } = await supabase.from('cuti_history').update({ status: newStatus }).eq('noCuti', id).select();
       if (error) throw error;
+      if (!updated || updated.length === 0) throw new Error('Data tidak ditemukan di database. Muat ulang halaman lalu coba lagi.');
       setModal({ isOpen: true, type: 'success', title: `Berhasil ${newStatus}!`, message: `Status permohonan ${id} telah diperbarui menjadi ${newStatus}.`, actionData: 'MAGIC_LINK' });
       fetchHistory();
     } catch (err) {
@@ -159,7 +160,9 @@ export default function CutiPage() {
 
     try {
       if (isEditing) {
-        await supabase.from('cuti_history').update(formData).eq('noCuti', originalNoCuti);
+        const { data: updated, error } = await supabase.from('cuti_history').update(formData).eq('noCuti', originalNoCuti).select();
+        if (error) throw error;
+        if (!updated || updated.length === 0) throw new Error('Data tidak ditemukan di database. Muat ulang halaman lalu coba lagi.');
         setModal({ isOpen: true, type: 'success', title: 'Berhasil Diupdate!', message: 'Data Permohonan Cuti telah diperbarui.', actionData: formData });
         setIsEditing(false);
       } else {
@@ -170,7 +173,8 @@ export default function CutiPage() {
           return;
         }
         
-        await supabase.from('cuti_history').insert([{ ...formData, status: 'DIPROSES' }]);
+        const { error } = await supabase.from('cuti_history').insert([{ ...formData, status: 'DIPROSES' }]);
+        if (error) throw error;
         setModal({ isOpen: true, type: 'success', title: 'Berhasil Disimpan!', message: 'Surat Permohonan Cuti berhasil dibuat dan siap dicetak.', actionData: formData });
       }
       resetForm();
@@ -196,8 +200,13 @@ export default function CutiPage() {
 
   const executeDelete = async (id) => {
     setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
-    await supabase.from('cuti_history').delete().eq('noCuti', id);
+    // SAKTI: Pastikan database benar-benar menghapus datanya sebelum bilang "Terhapus"
+    const { data: deleted, error } = await supabase.from('cuti_history').delete().eq('noCuti', id).select();
     fetchHistory();
+    if (error || !deleted || deleted.length === 0) {
+      setModal({ isOpen: true, type: 'error', title: 'Gagal Menghapus', message: `Permohonan Cuti No: ${id} belum terhapus. Periksa koneksi internet lalu coba lagi.`, actionData: null });
+      return;
+    }
     setModal({ isOpen: true, type: 'success_delete', title: 'Terhapus!', message: 'Data Cuti telah berhasil dihapus.', actionData: null });
   };
 

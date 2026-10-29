@@ -58,10 +58,9 @@
   .ui-action { @apply inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-[13px] font-semibold text-stone-700 whitespace-nowrap transition-colors hover:bg-stone-100 hover:text-stone-900; }
   .ui-action-danger { @apply inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-[13px] font-semibold text-red-700 whitespace-nowrap transition-colors hover:bg-red-50 hover:text-red-800; }
 
-  /* ---------- Pilihan kategori (tab) ---------- */
-  .ui-tabs { @apply flex flex-wrap gap-x-6 border-b border-stone-200; }
-  .ui-tab { @apply h-11 px-1 -mb-px border-b-2 border-transparent text-sm font-semibold text-stone-500 transition-colors hover:text-stone-900; }
-  .ui-tab-active { @apply h-11 px-1 -mb-px border-b-2 border-brand text-sm font-semibold text-stone-900; }
+  /* ---------- Pilihan kategori (tombol besar dalam kotak) ---------- */
+  .ui-choice { @apply w-full h-12 px-2 rounded-lg border border-stone-300 bg-white text-xs sm:text-sm font-semibold text-stone-700 transition-colors hover:bg-stone-100 hover:text-stone-900 active:translate-y-px; }
+  .ui-choice-active { @apply w-full h-12 px-2 rounded-lg border border-brand bg-brand text-xs sm:text-sm font-semibold text-brand-fg shadow-sm; }
 
   /* ---------- Tabel ---------- */
   .ui-table-wrap { @apply overflow-auto max-h-[440px]; }

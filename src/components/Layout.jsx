@@ -56,9 +56,15 @@ export default function Layout({ children }) {
           { path: '/kwitansi-kredit', icon: Receipt, label: 'Kwitansi Kredit' },
           { path: '/kwitansi-cash', icon: Banknote, label: 'Kwitansi Cash' },
           { path: '/kwitansi-indent', icon: ClipboardSignature, label: 'Kwitansi Indent' },
-          { path: '/nota', icon: ScrollText, label: 'Nota & Laporan' } 
+          { path: '/nota', icon: ScrollText, label: 'Nota & Laporan' }
         ]
-      },
+      }
+    );
+  }
+
+  // SAKTI: Logo & TTD hanya boleh diubah ADMIN (database juga menolak peran lain)
+  if (userRole === 'ADMIN') {
+    menuSections.push(
       {
         title: "Sistem",
         items: [

@@ -90,6 +90,17 @@ const NonKaryawanRoute = ({ children }) => {
   return children;
 };
 
+// SAKTI: Pengaturan (logo & TTD Kepala Cabang) hanya untuk ADMIN, termasuk bila dibuka lewat URL.
+const AdminRoute = ({ children }) => {
+  const userRole = localStorage.getItem('adminRole')?.toUpperCase() || '';
+
+  if (userRole !== 'ADMIN') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
 export default function App() {
   return (
     <Router>
@@ -125,7 +136,7 @@ export default function App() {
                 <Route path="/nota" element={<NonKaryawanRoute><NotaPage /></NonKaryawanRoute>} />
 
                 {/* ROUTING SISTEM */}
-                <Route path="/settings" element={<NonKaryawanRoute><SettingsPage /></NonKaryawanRoute>} />
+                <Route path="/settings" element={<AdminRoute><SettingsPage /></AdminRoute>} />
                 
                 {/* Fallback jika URL tidak ditemukan (404) */}
                 <Route path="*" element={

@@ -16,7 +16,7 @@ export default function BastkPage() {
 
   const [modal, setModal] = useState({ isOpen: false, type: '', title: '', message: '', actionData: null });
   const [isEditing, setIsEditing] = useState(false);
-  const [originalNoSurat, setOriginalNoSurat] = useState('');
+  const [originalId, setOriginalId] = useState(null);
   
   const [noSurat, setNoSurat] = useState('');
   const [tglSerah, setTglSerah] = useState('');
@@ -103,21 +103,28 @@ export default function BastkPage() {
       warna: warna.toUpperCase(), hadiah: hadiah || '-'
     };
 
+    const tolakNomorGanda = () => {
+      setModal({ isOpen: true, type: 'error', title: 'Peringatan Duplikasi!', message: `Dokumen dengan Nomor BASTK "${cleanNoSurat}" sudah ada di database. Tidak boleh ada data ganda!` });
+    };
+
     try {
+      // SAKTI: Nomor BASTK tidak boleh kembar, baik saat input baru maupun saat diedit
+      const { data: existing, error: checkError } = await supabase.from('bastk_history').select('id').ilike('noSurat', cleanNoSurat);
+      if (checkError) throw checkError;
+      if (existing && existing.some((row) => row.id !== originalId)) {
+        setIsSubmitting(false);
+        tolakNomorGanda();
+        return;
+      }
+
       if (isEditing) {
-        const { data: updated, error } = await supabase.from('bastk_history').update(formData).eq('noSurat', originalNoSurat).select();
+        // SAKTI: Ubah tepat satu baris (berdasarkan id), bukan semua baris yang nomornya sama
+        const { data: updated, error } = await supabase.from('bastk_history').update(formData).eq('id', originalId).select();
         if (error) throw error;
         if (!updated || updated.length === 0) throw new Error('Data tidak ditemukan di database. Muat ulang halaman lalu coba lagi.');
         setModal({ isOpen: true, type: 'success', title: 'Berhasil Diupdate!', message: 'Data BASTK telah berhasil diperbarui.', actionData: formData });
         setIsEditing(false);
       } else {
-        const { data: existing } = await supabase.from('bastk_history').select('noSurat').ilike('noSurat', cleanNoSurat);
-        if (existing && existing.length > 0) {
-          setIsSubmitting(false);
-          setModal({ isOpen: true, type: 'error', title: 'Peringatan Duplikasi!', message: `Dokumen dengan Nomor BASTK "${cleanNoSurat}" sudah ada di database. Tidak boleh ada data ganda!` });
-          return;
-        }
-        
         const { error } = await supabase.from('bastk_history').insert([formData]);
         if (error) throw error;
         setModal({ isOpen: true, type: 'success', title: 'Berhasil Disimpan!', message: 'Dokumen BASTK berhasil dibuat dan siap untuk dicetak.', actionData: formData });
@@ -125,14 +132,16 @@ export default function BastkPage() {
       resetForm();
       fetchHistory();
     } catch (err) {
-      setModal({ isOpen: true, type: 'error', title: 'Kesalahan Sistem', message: 'Terjadi kegagalan saat menghubungi server database.' });
+      // Database juga menolak nomor kembar (indeks unik), mis. bila dua orang menyimpan nomor yang sama bersamaan
+      if (err?.code === '23505') tolakNomorGanda();
+      else setModal({ isOpen: true, type: 'error', title: 'Kesalahan Sistem', message: 'Terjadi kegagalan saat menghubungi server database.' });
     }
     setIsSubmitting(false);
   };
 
   const handleEdit = (data) => {
     setIsEditing(true);
-    setOriginalNoSurat(data.noSurat);
+    setOriginalId(data.id);
     setNoSurat(data.noSurat); setTglSerah(data.tglSerah); setJenisPembiayaan(data.jenisPembiayaan);
     setNamaKonsumen(data.namaKonsumen); setNoKtp(data.noKtp); setAlamat(data.alamat);
     setTipeKendaraan(data.tipeKendaraan); setTahunCc(data.tahunCc); setNoRangka(data.noRangka);
@@ -140,14 +149,16 @@ export default function BastkPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDeleteRequest = (noSuratId) => {
-    setModal({ isOpen: true, type: 'confirm_delete', title: 'Yakin Ingin Menghapus?', message: `Dokumen BASTK No: ${noSuratId} akan dihapus secara permanen dari sistem.`, actionData: noSuratId });
+  const handleDeleteRequest = (row) => {
+    setModal({ isOpen: true, type: 'confirm_delete', title: 'Yakin Ingin Menghapus?', message: `Dokumen BASTK No: ${row.noSurat} akan dihapus secara permanen dari sistem.`, actionData: row });
   };
 
-  const executeDelete = async (noSuratId) => {
+  const executeDelete = async (row) => {
+    const noSuratId = row.noSurat;
     setModal({ isOpen: false, type: '', title: '', message: '', actionData: null });
     // SAKTI: Pastikan database benar-benar menghapus datanya sebelum bilang "Terhapus"
-    const { data: deleted, error } = await supabase.from('bastk_history').delete().eq('noSurat', noSuratId).select();
+    // Hapus tepat satu baris (berdasarkan id), bukan semua baris yang nomornya sama
+    const { data: deleted, error } = await supabase.from('bastk_history').delete().eq('id', row.id).select();
     fetchHistory();
     if (error || !deleted || deleted.length === 0) {
       setModal({ isOpen: true, type: 'error', title: 'Gagal Menghapus', message: `Dokumen BASTK No: ${noSuratId} belum terhapus. Periksa koneksi internet lalu coba lagi.`, actionData: null });
@@ -160,7 +171,7 @@ export default function BastkPage() {
     setNoSurat(''); setTglSerah(''); setJenisPembiayaan(''); setNamaKonsumen('');
     setNoKtp(''); setAlamat(''); setTipeKendaraan(''); setTahunCc('');
     setNoRangka(''); setNoMesin(''); setWarna(''); setHadiah('');
-    setIsEditing(false); setOriginalNoSurat('');
+    setIsEditing(false); setOriginalId(null);
   };
 
   const generateBastkPDF = (data) => {
@@ -504,7 +515,7 @@ export default function BastkPage() {
                             <button onClick={() => handleEdit(row)} className="ui-action">
                               <Edit className="w-3.5 h-3.5" /> Edit
                             </button>
-                            <button onClick={() => handleDeleteRequest(row.noSurat)} className="ui-action-danger">
+                            <button onClick={() => handleDeleteRequest(row)} className="ui-action-danger">
                               <Trash2 className="w-3.5 h-3.5" /> Del
                             </button>
                           </div>

@@ -29,6 +29,18 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// SAKTI: Halaman yang menunya disembunyikan untuk KARYAWAN juga ditolak bila dibuka lewat URL.
+// Ini hanya lapisan tampilan; pengaman sebenarnya harus di database (Supabase Auth + RLS).
+const NonKaryawanRoute = ({ children }) => {
+  const userRole = localStorage.getItem('adminRole')?.toUpperCase() || '';
+
+  if (userRole === 'KARYAWAN') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
 export default function App() {
   return (
     <Router>
@@ -53,18 +65,18 @@ export default function App() {
                 <Route path="/dashboard" element={<DashboardPage />} />
                 
                 {/* ROUTING MODUL UTAMA */}
-                <Route path="/bastk" element={<BastkPage />} />
-                <Route path="/buku-servis" element={<BukuServisPage />} /> {/* SAKTI: Rute Buku Servis Aktif */}
-                <Route path="/cuti" element={<CutiPage />} /> 
-                
+                <Route path="/bastk" element={<NonKaryawanRoute><BastkPage /></NonKaryawanRoute>} />
+                <Route path="/buku-servis" element={<NonKaryawanRoute><BukuServisPage /></NonKaryawanRoute>} /> {/* SAKTI: Rute Buku Servis Aktif */}
+                <Route path="/cuti" element={<CutiPage />} />
+
                 {/* ROUTING MODUL KEUANGAN */}
-                <Route path="/kwitansi-kredit" element={<KwitansiPage />} />
-                <Route path="/kwitansi-cash" element={<KwitansiCashPage />} />
-                <Route path="/kwitansi-indent" element={<KwitansiIndentPage />} />
-                <Route path="/nota" element={<NotaPage />} />
-                
+                <Route path="/kwitansi-kredit" element={<NonKaryawanRoute><KwitansiPage /></NonKaryawanRoute>} />
+                <Route path="/kwitansi-cash" element={<NonKaryawanRoute><KwitansiCashPage /></NonKaryawanRoute>} />
+                <Route path="/kwitansi-indent" element={<NonKaryawanRoute><KwitansiIndentPage /></NonKaryawanRoute>} />
+                <Route path="/nota" element={<NonKaryawanRoute><NotaPage /></NonKaryawanRoute>} />
+
                 {/* ROUTING SISTEM */}
-                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/settings" element={<NonKaryawanRoute><SettingsPage /></NonKaryawanRoute>} />
                 
                 {/* Fallback jika URL tidak ditemukan (404) */}
                 <Route path="*" element={

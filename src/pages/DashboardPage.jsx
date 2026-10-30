@@ -218,14 +218,16 @@ export default function DashboardPage() {
               </Link>
             )}
 
-            {/* Cuti & Izin selalu muncul untuk semua (Termasuk Karyawan) */}
-            <Link to="/cuti" className="w-full flex items-center justify-between h-11 px-3 rounded-lg text-stone-700 hover:bg-stone-100 hover:text-stone-900 transition-colors group/btn">
-              <div className="flex items-center gap-2.5">
-                <CalendarDays className="w-4 h-4 text-stone-500" />
-                <span className="font-medium text-sm">Ajukan Cuti & Izin</span>
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover/btn:text-stone-900 transition-colors" />
-            </Link>
+            {/* Cuti & Izin untuk ADMIN dan KARYAWAN (akun POS tidak punya menu Cuti) */}
+            {userRole !== 'POS BUOL' && (
+              <Link to="/cuti" className="w-full flex items-center justify-between h-11 px-3 rounded-lg text-stone-700 hover:bg-stone-100 hover:text-stone-900 transition-colors group/btn">
+                <div className="flex items-center gap-2.5">
+                  <CalendarDays className="w-4 h-4 text-stone-500" />
+                  <span className="font-medium text-sm">Ajukan Cuti & Izin</span>
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover/btn:text-stone-900 transition-colors" />
+              </Link>
+            )}
 
             {/* SAKTI: HANYA ADMIN YANG BISA MELIHAT SEMUA MENU KEUANGAN INI */}
             {userRole !== 'KARYAWAN' && (

@@ -43,7 +43,8 @@ export default function Layout({ children }) {
       items: [
         ...(userRole !== 'KARYAWAN' ? [{ path: '/bastk', icon: FileText, label: 'Dokumen BASTK' }] : []),
         ...(userRole !== 'KARYAWAN' ? [{ path: '/buku-servis', icon: BookOpen, label: 'Buku Servis' }] : []),
-        { path: '/cuti', icon: CalendarDays, label: 'Cuti & Izin' }
+        // SAKTI: Cuti & Izin hanya untuk ADMIN dan KARYAWAN (POS tidak)
+        ...(userRole !== 'POS BUOL' ? [{ path: '/cuti', icon: CalendarDays, label: 'Cuti & Izin' }] : [])
       ]
     }
   ];

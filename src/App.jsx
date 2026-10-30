@@ -90,6 +90,17 @@ const NonKaryawanRoute = ({ children }) => {
   return children;
 };
 
+// SAKTI: Cuti & Izin hanya untuk ADMIN dan KARYAWAN; akun POS ditolak walau dibuka lewat URL.
+const TanpaPosRoute = ({ children }) => {
+  const userRole = localStorage.getItem('adminRole')?.toUpperCase() || '';
+
+  if (userRole === 'POS BUOL') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
 // SAKTI: Pengaturan (logo & TTD Kepala Cabang) hanya untuk ADMIN, termasuk bila dibuka lewat URL.
 const AdminRoute = ({ children }) => {
   const userRole = localStorage.getItem('adminRole')?.toUpperCase() || '';
@@ -127,7 +138,7 @@ export default function App() {
                 {/* ROUTING MODUL UTAMA */}
                 <Route path="/bastk" element={<NonKaryawanRoute><BastkPage /></NonKaryawanRoute>} />
                 <Route path="/buku-servis" element={<NonKaryawanRoute><BukuServisPage /></NonKaryawanRoute>} /> {/* SAKTI: Rute Buku Servis Aktif */}
-                <Route path="/cuti" element={<CutiPage />} />
+                <Route path="/cuti" element={<TanpaPosRoute><CutiPage /></TanpaPosRoute>} />
 
                 {/* ROUTING MODUL KEUANGAN */}
                 <Route path="/kwitansi-kredit" element={<NonKaryawanRoute><KwitansiPage /></NonKaryawanRoute>} />

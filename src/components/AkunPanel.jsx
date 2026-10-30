@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Users, UserPlus, KeyRound, Edit, Trash2, RefreshCw, AlertCircle, CheckCircle2, Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { Users, UserPlus, KeyRound, Edit, Trash2, RefreshCw, AlertCircle, CheckCircle2, Eye, EyeOff, ChevronDown, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 // Nilai role di database tetap ADMIN / POS BUOL / KARYAWAN; role POS dipakai juga untuk cabang Lakea
@@ -194,7 +194,11 @@ export default function AkunPanel() {
                         <div className="fixed inset-0 z-10" onClick={() => setMenuPeranTerbuka(false)}></div>
                         <div className="ui-menu" role="listbox">
                           {DAFTAR_PERAN.map((p) => (
-                            <div key={p.value} role="option" aria-selected={form.role === p.value} onClick={() => { setForm((f) => ({ ...f, role: p.value })); setMenuPeranTerbuka(false); }} className={form.role === p.value ? 'ui-menu-item-active' : 'ui-menu-item'}>{p.label}</div>
+                            // Pilihan saat ini cukup ditandai tebal + centang (tanpa latar), agar hanya baris yang disorot yang abu-abu
+                            <div key={p.value} role="option" aria-selected={form.role === p.value} onClick={() => { setForm((f) => ({ ...f, role: p.value })); setMenuPeranTerbuka(false); }} className={`ui-menu-item flex items-center justify-between ${form.role === p.value ? 'font-semibold text-stone-900' : ''}`}>
+                              {p.label}
+                              {form.role === p.value && <Check className="w-4 h-4 text-stone-900 flex-shrink-0" />}
+                            </div>
                           ))}
                         </div>
                       </>

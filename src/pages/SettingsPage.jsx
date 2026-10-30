@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Settings, UploadCloud, Image as ImageIcon, CheckCircle2, AlertCircle, Trash2, RefreshCw, PenTool } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getLogosSignedUrl } from '../lib/storage';
+import AkunPanel from '../components/AkunPanel';
 
 // Gambar ditanam utuh ke setiap PDF, jadi file besar membuat PDF berat & lambat dibuat
 const MAX_FILE_SIZE_MB = 2;
@@ -220,6 +221,9 @@ export default function SettingsPage() {
               <p className="mt-2 text-xs text-stone-500">PNG transparan, maks. {MAX_FILE_SIZE_MB} MB. Sebaiknya melebar (± 2:1) agar tidak gepeng di dokumen.</p>
             </div>
         </div>
+
+        {/* SAKTI: Pengaturan akun (role & kata sandi) — halaman ini hanya bisa dibuka ADMIN */}
+        <AkunPanel />
       </div>
     </>
   );

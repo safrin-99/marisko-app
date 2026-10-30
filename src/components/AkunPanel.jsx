@@ -192,8 +192,7 @@ export default function AkunPanel() {
                     {menuPeranTerbuka && (
                       <>
                         <div className="fixed inset-0 z-10" onClick={() => setMenuPeranTerbuka(false)}></div>
-                        {/* Di dalam popup, daftar ikut mendorong isi di bawahnya agar tidak keluar dari tepi popup */}
-                        <div className="ui-menu relative" role="listbox">
+                        <div className="ui-menu" role="listbox">
                           {DAFTAR_PERAN.map((p) => (
                             <div key={p.value} role="option" aria-selected={form.role === p.value} onClick={() => { setForm((f) => ({ ...f, role: p.value })); setMenuPeranTerbuka(false); }} className={form.role === p.value ? 'ui-menu-item-active' : 'ui-menu-item'}>{p.label}</div>
                           ))}
@@ -202,7 +201,8 @@ export default function AkunPanel() {
                     )}
                   </>
                 )}
-                <p className="mt-1.5 text-xs text-stone-500">
+                {/* Kotak keterangan setinggi tetap: memberi ruang agar daftar Role yang melayang tetap muat di dalam popup (popup tidak berubah ukuran / melompat) */}
+                <p className="mt-2 min-h-[3.5rem] px-3 py-2.5 rounded-lg border border-stone-200 bg-stone-50 text-xs leading-relaxed text-stone-600">
                   {form.id !== null && form.id === idSaya
                     ? 'Role akun sendiri tidak bisa diubah, agar selalu ada ADMIN.'
                     : DAFTAR_PERAN.find((p) => p.value === form.role)?.ket}

@@ -192,7 +192,8 @@ export default function AkunPanel() {
                     {menuPeranTerbuka && (
                       <>
                         <div className="fixed inset-0 z-10" onClick={() => setMenuPeranTerbuka(false)}></div>
-                        <div className="ui-menu" role="listbox">
+                        {/* Di dalam popup, daftar ikut mendorong isi di bawahnya agar tidak keluar dari tepi popup */}
+                        <div className="ui-menu relative" role="listbox">
                           {DAFTAR_PERAN.map((p) => (
                             <div key={p.value} role="option" aria-selected={form.role === p.value} onClick={() => { setForm((f) => ({ ...f, role: p.value })); setMenuPeranTerbuka(false); }} className={form.role === p.value ? 'ui-menu-item-active' : 'ui-menu-item'}>{p.label}</div>
                           ))}

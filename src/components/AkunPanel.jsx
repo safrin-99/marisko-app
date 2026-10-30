@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Users, UserPlus, KeyRound, Edit, Trash2, RefreshCw, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { Users, UserPlus, KeyRound, Edit, Trash2, RefreshCw, AlertCircle, CheckCircle2, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 // Nilai role di database tetap ADMIN / POS BUOL / KARYAWAN; role POS dipakai juga untuk cabang Lakea
 const DAFTAR_PERAN = [
   { value: 'ADMIN', label: 'ADMIN (Induk)', ket: 'Semua menu, termasuk Pengaturan.' },
-  { value: 'POS BUOL', label: 'POS (Buol / Lakea)', ket: 'Semua menu kecuali Pengaturan. Cuti tidak bisa menyetujui/menghapus.' },
+  { value: 'POS BUOL', label: 'POS (Buol / Lakea)', ket: 'Semua menu kecuali Pengaturan dan Cuti & Izin.' },
   { value: 'KARYAWAN', label: 'KARYAWAN', ket: 'Hanya Dashboard dan Cuti & Izin.' },
 ];
 const labelPeran = (role) => DAFTAR_PERAN.find((p) => p.value === role)?.label || 'Belum ada role';
 
 // Sama dengan batas di database (fungsi private.cek_password)
 const SANDI_MIN = 8;
+
+// Sama dengan durasi animasi .ui-modal-closing / .ui-overlay-closing
+const DURASI_TUTUP_MS = 180;
 
 const FORM_KOSONG = { id: null, email: '', nama: '', role: 'POS BUOL', sandi: '', ulangiSandi: '' };
 
@@ -38,6 +41,8 @@ export default function AkunPanel() {
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [notif, setNotif] = useState('');
+  const [sedangMenutup, setSedangMenutup] = useState(false);
+  const [menuPeranTerbuka, setMenuPeranTerbuka] = useState(false);
 
   const terapkanDaftarAkun = ({ data, error }) => {
     if (error) {
@@ -66,11 +71,23 @@ export default function AkunPanel() {
     setFormError('');
     setNotif('');
     setLihatSandi(false);
+    setMenuPeranTerbuka(false);
     setDialog(jenis);
   };
 
+  // Popup ditutup dengan animasi dulu (sama seperti popup Keluar Aplikasi), baru dilepas
+  const lepasDialog = (setelahTutup) => {
+    setMenuPeranTerbuka(false);
+    setSedangMenutup(true);
+    setTimeout(() => {
+      setDialog(null);
+      setSedangMenutup(false);
+      if (setelahTutup) setelahTutup();
+    }, DURASI_TUTUP_MS);
+  };
+
   const tutupDialog = () => {
-    if (!isSaving) setDialog(null);
+    if (!isSaving && !sedangMenutup) lepasDialog();
   };
 
   const ubahForm = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -116,8 +133,7 @@ export default function AkunPanel() {
         : `Kata sandi ${form.email} berhasil diganti. Perangkat yang masih login dengan akun itu otomatis keluar.`,
       hapus: `Akun ${form.email} berhasil dihapus.`,
     }[dialog];
-    setDialog(null);
-    setNotif(pesan);
+    lepasDialog(() => setNotif(pesan));
     muatAkun();
   };
 
@@ -136,9 +152,9 @@ export default function AkunPanel() {
   }[dialog];
 
   const renderDialog = () => createPortal(
-    <div className="ui-overlay">
+    <div className={`ui-overlay ${sedangMenutup ? 'ui-overlay-closing' : ''}`}>
       <div className="absolute inset-0" onClick={tutupDialog}></div>
-      <form onSubmit={simpan} className="ui-modal">
+      <form onSubmit={simpan} className={`ui-modal ${sedangMenutup ? 'ui-modal-closing' : ''}`}>
         <h3 className="ui-modal-title">{judulDialog}</h3>
         <p className="ui-modal-text">{ketDialog}</p>
 
@@ -154,11 +170,37 @@ export default function AkunPanel() {
           {(dialog === 'tambah' || dialog === 'ubah') && (
             <>
               <div><label className="ui-label">Nama Tampil</label><input type="text" value={form.nama} onChange={ubahForm('nama')} required placeholder="Mis. STAF POS LAKEA" className="ui-input" /></div>
-              <div>
+              <div className="relative">
                 <label className="ui-label">Role</label>
-                <select value={form.role} onChange={ubahForm('role')} disabled={form.id !== null && form.id === idSaya} className="ui-input disabled:bg-stone-100 disabled:cursor-not-allowed">
-                  {DAFTAR_PERAN.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
-                </select>
+                {form.id !== null && form.id === idSaya ? (
+                  <div className="ui-input flex items-center bg-stone-100 text-stone-600 cursor-not-allowed select-none">{labelPeran(form.role)}</div>
+                ) : (
+                  <>
+                    {/* SAKTI: Dropdown sama dengan Jenis Pembiayaan di halaman BASTK */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-haspopup="listbox"
+                      aria-expanded={menuPeranTerbuka}
+                      onClick={() => setMenuPeranTerbuka(!menuPeranTerbuka)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMenuPeranTerbuka(!menuPeranTerbuka); } }}
+                      className={`ui-input flex items-center justify-between cursor-pointer select-none ${menuPeranTerbuka ? 'border-brand ring-3 ring-brand/10' : ''}`}
+                    >
+                      <span className="text-stone-900 font-medium">{labelPeran(form.role)}</span>
+                      <ChevronDown className={`w-4 h-4 text-stone-500 transition-transform duration-200 flex-shrink-0 ${menuPeranTerbuka ? 'rotate-180' : ''}`} />
+                    </div>
+                    {menuPeranTerbuka && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setMenuPeranTerbuka(false)}></div>
+                        <div className="ui-menu" role="listbox">
+                          {DAFTAR_PERAN.map((p) => (
+                            <div key={p.value} role="option" aria-selected={form.role === p.value} onClick={() => { setForm((f) => ({ ...f, role: p.value })); setMenuPeranTerbuka(false); }} className={form.role === p.value ? 'ui-menu-item-active' : 'ui-menu-item'}>{p.label}</div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
                 <p className="mt-1.5 text-xs text-stone-500">
                   {form.id !== null && form.id === idSaya
                     ? 'Role akun sendiri tidak bisa diubah, agar selalu ada ADMIN.'

@@ -6,8 +6,14 @@ import { supabase } from '../lib/supabase';
 import { getLogosSignedUrl } from '../lib/storage';
 import { jsPDF } from "jspdf";
 
-// SAKTI: Penomoran BASTK berurutan per kategori, format: <nomor>/MP/BL/<bulan romawi>/<tahun>
+// SAKTI: Penomoran BASTK berurutan per kategori, format: <nomor>/<kode>/<bulan romawi>/<tahun>, mis. 1416/MP/BL/X/2026
 const BULAN_ROMAWI = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+const POLA_NOMOR = /^\s*(\d+)\/(.+)\/(?:I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)\/\d{4}\s*$/;
+
+const DAFTAR_KATEGORI = ['BASTK INDUK', 'BASTK POS BUOL', 'BASTK POS LAKEA'];
+
+// Nomor yang sudah terpakai di dokumen kertas (di luar aplikasi), agar usulan nomor melanjutkan dari sana
+const NOMOR_TERPAKAI_DI_LUAR_APLIKASI = { 'BASTK POS BUOL': 1415 };
 
 const ambilNomorUrut = (noSurat) => {
   const cocok = /^\s*(\d+)/.exec(noSurat || '');
@@ -16,14 +22,20 @@ const ambilNomorUrut = (noSurat) => {
 
 // Nomor berikutnya = nomor terbesar dari 10 data terakhir kategori itu + 1.
 // Cukup 10 data terakhir agar satu nomor lama yang salah kategori tidak mengacaukan urutan.
-const hitungNomorBerikutnya = (rows) => {
+const hitungNomorBerikutnya = (rows, kategori) => {
   const angka = (rows || []).slice(0, 10).map((r) => ambilNomorUrut(r.noSurat)).filter((n) => n !== null);
+  if (NOMOR_TERPAKAI_DI_LUAR_APLIKASI[kategori]) angka.push(NOMOR_TERPAKAI_DI_LUAR_APLIKASI[kategori]);
   return angka.length > 0 ? Math.max(...angka) + 1 : null;
 };
 
-const formatNomorBastk = (nomor) => {
+// Kode tengah (mis. MP/BL) & jumlah digit mengikuti data terakhir kategori itu, jadi POS baru
+// cukup mengetik nomor pertamanya sekali; bulan romawi & tahun selalu mengikuti tanggal hari ini.
+const formatNomorBastk = (nomor, rows) => {
+  const contoh = (rows || []).slice(0, 10).map((r) => POLA_NOMOR.exec(r.noSurat || '')).find(Boolean);
+  const kode = contoh ? contoh[2] : 'MP/BL';
+  const digit = contoh ? contoh[1].length : 0;
   const sekarang = new Date();
-  return `${nomor}/MP/BL/${BULAN_ROMAWI[sekarang.getMonth()]}/${sekarang.getFullYear()}`;
+  return `${String(nomor).padStart(digit, '0')}/${kode}/${BULAN_ROMAWI[sekarang.getMonth()]}/${sekarang.getFullYear()}`;
 };
 
 export default function BastkPage() {
@@ -39,6 +51,7 @@ export default function BastkPage() {
   const [originalId, setOriginalId] = useState(null);
   const [nomorAsli, setNomorAsli] = useState('');
   const nomorOtomatisRef = useRef('');
+  const isAdmin = (localStorage.getItem('adminRole') || '').toUpperCase() === 'ADMIN';
   
   const [noSurat, setNoSurat] = useState('');
   const [tglSerah, setTglSerah] = useState('');
@@ -97,9 +110,9 @@ export default function BastkPage() {
 
   // Isi kolom nomor dengan nomor berikutnya, kecuali pengguna sudah mengetik nomor sendiri / sedang mengedit
   const isiNomorOtomatis = (rows) => {
-    const berikutnya = hitungNomorBerikutnya(rows);
-    if (!berikutnya) return;
-    const usulan = formatNomorBastk(berikutnya);
+    const berikutnya = hitungNomorBerikutnya(rows, kategori);
+    // Kategori tanpa data (mis. POS baru): kosongkan usulan dari kategori lain, nomor pertama diketik sendiri
+    const usulan = berikutnya ? formatNomorBastk(berikutnya, rows) : '';
     const usulanSebelumnya = nomorOtomatisRef.current;
     nomorOtomatisRef.current = usulan;
     setNoSurat((prev) => (prev === '' || prev === usulanSebelumnya ? usulan : prev));
@@ -120,8 +133,8 @@ export default function BastkPage() {
     setIsLoading(false);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e, izinkanLompat = false) => {
+    if (e) e.preventDefault();
     if (!noSurat || !tglSerah || !namaKonsumen || !jenisPembiayaan) {
       setModal({ isOpen: true, type: 'error', title: 'Data Belum Lengkap!', message: 'Mohon isi semua kolom yang diwajibkan sebelum menyimpan.' });
       return;
@@ -154,14 +167,20 @@ export default function BastkPage() {
 
       // SAKTI: Nomor harus berurutan, tidak boleh melompat melewati nomor berikutnya di kategori ini
       const nomorDiubah = !isEditing || cleanNoSurat.toLowerCase() !== nomorAsli.trim().toLowerCase();
-      if (nomorDiubah) {
+      if (nomorDiubah && !izinkanLompat) {
         const { data: terakhir, error: urutError } = await supabase.from('bastk_history').select('noSurat').eq('kategori', kategori).order('created_at', { ascending: false }).limit(10);
         if (urutError) throw urutError;
-        const berikutnya = hitungNomorBerikutnya(terakhir);
+        const berikutnya = hitungNomorBerikutnya(terakhir, kategori);
         const nomorBaru = ambilNomorUrut(cleanNoSurat);
         if (berikutnya && (nomorBaru === null || nomorBaru > berikutnya)) {
           setIsSubmitting(false);
-          setModal({ isOpen: true, type: 'error', title: 'Nomor Tidak Berurutan!', message: `Nomor ${kategori} berikutnya adalah "${formatNomorBastk(berikutnya)}". Nomor BASTK tidak boleh melompat.` });
+          const usulan = formatNomorBastk(berikutnya, terakhir);
+          // ADMIN boleh melompat setelah konfirmasi, untuk nomor yang sudah terpakai di dokumen kertas
+          if (isAdmin && nomorBaru !== null) {
+            setModal({ isOpen: true, type: 'confirm_lompat', title: 'Nomor Melompat?', message: `Nomor ${kategori} berikutnya seharusnya "${usulan}", tetapi yang diisi "${cleanNoSurat}". Lanjutkan hanya bila nomor di antaranya sudah terpakai di luar aplikasi.` });
+          } else {
+            setModal({ isOpen: true, type: 'error', title: 'Nomor Tidak Berurutan!', message: `Nomor ${kategori} berikutnya adalah "${usulan}". Nomor BASTK tidak boleh melompat. Bila nomor di antaranya sudah terpakai di luar aplikasi, minta ADMIN yang menginput nomor ini.` });
+          }
           return;
         }
       }
@@ -364,7 +383,9 @@ export default function BastkPage() {
             <h3 className="ui-modal-title">{modal.title}</h3>
             <p className="ui-modal-text">{modal.message}</p>
             <div className="flex w-full gap-3 justify-center">
-              {modal.type === 'confirm_delete' ? (
+              {modal.type === 'confirm_lompat' ? (
+                <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="ui-btn-secondary flex-1">Batal</button><button onClick={() => { setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); handleSubmit(null, true); }} className="ui-btn-primary flex-1">Ya, Lanjutkan</button></>
+              ) : modal.type === 'confirm_delete' ? (
                 <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="ui-btn-secondary flex-1">Batal</button><button onClick={() => executeDelete(modal.actionData)} className="ui-btn-danger flex-1">Ya, Hapus!</button></>
               ) : modal.type === 'success' ? (
                 <><button onClick={() => setModal({ isOpen: false, type: '', title: '', message: '', actionData: null })} className="ui-btn-secondary flex-1">Tutup</button><button onClick={() => { generateBastkPDF(modal.actionData); setModal({ isOpen: false, type: '', title: '', message: '', actionData: null }); }} className="ui-btn-primary flex-1"><Printer className="w-4 h-4" /> Cetak PDF</button></>
@@ -400,9 +421,10 @@ export default function BastkPage() {
             <form onSubmit={handleSubmit} className="space-y-8">
               <div className="ui-panel p-4 sm:p-5">
                 <label className="ui-label mb-3 text-center md:text-left">Pilih Kategori BASTK</label>
-                <div className="grid grid-cols-2 gap-2 md:gap-3">
-                  <button type="button" onClick={() => setKategori('BASTK INDUK')} className={kategori === 'BASTK INDUK' ? 'ui-choice-active' : 'ui-choice'}>1. BASTK INDUK</button>
-                  <button type="button" onClick={() => setKategori('BASTK POS BUOL')} className={kategori === 'BASTK POS BUOL' ? 'ui-choice-active' : 'ui-choice'}>2. BASTK POS BUOL</button>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
+                  {DAFTAR_KATEGORI.map((nama, idx) => (
+                    <button key={nama} type="button" onClick={() => setKategori(nama)} className={kategori === nama ? 'ui-choice-active' : 'ui-choice'}>{idx + 1}. {nama}</button>
+                  ))}
                 </div>
               </div>
 

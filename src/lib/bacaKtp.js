@@ -33,7 +33,7 @@ const rapikan = (teks) => bersihkanNilai(teks).replace(/^[.,\-/ ]+|[.,\-/ ]+$/g,
 const KE_ANGKA = { O: '0', D: '0', Q: '0', I: '1', L: '1', '|': '1', '!': '1', Z: '2', S: '5', G: '6', B: '8' };
 
 export function uraiKtp(teks) {
-  const hasil = { nama: '', nikMentah: '', desa: '', desaAlamat: '', kecamatan: '', kabupaten: '', jenisKabupaten: '', provinsi: '', tglLahir: '', perempuan: null };
+  const hasil = { nama: '', nikMentah: '', desa: '', jenisDesa: '', desaAlamat: '', jenisDesaAlamat: '', kecamatan: '', kabupaten: '', jenisKabupaten: '', provinsi: '', tglLahir: '', perempuan: null };
 
   for (const barisMentah of teks.split('\n')) {
     const baris = barisMentah.replace(/^[^A-Za-z]+/, '').trim();
@@ -85,13 +85,19 @@ export function uraiKtp(teks) {
     } else if (cocok === 'nama' && !hasil.nama) {
       hasil.nama = rapikan(isi);
     } else if (cocok === 'desa' && !hasil.desa) {
+      const awalan = bersihkanNilai(isi).match(/^(DESA|DS|KEL(URAHAN)?)(\.\s*|\s+)/);
+      if (awalan) hasil.jenisDesa = awalan[1].startsWith('KEL') ? 'KEL.' : 'DESA';
       hasil.desa = bersihkanNilai(isi).replace(/^(DESA|DS|KEL(URAHAN)?)(\.\s*|\s+)/, '');
     } else if (cocok === 'kecamatan' && !hasil.kecamatan) {
       hasil.kecamatan = bersihkanNilai(isi).replace(/^(KEC(AMATAN)?)(\.\s*|\s+)/, '');
     } else if (label === 'ALAMAT' && !hasil.desaAlamat) {
-      // Cadangan bila baris Kel/Desa gagal terbaca: "Alamat : DESA MULAT"
-      const desaAlamat = bersihkanNilai(isi).match(/(?:^|\s)(?:DESA|DS[.\s])\s*([A-Z][A-Z0-9 ]+)/);
-      if (desaAlamat) hasil.desaAlamat = desaAlamat[1].trim();
+      // "Alamat : DESA MULAT" / "Alamat : KEL. LEOK II": cadangan nama desa bila baris Kel/Desa gagal
+      // terbaca, sekaligus petunjuk apakah tempat itu desa atau kelurahan
+      const desaAlamat = bersihkanNilai(isi).match(/(?:^|\s)(DESA|DS[.\s]|KELURAHAN|KEL[.\s])\s*([A-Z][A-Z0-9 ]+)/);
+      if (desaAlamat) {
+        hasil.desaAlamat = desaAlamat[2].trim();
+        hasil.jenisDesaAlamat = desaAlamat[1].startsWith('KEL') ? 'KEL.' : 'DESA';
+      }
     } else if (cocok === 'lahir' && !hasil.tglLahir) {
       const tgl = isi.match(/(\d{2})[-/.](\d{2})[-/.](\d{4})/);
       if (tgl) hasil.tglLahir = `${tgl[1]}-${tgl[2]}-${tgl[3]}`;
@@ -294,13 +300,23 @@ export function tetapkan(bacaan, wilayah) {
   const teksMentah = (k) => rapikan(pertama(bacaan, k) || '');
   const desaMentah = rapikan(pertama(bacaan, 'desa') || pertama(bacaan, 'desaAlamat') || '');
   const kabMentah = pertama(bacaan, 'kabupaten') ? `${jenisKab || 'KAB.'} ${rapikan(pertama(bacaan, 'kabupaten'))}` : '';
+  const namaDesa = desa ? desa.nama : desaMentah;
+  const kabupaten = kab ? kab.nama : kabMentah;
+
+  // Desa atau kelurahan: ikuti tulisan di KTP ("DESA X" / "KEL. X") bila menyebut tempat yang sama;
+  // bila KTP tidak menyebut, pakai data Kemendagri; di luar data, wilayah KOTA umumnya kelurahan
+  const petunjukKtp = bacaan
+    .flatMap((b) => [[b.jenisDesa, b.desa], [b.jenisDesaAlamat, b.desaAlamat]])
+    .find(([jenis, teks]) => jenis && teks && namaDesa && cocokkan([teks], [{ nama: namaDesa }]))?.[0];
+  const kelurahan = petunjukKtp ? petunjukKtp === 'KEL.' : desa ? desa.kelurahan : kabupaten.startsWith('KOTA ');
+
   return {
     nama: pertama(bacaan, 'nama') || '',
     nik: nik.nik,
-    desa: desa ? desa.nama : desaMentah,
-    kelurahan: Boolean(desa?.kelurahan),
+    desa: namaDesa,
+    kelurahan,
     kecamatan: kec ? kec.nama : teksMentah('kecamatan'),
-    kabupaten: kab ? kab.nama : kabMentah,
+    kabupaten,
     tglLahir: daftarTgl[0] || '',
     perempuan,
     peringatanNik,

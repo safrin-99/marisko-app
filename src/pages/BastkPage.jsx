@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 // SAKTI: Menambahkan Search pada import lucide-react
-import { FileText, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, Search } from 'lucide-react';
+import { FileText, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, Search, ScanLine } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getLogosSignedUrl } from '../lib/storage';
+import { scanKtp, susunAlamat } from '../lib/bacaKtp';
 import { jsPDF } from "jspdf";
 
 // SAKTI: Penomoran BASTK berurutan per kategori, format: <nomor>/<kode>/<bulan romawi>/<tahun>, mis. 1416/MP/BL/X/2026
@@ -59,6 +60,8 @@ export default function BastkPage() {
   const [namaKonsumen, setNamaKonsumen] = useState('');
   const [noKtp, setNoKtp] = useState('');
   const [alamat, setAlamat] = useState('');
+  // SAKTI: Scan KTP -> isi otomatis Nama, NIK & Alamat (dibaca di browser, foto tidak disimpan)
+  const [scanKtpStatus, setScanKtpStatus] = useState({ proses: false, persen: 0, sukses: '', peringatan: [] });
   const [tipeKendaraan, setTipeKendaraan] = useState('');
   const [tahunCc, setTahunCc] = useState('');
   const [noRangka, setNoRangka] = useState('');
@@ -116,6 +119,35 @@ export default function BastkPage() {
     const usulanSebelumnya = nomorOtomatisRef.current;
     nomorOtomatisRef.current = usulan;
     setNoSurat((prev) => (prev === '' || prev === usulanSebelumnya ? usulan : prev));
+  };
+
+  const handleScanKtp = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setScanKtpStatus({ proses: false, persen: 0, sukses: '', peringatan: ['File harus berupa foto (JPG/PNG).'] });
+      return;
+    }
+    setScanKtpStatus({ proses: true, persen: 0, sukses: '', peringatan: [] });
+    try {
+      const hasil = await scanKtp(file, (p) => setScanKtpStatus((s) => ({ ...s, persen: Math.round(p * 100) })));
+      const alamatKtp = susunAlamat(hasil);
+      const terisi = [];
+      const peringatan = [];
+      if (hasil.nama) { setNamaKonsumen(hasil.nama); terisi.push('Nama'); } else peringatan.push('Nama tidak terbaca.');
+      if (hasil.nik) { setNoKtp(hasil.nik); terisi.push('NIK'); } else peringatan.push('NIK tidak terbaca.');
+      if (hasil.peringatanNik) peringatan.push(hasil.peringatanNik);
+      if (hasil.desa && hasil.kecamatan) { setAlamat(alamatKtp); terisi.push('Alamat'); } else peringatan.push('Desa/Kecamatan tidak terbaca lengkap.');
+      setScanKtpStatus({
+        proses: false,
+        persen: 100,
+        sukses: terisi.length ? `${terisi.join(', ')} terisi dari KTP. Periksa kembali sebelum menyimpan.` : '',
+        peringatan: terisi.length ? peringatan : ['KTP tidak terbaca. Foto ulang lebih dekat, lurus, terang, dan tidak buram.'],
+      });
+    } catch {
+      setScanKtpStatus({ proses: false, persen: 0, sukses: '', peringatan: [navigator.onLine ? 'Gagal membaca KTP. Coba lagi.' : 'Tidak ada koneksi internet (dibutuhkan saat scan pertama kali).'] });
+    }
   };
 
   const fetchHistory = async () => {
@@ -241,6 +273,7 @@ export default function BastkPage() {
     setNoKtp(''); setAlamat(''); setTipeKendaraan(''); setTahunCc('');
     setNoRangka(''); setNoMesin(''); setWarna(''); setHadiah('');
     setIsEditing(false); setOriginalId(null); setNomorAsli('');
+    setScanKtpStatus({ proses: false, persen: 0, sukses: '', peringatan: [] });
     isiNomorOtomatis(historyData);
   };
 
@@ -430,6 +463,21 @@ export default function BastkPage() {
 
               <section>
                 <h3 className="ui-section-title"><span className="ui-step">1</span>Informasi Surat & Konsumen</h3>
+                <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <label className={`ui-btn-sm relative cursor-pointer ${scanKtpStatus.proses ? 'opacity-60 pointer-events-none' : ''}`}>
+                    <input type="file" accept="image/*" onChange={handleScanKtp} disabled={scanKtpStatus.proses} aria-label="Scan KTP" className="absolute inset-0 opacity-0 cursor-pointer" />
+                    {scanKtpStatus.proses
+                      ? <><RefreshCw className="w-4 h-4 animate-spin" /> Membaca KTP... {scanKtpStatus.persen}%</>
+                      : <><ScanLine className="w-4 h-4" /> Scan KTP</>}
+                  </label>
+                  <p className="text-xs text-stone-500">Upload foto KTP untuk mengisi Nama, NIK &amp; Alamat otomatis. Foto tidak disimpan.</p>
+                </div>
+                {(scanKtpStatus.sukses || scanKtpStatus.peringatan.length > 0) && (
+                  <div className="mb-4 space-y-2">
+                    {scanKtpStatus.sukses && <div className="ui-alert-neutral"><CheckCircle2 className="w-4 h-4 flex-shrink-0 text-green-700" /> {scanKtpStatus.sukses}</div>}
+                    {scanKtpStatus.peringatan.map((p) => <div key={p} className="ui-alert-danger"><AlertCircle className="w-4 h-4 flex-shrink-0" /> {p}</div>)}
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
                   <div><label className={labelClass}>Nomor Surat (BASTK)</label><input type="text" value={noSurat} onChange={(e)=>setNoSurat(e.target.value)} required placeholder="Contoh: 6526/MP/BL/III/2026" className={inputClass} /></div>
                   <div><label className={labelClass}>Tanggal Serah Terima</label><input type="date" value={tglSerah} onChange={(e)=>setTglSerah(e.target.value)} required className={inputClass} /></div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 // SAKTI: Menambahkan Search pada import lucide-react
-import { FileText, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, Search, ScanLine } from 'lucide-react';
+import { FileText, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, Search, ScanLine, Info } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getLogosSignedUrl } from '../lib/storage';
 import { scanKtp, susunAlamat } from '../lib/bacaKtp';
@@ -61,7 +61,7 @@ export default function BastkPage() {
   const [noKtp, setNoKtp] = useState('');
   const [alamat, setAlamat] = useState('');
   // SAKTI: Scan KTP -> isi otomatis Nama, NIK & Alamat (dibaca di browser, foto tidak disimpan)
-  const [scanKtpStatus, setScanKtpStatus] = useState({ proses: false, persen: 0, sukses: '', peringatan: [] });
+  const [scanKtpStatus, setScanKtpStatus] = useState({ proses: false, persen: 0, sukses: '', koreksi: '', peringatan: [] });
   const [tipeKendaraan, setTipeKendaraan] = useState('');
   const [tahunCc, setTahunCc] = useState('');
   const [noRangka, setNoRangka] = useState('');
@@ -126,10 +126,10 @@ export default function BastkPage() {
     e.target.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setScanKtpStatus({ proses: false, persen: 0, sukses: '', peringatan: ['File harus berupa foto (JPG/PNG).'] });
+      setScanKtpStatus({ proses: false, persen: 0, sukses: '', koreksi: '', peringatan: ['File harus berupa foto (JPG/PNG).'] });
       return;
     }
-    setScanKtpStatus({ proses: true, persen: 0, sukses: '', peringatan: [] });
+    setScanKtpStatus({ proses: true, persen: 0, sukses: '', koreksi: '', peringatan: [] });
     try {
       const hasil = await scanKtp(file, (p) => setScanKtpStatus((s) => ({ ...s, persen: Math.round(p * 100) })));
       const alamatKtp = susunAlamat(hasil);
@@ -143,10 +143,12 @@ export default function BastkPage() {
         proses: false,
         persen: 100,
         sukses: terisi.length ? `${terisi.join(', ')} terisi dari KTP. Periksa kembali sebelum menyimpan.` : '',
+        // Huruf/angka yang dibetulkan otomatis dengan data wilayah Kemendagri, agar admin tahu bagian mana yang perlu dicocokkan
+        koreksi: terisi.length && hasil.koreksi.length ? `Dibetulkan otomatis sesuai data wilayah: ${hasil.koreksi.join('; ')}.` : '',
         peringatan: terisi.length ? peringatan : ['KTP tidak terbaca. Foto ulang lebih dekat, lurus, terang, dan tidak buram.'],
       });
     } catch {
-      setScanKtpStatus({ proses: false, persen: 0, sukses: '', peringatan: [navigator.onLine ? 'Gagal membaca KTP. Coba lagi.' : 'Tidak ada koneksi internet (dibutuhkan saat scan pertama kali).'] });
+      setScanKtpStatus({ proses: false, persen: 0, sukses: '', koreksi: '', peringatan: [navigator.onLine ? 'Gagal membaca KTP. Coba lagi.' : 'Tidak ada koneksi internet (dibutuhkan saat scan pertama kali).'] });
     }
   };
 
@@ -273,7 +275,7 @@ export default function BastkPage() {
     setNoKtp(''); setAlamat(''); setTipeKendaraan(''); setTahunCc('');
     setNoRangka(''); setNoMesin(''); setWarna(''); setHadiah('');
     setIsEditing(false); setOriginalId(null); setNomorAsli('');
-    setScanKtpStatus({ proses: false, persen: 0, sukses: '', peringatan: [] });
+    setScanKtpStatus({ proses: false, persen: 0, sukses: '', koreksi: '', peringatan: [] });
     isiNomorOtomatis(historyData);
   };
 
@@ -475,6 +477,7 @@ export default function BastkPage() {
                 {(scanKtpStatus.sukses || scanKtpStatus.peringatan.length > 0) && (
                   <div className="mb-4 space-y-2">
                     {scanKtpStatus.sukses && <div className="ui-alert-neutral"><CheckCircle2 className="w-4 h-4 flex-shrink-0 text-green-700" /> {scanKtpStatus.sukses}</div>}
+                    {scanKtpStatus.koreksi && <div className="ui-alert-neutral"><Info className="w-4 h-4 flex-shrink-0 text-stone-500" /> {scanKtpStatus.koreksi}</div>}
                     {scanKtpStatus.peringatan.map((p) => <div key={p} className="ui-alert-danger"><AlertCircle className="w-4 h-4 flex-shrink-0" /> {p}</div>)}
                   </div>
                 )}

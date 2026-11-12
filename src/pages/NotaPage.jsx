@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ScrollText, Edit, Trash2, RefreshCw, Clock, X, CheckCircle2, AlertCircle, Printer, FileText, Search, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useNomorOtomatis } from '../lib/nomorOtomatis';
 import { getLogosSignedUrl } from '../lib/storage';
 import { jsPDF } from "jspdf";
 
@@ -18,6 +19,8 @@ export default function NotaPage() {
 
   // Form Fields
   const [noInvoice, setNoInvoice] = useState('');
+  // SAKTI: No. Invoice terisi otomatis meniru nomor terakhir di kategori yang sama (Pemasukan / Pengeluaran)
+  const isiNoInvoiceOtomatis = useNomorOtomatis(setNoInvoice);
   const [noBastk, setNoBastk] = useState('');
   const [tanggal, setTanggal] = useState('');
   const [penerima, setPenerima] = useState('');
@@ -61,7 +64,10 @@ export default function NotaPage() {
       .eq('kategori', kategoriNota)
       .order('created_at', { ascending: false })
       .limit(100);
-    if (!error && data) setHistoryData(data);
+    if (!error && data) {
+      setHistoryData(data);
+      isiNoInvoiceOtomatis(data.map((r) => r.no_invoice));
+    }
     setIsLoading(false);
   };
 
@@ -193,6 +199,7 @@ export default function NotaPage() {
     setNoInvoice(''); setNoBastk(''); setTanggal(''); setPenerima(''); setKasir('');
     setItems(getInitialItems());
     setIsEditing(false); setOriginalId('');
+    isiNoInvoiceOtomatis(historyData.filter((r) => r.kategori === kategoriNota).map((r) => r.no_invoice));
   };
 
   const generatePDF = (data) => {

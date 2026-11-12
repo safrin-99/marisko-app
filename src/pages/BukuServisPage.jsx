@@ -32,7 +32,6 @@ export default function BukuServisPage() {
   };
 
   const handlePrint = (data) => {
-    const printWindow = window.open('', '_blank', 'width=1000,height=700');
     
     // ====================================================================
     // SAKTI: Logika Pemotongan Nama Motor (Hanya Ambil NAMA MOTOR SAJA)
@@ -140,7 +139,7 @@ export default function BukuServisPage() {
             .col-gap { width: 4%; }
           </style>
         </head>
-        <body onload="window.print(); window.onafterprint = function(){ window.close(); }">
+        <body onload="window.print();">
           
           <table class="table-1 font-normal">
             <tr class="row-sm">
@@ -229,8 +228,19 @@ export default function BukuServisPage() {
         </body>
       </html>
     `;
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+    // SAKTI: Cetak lewat bingkai tersembunyi di halaman ini (bukan jendela baru),
+    // agar tidak ada jendela putih yang tertinggal setelah dialog cetak ditutup
+    document.querySelectorAll('iframe[data-cetak-stiker]').forEach((lama) => lama.remove());
+    const bingkai = document.createElement('iframe');
+    bingkai.setAttribute('data-cetak-stiker', '');
+    bingkai.setAttribute('aria-hidden', 'true');
+    bingkai.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+    document.body.appendChild(bingkai);
+    const dokumen = bingkai.contentWindow.document;
+    dokumen.open();
+    dokumen.write(htmlContent);
+    dokumen.close();
+    bingkai.contentWindow.addEventListener('afterprint', () => setTimeout(() => bingkai.remove(), 0));
   };
 
   const getFilteredData = () => {

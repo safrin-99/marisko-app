@@ -281,6 +281,31 @@ const potongNik = (mentah) => {
 // Bacaan langsung: hanya angka asli; huruf diterjemahkan dengan tebakan pertamanya
 const bacaLangsung = (teks) => teks.split('').map((c) => (/\d/.test(c) ? c : (MIRIP_ANGKA[c] || '')[0] || '')).join('');
 
+// Biaya mengisi slot kode kecamatan dengan karakter bacaan: sama = 0, huruf mirip = 0,5, lainnya = 1
+const biayaKode = (c, slot) => (c === slot ? 0 : !/\d/.test(c) && (MIRIP_ANGKA[c] || '').includes(slot) ? 0.5 : 1);
+
+// Batas bawah biaya untuk satu kode kecamatan: hanya 6 digit awal yang disejajarkan (ujung bebas).
+// Dipakai untuk mengurutkan & melewati ribuan kode yang jelas tidak cocok sebelum penyejajaran penuh.
+function biayaAwal(teks, kode) {
+  const m = Math.min(teks.length, 12);
+  const b = Array.from({ length: m + 1 }, () => new Array(7).fill(Infinity));
+  b[0][0] = 0;
+  let terendah = Infinity;
+  for (let i = 0; i <= m; i++) {
+    for (let j = 0; j <= 6; j++) {
+      const v = b[i][j];
+      if (v === Infinity) continue;
+      if (j === 6) { terendah = Math.min(terendah, v); continue; }
+      if (i < m) {
+        b[i + 1][j + 1] = Math.min(b[i + 1][j + 1], v + biayaKode(teks[i], kode[j]));
+        b[i + 1][j] = Math.min(b[i + 1][j], v + (j === 0 ? 0.5 : 1));
+      }
+      b[i][j + 1] = Math.min(b[i][j + 1], v + 1);
+    }
+  }
+  return terendah;
+}
+
 // Sejajarkan bacaan NIK dengan pola: 6 digit kode kecamatan + 6 digit tanggal lahir (bila diketahui)
 // + 4 digit nomor urut. Mengatasi huruf yang salah baca ("Y2050L..."), karakter sisipan, dan digit
 // yang hilang. Digit tanggal lahir & nomor urut yang terbaca sebagai angka TIDAK ditimpa.
@@ -335,9 +360,10 @@ function sejajarkanNik(teks, kodeKec, kodeTgl) {
   return { nik: digit.join(''), biaya: biaya[m][n], biayaKode };
 }
 
-// Pilih NIK dari semua bacaan. Prinsip: bacaan yang sudah bersih & kode wilayahnya ada TIDAK diubah
-// (pemilik KTP bisa pindahan, mis. NIK Kec. Biau tapi tinggal di Kec. Bukal). Bacaan yang rusak
-// disejajarkan dengan kode kecamatan di KTP & tanggal lahir.
+// Pilih NIK dari semua bacaan. Prinsip: angka yang terbaca jelas TIDAK ditimpa, karena 6 digit awal NIK
+// bisa berbeda dengan kecamatan alamat (pindahan/pemekaran, mis. NIK Kec. Bokat tapi tinggal di Kec. Biau).
+// Bacaan yang rusak disejajarkan dengan SEMUA kode kecamatan & tanggal lahir; yang dipilih kode yang paling
+// cocok dengan angka yang terbaca. Kecamatan alamat hanya penentu bila beberapa kode sama cocoknya.
 function pilihNik(daftarMentah, petunjuk, wilayah) {
   const adaKode = (nik) => Boolean(wilayah.kecamatan[nik.slice(0, 6)]);
   const bacaan = daftarMentah.filter(Boolean).map(potongNik).filter((t) => t.length >= 12);
@@ -349,21 +375,27 @@ function pilihNik(daftarMentah, petunjuk, wilayah) {
   const bersihSesuai = bersih.find((b) => b.nik.startsWith(petunjuk.kecamatan || '#') && cocokTglLahir(b.nik, petunjuk.daftarTgl, petunjuk.perempuan));
   if (bersihSesuai) return { nik: bersihSesuai.nik, dikoreksi: false };
 
-  // 2. Sejajarkan dengan pola kode kecamatan (dari KTP; bila tidak ada, semua kecamatan di kabupatennya)
-  const daftarKode = petunjuk.kecamatan ? [petunjuk.kecamatan]
-    : petunjuk.kabupaten ? Object.keys(wilayah.kecamatan).filter((k) => k.startsWith(petunjuk.kabupaten)) : [];
+  // 2. Sejajarkan dengan pola setiap kode kecamatan. Bila biayanya sama, utamakan kecamatan alamat,
+  //    lalu kabupaten yang sama, lalu provinsi yang sama.
+  const daftarKode = Object.keys(wilayah.kecamatan);
+  const prioritas = (kode) => (kode === petunjuk.kecamatan ? 0
+    : petunjuk.kabupaten && kode.startsWith(petunjuk.kabupaten) ? 1
+      : petunjuk.kabupaten && kode.startsWith(petunjuk.kabupaten.slice(0, 2)) ? 2 : 3);
   const daftarKodeTgl = petunjuk.daftarTgl.length
     ? [...new Set(petunjuk.daftarTgl.flatMap((t) => (petunjuk.perempuan === null ? [kodeTanggal(t, false), kodeTanggal(t, true)] : [kodeTanggal(t, petunjuk.perempuan)])))]
     : [null];
   let pola = null;
   let seri = false;
   for (const teks of bacaan) {
-    for (const kode of daftarKode) {
+    const urut = daftarKode.map((kode) => [biayaAwal(teks, kode), kode]).sort((a, b) => a[0] - b[0]);
+    for (const [awal, kode] of urut) {
+      if (pola && awal > pola.biaya) break; // sisa kode pasti lebih mahal
       for (const kodeTgl of daftarKodeTgl) {
         const h = sejajarkanNik(teks, kode, kodeTgl);
         if (!h || !/^\d{16}$/.test(h.nik)) continue;
-        if (!pola || h.biaya < pola.biaya) { pola = h; seri = false; }
-        else if (h.biaya === pola.biaya && h.nik.slice(0, 6) !== pola.nik.slice(0, 6)) seri = true;
+        h.prioritas = prioritas(kode);
+        if (!pola || h.biaya < pola.biaya || (h.biaya === pola.biaya && h.prioritas < pola.prioritas)) { pola = h; seri = false; }
+        else if (h.biaya === pola.biaya && h.prioritas === pola.prioritas && h.nik.slice(0, 6) !== pola.nik.slice(0, 6)) seri = true;
       }
     }
   }

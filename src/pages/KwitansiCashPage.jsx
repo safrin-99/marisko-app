@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Receipt, Edit, Trash2, RefreshCw, X, CheckCircle2, AlertCircle, Printer, Search, ChevronDown, Banknote, FileText, Clock, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useNomorOtomatis } from '../lib/nomorOtomatis';
 import { getLogosSignedUrl } from '../lib/storage';
 import { jsPDF } from "jspdf";
 
@@ -16,6 +17,8 @@ export default function KwitansiCashPage() {
   const [originalNo, setOriginalNo] = useState('');
   
   const [noInvoice, setNoInvoice] = useState(''); 
+  // SAKTI: No. Invoice terisi otomatis meniru nomor terakhir (mis. KWI-0718 -> KWI-0719)
+  const isiNoInvoiceOtomatis = useNomorOtomatis(setNoInvoice);
   const [noBastk, setNoBastk] = useState(''); 
   const [tanggal, setTanggal] = useState('');
   const [diterimaDari, setDiterimaDari] = useState('');
@@ -81,7 +84,10 @@ export default function KwitansiCashPage() {
     setIsLoading(true);
     try {
       const { data } = await supabase.from('kwitansi_cash_history').select('*').order('created_at', { ascending: false }).limit(100);
-      if (data) setHistoryData(data);
+      if (data) {
+        setHistoryData(data);
+        isiNoInvoiceOtomatis(data.map((r) => r.noInvoice));
+      }
     } catch (err) {}
     setIsLoading(false);
   };
@@ -202,6 +208,7 @@ export default function KwitansiCashPage() {
     setOffTheRoad(0); setBbn(0); setIndent(0); setOtr(0); setDiskon(0); setTransfer(0);
     setAccesoris(0); setPotonganLecet(0); setSisaUangMuka(0);
     setIsEditing(false); setOriginalNo('');
+    isiNoInvoiceOtomatis(historyData.map((r) => r.noInvoice));
   };
 
   const generatePDF = (data) => {

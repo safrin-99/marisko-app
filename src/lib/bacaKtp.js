@@ -303,12 +303,23 @@ export function tetapkan(bacaan, wilayah) {
   const namaDesa = desa ? desa.nama : desaMentah;
   const kabupaten = kab ? kab.nama : kabMentah;
 
-  // Desa atau kelurahan: ikuti tulisan di KTP ("DESA X" / "KEL. X") bila menyebut tempat yang sama;
-  // bila KTP tidak menyebut, pakai data Kemendagri; di luar data, wilayah KOTA umumnya kelurahan
+  // Desa atau kelurahan. Di wilayah yang ada datanya (Sulteng & Gorontalo) selalu ikut status resmi
+  // Kemendagri, bukan tulisan KTP yang bisa salah baca (mis. Kab. Buol: kelurahan hanya 7, semuanya di
+  // Kec. Biau; selebihnya desa). Di luar data: ikut tulisan "DESA X"/"KEL. X" di KTP, lalu KOTA = kelurahan.
+  const isiKec = (kec && wilayah.desa[kec.kode]) || [];
+  const semuaKel = isiKec.length > 0 && isiKec.every((n) => n.startsWith('*'));
+  const semuaDesa = isiKec.length > 0 && isiKec.every((n) => !n.startsWith('*'));
   const petunjukKtp = bacaan
     .flatMap((b) => [[b.jenisDesa, b.desa], [b.jenisDesaAlamat, b.desaAlamat]])
     .find(([jenis, teks]) => jenis && teks && namaDesa && cocokkan([teks], [{ nama: namaDesa }]))?.[0];
-  const kelurahan = petunjukKtp ? petunjukKtp === 'KEL.' : desa ? desa.kelurahan : kabupaten.startsWith('KOTA ');
+  let kelurahan;
+  if (desa) kelurahan = desa.kelurahan;
+  else if (semuaKel || semuaDesa) kelurahan = semuaKel; // nama desa tak terbaca, tapi kecamatannya seragam
+  else if (petunjukKtp) kelurahan = petunjukKtp === 'KEL.';
+  else kelurahan = isiKec.length === 0 && kabupaten.startsWith('KOTA ');
+  if (desa && petunjukKtp && (petunjukKtp === 'KEL.') !== desa.kelurahan) {
+    koreksi.push(`${desa.nama} tercatat ${desa.kelurahan ? 'kelurahan' : 'desa'} di data resmi (di KTP terbaca ${petunjukKtp === 'KEL.' ? 'kelurahan' : 'desa'})`);
+  }
 
   return {
     nama: pertama(bacaan, 'nama') || '',

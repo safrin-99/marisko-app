@@ -134,7 +134,7 @@ export default function BastkPage() {
     sedangScanKtp.current = true;
     setScanKtpStatus({ proses: true, persen: 0, sukses: '', koreksi: '', catatan: [], peringatan: [] });
     try {
-      const hasil = await scanKtp(file, (p) => setScanKtpStatus((s) => ({ ...s, persen: Math.round(p * 100) })));
+      const hasil = await scanKtp(file, (p, keBaca) => setScanKtpStatus((s) => ({ ...s, persen: Math.round(p * 100), keBaca })));
       const alamatKtp = susunAlamat(hasil);
       const terisi = [];
       const peringatan = [];
@@ -515,7 +515,7 @@ export default function BastkPage() {
                     <label className={`ui-btn-sm relative cursor-pointer ${scanKtpStatus.proses ? 'opacity-60 pointer-events-none' : ''}`}>
                       <input type="file" accept="image/*" onChange={handleScanKtp} disabled={scanKtpStatus.proses} aria-label="Scan KTP" className="absolute inset-0 opacity-0 cursor-pointer" />
                       {scanKtpStatus.proses
-                        ? <><RefreshCw className="w-4 h-4 animate-spin" /> Membaca KTP... {scanKtpStatus.persen}%</>
+                        ? <><RefreshCw className="w-4 h-4 animate-spin" /> Membaca KTP{scanKtpStatus.keBaca > 1 ? ` (baca ke-${scanKtpStatus.keBaca})` : ''}... {scanKtpStatus.persen}%</>
                         : <><ScanLine className="w-4 h-4" /> Scan KTP</>}
                     </label>
                     {!scanKtpStatus.proses && (

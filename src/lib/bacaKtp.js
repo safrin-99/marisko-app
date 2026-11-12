@@ -1,19 +1,21 @@
 // SAKTI: Baca KTP langsung di browser (Tesseract.js). Foto KTP tidak dikirim ke server mana pun
 // dan tidak disimpan; hanya teks hasil bacaan yang dipakai untuk mengisi form.
 // Hasil bacaan lalu dicocokkan dengan data wilayah Kemendagri (wilayahKtp.json) untuk membetulkan
-// huruf/angka yang salah baca pada Desa, Kecamatan, Kabupaten, dan 6 digit kode wilayah NIK.
+// huruf/angka yang salah baca pada Desa, Kecamatan, Kabupaten, dan NIK.
 // Sumber data wilayah: idn-area-data v4.0.1 (data Kepmendagri, lisensi ODbL 1.0); desa/kelurahan hanya
 // untuk Sulawesi Tengah & Gorontalo, kabupaten & kecamatan untuk seluruh Indonesia.
 
+// Label baris KTP beserta batas salah baca yang masih diterima (mis. "KellDesa" = "KEL/DESA")
 const LABEL = {
-  nik: 'NIK',
-  nama: 'NAMA',
-  lahir: 'TEMPAT/TGL LAHIR',
-  desa: 'KEL/DESA',
-  kecamatan: 'KECAMATAN',
+  nik: ['NIK', 1],
+  nama: ['NAMA', 1],
+  lahir: ['TEMPAT/TGL LAHIR', 4],
+  alamat: ['ALAMAT', 1],
+  desa: ['KEL/DESA', 2],
+  kecamatan: ['KECAMATAN', 3],
 };
 
-// Jarak edit sederhana untuk mencocokkan teks yang salah baca (mis. "Kel/Desm" -> "KEL/DESA")
+// Jarak edit sederhana untuk mencocokkan teks yang salah baca
 const jarak = (a, b) => {
   const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
   for (let j = 1; j <= b.length; j++) d[0][j] = j;
@@ -29,15 +31,46 @@ const bersihkanNilai = (teks) => teks.toUpperCase().replace(/[^A-Z0-9'.,/\- ]/g,
 // Buang potongan sampah di ujung (mis. "MULAT AG", "ZAINUDIN DD") & tanda baca sisa
 const rapikan = (teks) => bersihkanNilai(teks).replace(/^[.,\-/ ]+|[.,\-/ ]+$/g, '').replace(/(\s+[A-Z]{1,2})+$/, '').trim();
 
-// Huruf yang sering tertukar dengan angka pada baris NIK
-const KE_ANGKA = { O: '0', D: '0', Q: '0', I: '1', L: '1', '|': '1', '!': '1', Z: '2', S: '5', G: '6', B: '8' };
+// Gelar di belakang nama, mis. "S.Kep-.Ns" -> "S.KEP.NS"; kosong bila tidak berbentuk gelar
+const bacaGelar = (teks) => {
+  const t = teks.toUpperCase().replace(/[^A-Z.,]/g, '').replace(/^[.,]+|[,]+$/g, '');
+  return /^[A-Z]{1,6}(\.[A-Z]{1,6}){1,4}\.?(,[A-Z]{1,6}(\.[A-Z]{1,6})*\.?)*$/.test(t) ? t : '';
+};
+
+// Pisahkan label & isi. Titik dua sering terbaca ".", "—", "|", " -" atau hilang sama sekali
+// ("KellDesa “TEOKE"), jadi bila label belum dikenali, coba 1-3 kata pertama sebagai label.
+function pisahLabel(baris) {
+  const coba = [];
+  const p = baris.search(/\s*[:.—|]\s*|\s+-/);
+  if (p > 0) coba.push([baris.slice(0, p), baris.slice(p)]);
+  const kata = baris.split(/\s+/);
+  for (let n = 1; n <= Math.min(3, kata.length - 1); n++) coba.push([kata.slice(0, n).join(' '), kata.slice(n).join(' ')]);
+  for (const [labelMentah, isi] of coba) {
+    const label = labelMentah.toUpperCase().replace(/\s+/g, ' ').trim();
+    let cocok = null;
+    let terdekat = Infinity;
+    for (const [kunciLabel, [target, batas]] of Object.entries(LABEL)) {
+      const j = jarak(label, target);
+      if (j <= batas && j < terdekat) { cocok = kunciLabel; terdekat = j; }
+    }
+    if (!cocok && /LAHIR/.test(label)) cocok = 'lahir';
+    if (cocok) return { label: cocok, isi: isi.replace(/^[\s:.—|"“”'-]+/, '') };
+  }
+  return null;
+}
 
 export function uraiKtp(teks) {
-  const hasil = { nama: '', nikMentah: '', desa: '', jenisDesa: '', desaAlamat: '', jenisDesaAlamat: '', kecamatan: '', kabupaten: '', jenisKabupaten: '', provinsi: '', tglLahir: '', perempuan: null };
+  const hasil = {
+    nama: '', gelar: '', namaBergelar: false, nikMentah: '', desa: '', jenisDesa: '', desaAlamat: '', jenisDesaAlamat: '',
+    kecamatan: '', kabupaten: '', jenisKabupaten: '', provinsi: '', tglLahir: '', perempuan: null,
+  };
+  let barisSetelahNama = false;
 
   for (const barisMentah of teks.split('\n')) {
     const baris = barisMentah.replace(/^[^A-Za-z]+/, '').trim();
     if (!baris) continue;
+    const lanjutanNama = barisSetelahNama;
+    barisSetelahNama = false;
     const kata = baris.toUpperCase().split(/\s+/);
 
     // Kepala KTP (di atas baris NIK): "PROVINSI SULAWESI TENGAH" / "KABUPATEN BUOL" / "KOTA PALU"
@@ -55,42 +88,39 @@ export function uraiKtp(teks) {
       }
     }
 
-    // Baris NIK: ambil semua sisa baris (titik/spasi nyasar di tengah angka tidak memotong NIK)
+    // Baris NIK: simpan apa adanya (huruf besar/kecil dipakai untuk menebak angka, mis. "b" = 6)
     const tokenAwal = kata[0].replace(/[^A-Z]/g, '');
     if (!hasil.nikMentah && tokenAwal.length >= 2 && jarak(tokenAwal, 'NIK') <= 1) {
-      const sisa = baris.slice(kata[0].length).replace(/^[\s:.—|-]+/, '').toUpperCase().replace(/\s+/g, '');
-      if ((sisa.match(/[0-9OQDILZSGB?|!]/g) || []).length >= 14) { hasil.nikMentah = sisa; continue; }
+      const sisa = baris.slice(kata[0].length).replace(/^[\s:.—|-]+/, '');
+      if ((sisa.match(/[0-9A-Za-z?|!#]/g) || []).length >= 14) { hasil.nikMentah = sisa; continue; }
     }
 
     if (/PEREMPUAN|WANITA/i.test(baris)) hasil.perempuan = true;
     else if (/LAKI/i.test(baris) && hasil.perempuan === null) hasil.perempuan = false;
 
-    // Pisahkan label & isi pada ":" pertama (titik dua sering terbaca ".", "—", "|" atau " -")
-    const pemisah = baris.search(/\s*[:.—|]\s*|\s+-/);
-    if (pemisah <= 0) continue;
-    const label = baris.slice(0, pemisah).toUpperCase().replace(/\s+/g, ' ').trim();
-    const isi = baris.slice(pemisah).replace(/^[\s:.—|-]+/, '');
-
-    let cocok = null;
-    let terdekat = 3;
-    for (const [kunci, target] of Object.entries(LABEL)) {
-      const j = jarak(label, target);
-      const batas = target.length <= 4 ? 1 : 3;
-      if (j <= batas && j < terdekat) { cocok = kunci; terdekat = j; }
+    const pasangan = pisahLabel(baris);
+    if (!pasangan) {
+      // Baris kedua nama berisi gelar, mis. "MOHAMMAD TAUFIK HIDAYAT," lalu "S.Kep.Ns"
+      if (lanjutanNama && !hasil.gelar) hasil.gelar = bacaGelar(baris);
+      continue;
     }
-    if (!cocok && /LAHIR/.test(label)) cocok = 'lahir';
+    const { label, isi } = pasangan;
 
-    if (cocok === 'nik' && !hasil.nikMentah) {
-      hasil.nikMentah = isi.toUpperCase().replace(/\s+/g, '');
-    } else if (cocok === 'nama' && !hasil.nama) {
-      hasil.nama = rapikan(isi);
-    } else if (cocok === 'desa' && !hasil.desa) {
+    if (label === 'nik' && !hasil.nikMentah) {
+      hasil.nikMentah = isi;
+    } else if (label === 'nama' && !hasil.nama) {
+      const [namaSaja, ...gelar] = isi.split(',');
+      hasil.nama = rapikan(namaSaja);
+      hasil.namaBergelar = gelar.length > 0;
+      hasil.gelar = bacaGelar(gelar.join(','));
+      barisSetelahNama = hasil.namaBergelar && !hasil.gelar;
+    } else if (label === 'desa' && !hasil.desa) {
       const awalan = bersihkanNilai(isi).match(/^(DESA|DS|KEL(URAHAN)?)(\.\s*|\s+)/);
       if (awalan) hasil.jenisDesa = awalan[1].startsWith('KEL') ? 'KEL.' : 'DESA';
       hasil.desa = bersihkanNilai(isi).replace(/^(DESA|DS|KEL(URAHAN)?)(\.\s*|\s+)/, '');
-    } else if (cocok === 'kecamatan' && !hasil.kecamatan) {
+    } else if (label === 'kecamatan' && !hasil.kecamatan) {
       hasil.kecamatan = bersihkanNilai(isi).replace(/^(KEC(AMATAN)?)(\.\s*|\s+)/, '');
-    } else if (label === 'ALAMAT' && !hasil.desaAlamat) {
+    } else if (label === 'alamat' && !hasil.desaAlamat) {
       // "Alamat : DESA MULAT" / "Alamat : KEL. LEOK II": cadangan nama desa bila baris Kel/Desa gagal
       // terbaca, sekaligus petunjuk apakah tempat itu desa atau kelurahan
       const desaAlamat = bersihkanNilai(isi).match(/(?:^|\s)(DESA|DS[.\s]|KELURAHAN|KEL[.\s])\s*([A-Z][A-Z0-9 ]+)/);
@@ -98,7 +128,7 @@ export function uraiKtp(teks) {
         hasil.desaAlamat = desaAlamat[2].trim();
         hasil.jenisDesaAlamat = desaAlamat[1].startsWith('KEL') ? 'KEL.' : 'DESA';
       }
-    } else if (cocok === 'lahir' && !hasil.tglLahir) {
+    } else if (label === 'lahir' && !hasil.tglLahir) {
       const tgl = isi.match(/(\d{2})[-/.](\d{2})[-/.](\d{4})/);
       if (tgl) hasil.tglLahir = `${tgl[1]}-${tgl[2]}-${tgl[3]}`;
     }
@@ -107,17 +137,15 @@ export function uraiKtp(teks) {
 }
 
 // NIK 16 digit; digit ke-7 s.d. 12 = tanggal lahir DDMMYY (perempuan: tanggal + 40)
+const kodeTanggal = (tglLahir, perempuan) => {
+  const [dd, mm, yyyy] = tglLahir.split('-');
+  return `${String(Number(dd) + (perempuan ? 40 : 0)).padStart(2, '0')}${mm}${yyyy.slice(2)}`;
+};
 export function cekNik(nik, tglLahir, perempuan) {
   if (!/^\d{16}$/.test(nik)) return 'NIK harus 16 digit.';
   if (!tglLahir) return '';
-  const [dd, mm, yyyy] = tglLahir.split('-');
-  const tanggal = String(Number(dd) + (perempuan ? 40 : 0)).padStart(2, '0');
-  const harapan = `${tanggal}${mm}${yyyy.slice(2)}`;
-  if (perempuan === null) {
-    const tanpaJenis = [`${dd}${mm}${yyyy.slice(2)}`, `${String(Number(dd) + 40)}${mm}${yyyy.slice(2)}`];
-    return tanpaJenis.includes(nik.slice(6, 12)) ? '' : 'NIK tidak cocok dengan tanggal lahir di KTP.';
-  }
-  return nik.slice(6, 12) === harapan ? '' : 'NIK tidak cocok dengan tanggal lahir di KTP.';
+  const harapan = perempuan === null ? [kodeTanggal(tglLahir, false), kodeTanggal(tglLahir, true)] : [kodeTanggal(tglLahir, perempuan)];
+  return harapan.includes(nik.slice(6, 12)) ? '' : 'NIK tidak cocok dengan tanggal lahir di KTP.';
 }
 
 export function susunAlamat({ desa, kelurahan, kecamatan, kabupaten }) {
@@ -159,6 +187,72 @@ function cocokkan(daftarTeks, daftar) {
   return terbaik;
 }
 
+// Nama desa bernomor (LEOK I / LEOK II, BOKAT / BOKAT IV): angka romawinya sering salah baca
+// ("TEOK HE", "CLEOKIH"), jadi nama dasarnya dicocokkan dulu, lalu nomornya ditebak dari jumlah
+// garis tegak sesudahnya. Bila nomornya tidak terbaca jelas, hasil ditandai "ragu".
+const pecahRomawi = (nama) => {
+  const m = nama.match(/\s+(I{1,3}|IV|V|VI{1,3})$/);
+  return m ? [nama.slice(0, m.index), m[1]] : [nama, ''];
+};
+const NILAI_ROMAWI = { '': 0, I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6, VII: 7, VIII: 8 };
+function bacaRomawi(sisa) {
+  if (!sisa) return { romawi: '', jelas: true };
+  if (/^(IV|IY|LV|TV)$/.test(sisa)) return { romawi: 'IV', jelas: sisa === 'IV' };
+  if (/^[VY]$/.test(sisa)) return { romawi: 'V', jelas: sisa === 'V' };
+  const garis = sisa.split('').filter((c) => /[ILTEFHJ]/.test(c)).length;
+  return { romawi: 'I'.repeat(Math.min(3, garis)), jelas: /^I{1,3}$/.test(sisa) };
+}
+
+function cocokkanDesa(daftarTeks, daftar) {
+  const biasa = cocokkan(daftarTeks, daftar);
+  const kelompok = new Map();
+  for (const d of daftar) {
+    const [dasar, romawi] = pecahRomawi(d.nama);
+    if (!kelompok.has(dasar)) kelompok.set(dasar, []);
+    kelompok.get(dasar).push({ ...d, romawi });
+  }
+  const bernomor = (dasar) => (kelompok.get(dasar) || []).some((v) => v.romawi);
+  if (biasa && (biasa.jarak === 0 || !bernomor(pecahRomawi(biasa.nama)[0]))) return biasa;
+
+  const dasarDaftar = [...kelompok.keys()].filter(bernomor);
+  const temuan = [];
+  for (const teks of daftarTeks) {
+    const kata = bersihkanNilai(teks || '').split(' ').map(kunci).filter(Boolean);
+    if (!kata.length) continue;
+    let terbaik = null;
+    let seri = false;
+    for (const dasar of dasarDaftar) {
+      const kb = kunci(dasar);
+      let gabung = '';
+      let i = 0;
+      while (i < kata.length && gabung.length < kb.length - 1) gabung += kata[i++];
+      for (let k = Math.max(2, kb.length - 2); k <= Math.min(gabung.length, kb.length + 2); k++) {
+        const ekor = gabung.slice(k);
+        if (ekor.length > 3) continue;
+        const j = jarak(gabung.slice(0, k), kb);
+        if (j > batasJarak(kb.length)) continue;
+        const sisa = ekor || (kata[i] && kata[i].length <= 3 ? kata[i] : '');
+        if (!terbaik || j < terbaik.j) { terbaik = { dasar, j, sisa, dibaca: gabung.slice(0, k) + (sisa ? ` ${sisa}` : '') }; seri = false; }
+        else if (j === terbaik.j && dasar !== terbaik.dasar) seri = true;
+      }
+    }
+    if (terbaik && !seri) temuan.push(terbaik);
+  }
+  if (!temuan.length) return biasa;
+
+  // Utamakan bacaan yang nomornya jelas; bila semua ragu, ambil yang garisnya paling banyak
+  const dinilai = temuan.map((t) => ({ ...t, ...bacaRomawi(t.sisa) }));
+  dinilai.sort((a, b) => Number(b.jelas) - Number(a.jelas) || b.romawi.length - a.romawi.length || a.j - b.j);
+  const pilih = dinilai[0];
+  const varian = kelompok.get(pilih.dasar);
+  const cocok = varian.find((v) => v.romawi === pilih.romawi)
+    || [...varian].sort((a, b) => Math.abs(NILAI_ROMAWI[a.romawi] - NILAI_ROMAWI[pilih.romawi]) - Math.abs(NILAI_ROMAWI[b.romawi] - NILAI_ROMAWI[pilih.romawi]))[0];
+  const ragu = varian.length > 1 && (!pilih.jelas || cocok.romawi !== pilih.romawi || dinilai.some((t) => t.romawi !== pilih.romawi));
+  return { ...cocok, jarak: kunci(pilih.dibaca) === kunci(cocok.nama) ? 0 : Math.max(1, pilih.j), dibaca: pilih.dibaca, ragu, varian: varian.map((v) => v.nama) };
+}
+
+// ---------- NIK ----------
+
 // Tanggal lahir yang mustahil (mis. tahun 2091 karena salah baca) diabaikan
 const tglLahirWajar = (tgl) => {
   const [d, m, y] = tgl.split('-').map(Number);
@@ -166,72 +260,177 @@ const tglLahirWajar = (tgl) => {
 };
 const cocokTglLahir = (nik, daftarTgl, perempuan) => daftarTgl.some((tgl) => !cekNik(nik, tgl, perempuan));
 
-const tanggalWajar = (nik) => {
-  const dd = Number(nik.slice(6, 8));
-  const mm = Number(nik.slice(8, 10));
-  const hari = dd > 40 ? dd - 40 : dd;
-  return hari >= 1 && hari <= 31 && mm >= 1 && mm <= 12;
+// Huruf yang sering tertukar dengan angka pada font NIK KTP (huruf -> kemungkinan angka)
+const MIRIP_ANGKA = {
+  O: '0', o: '0', D: '0', Q: '0', U: '0', C: '0',
+  I: '1', i: '1', l: '1', '|': '1', '!': '1', J: '1', L: '16', T: '17',
+  Z: '2', z: '2', A: '4', S: '5', s: '5', G: '6', b: '6', B: '8',
+  Y: '7', y: '7', '?': '7', '#': '7', P: '7', F: '7', '/': '7', g: '9', q: '9',
 };
 
-const bacaAngka = (mentah, gantiTanya) => mentah.toUpperCase().split('')
-  .map((c) => (c === '?' ? gantiTanya : KE_ANGKA[c] ?? c)).join('').replace(/\D/g, '');
+// Ambil potongan baris NIK sampai kira-kira 16 karakter (buang sampah di ujung baris)
+const potongNik = (mentah) => {
+  let hasil = '';
+  for (const token of mentah.split(/\s+/)) {
+    if (hasil.length >= 16) break;
+    hasil += token.replace(/[.,:;'"`\-—–_~^°*()[\]{}“”]/g, '');
+  }
+  return hasil;
+};
 
-// Pilih NIK paling masuk akal dari semua bacaan: 6 digit awal harus kode kecamatan yang ada
-// (sebaiknya sama dengan kecamatan/kabupaten di KTP) dan digit 7-12 cocok dengan tanggal lahir.
+// Bacaan langsung: hanya angka asli; huruf diterjemahkan dengan tebakan pertamanya
+const bacaLangsung = (teks) => teks.split('').map((c) => (/\d/.test(c) ? c : (MIRIP_ANGKA[c] || '')[0] || '')).join('');
+
+// Aturan utama: ANGKA YANG TERBACA JELAS TIDAK PERNAH DITIMPA. Yang boleh dilakukan hanya:
+// (a) mengisi karakter yang tidak jelas (mis. "?", "Y", "L", "b") dengan angka yang cocok dengan pola NIK,
+// (b) membuang karakter sisipan (mis. "7" terbaca "71" atau "2?"), (c) mengisi angka yang hilang.
+const angkaJelas = (c) => /\d/.test(c);
+
+// Biaya mengisi slot pola dengan karakter bacaan. slot null = bebas (angka dibaca apa adanya).
+function biayaIsi(c, slot) {
+  const tebakan = MIRIP_ANGKA[c] || '';
+  if (slot === null) {
+    if (angkaJelas(c)) return [0, c];
+    return tebakan ? [0.5, tebakan[0]] : [Infinity, ''];
+  }
+  if (c === slot) return [0, c];
+  if (angkaJelas(c)) return [Infinity, '']; // angka jelas yang berbeda: tidak boleh ditimpa
+  return [tebakan.includes(slot) ? 0.5 : 1, slot];
+}
+// Membuang karakter sisipan: tanda/huruf di ujung murah; angka jelas mahal
+const biayaBuang = (c, j, n) => (j === n || (j === 0 && !angkaJelas(c)) ? 0.5 : 1);
+
+// Batas bawah biaya untuk satu kode kecamatan: hanya 6 digit awal yang disejajarkan (ujung bebas).
+// Dipakai untuk mengurutkan & melewati ribuan kode yang jelas tidak cocok sebelum penyejajaran penuh.
+function biayaAwal(teks, kode) {
+  const m = Math.min(teks.length, 12);
+  const b = Array.from({ length: m + 1 }, () => new Array(7).fill(Infinity));
+  b[0][0] = 0;
+  let terendah = Infinity;
+  for (let i = 0; i <= m; i++) {
+    for (let j = 0; j <= 6; j++) {
+      const v = b[i][j];
+      if (v === Infinity) continue;
+      if (j === 6) { terendah = Math.min(terendah, v); continue; }
+      if (i < m) {
+        b[i + 1][j + 1] = Math.min(b[i + 1][j + 1], v + biayaIsi(teks[i], kode[j])[0]);
+        b[i + 1][j] = Math.min(b[i + 1][j], v + biayaBuang(teks[i], j, 16));
+      }
+      b[i][j + 1] = Math.min(b[i][j + 1], v + 1);
+    }
+  }
+  return terendah;
+}
+
+// Sejajarkan bacaan NIK dengan pola: 6 digit kode kecamatan + 6 digit tanggal lahir + 4 digit nomor urut.
+// "_" atau null = angka di posisi itu dibaca apa adanya (mis. "7205__" = kabupaten pasti, kecamatan bebas).
+function sejajarkanNik(teks, kodeKec, kodeTgl) {
+  const slot = (kode) => (kode || '______').split('').map((c) => (c === '_' ? null : c));
+  const pola = [...slot(kodeKec), ...slot(kodeTgl), ...Array(4).fill(null)];
+  const m = teks.length;
+  const n = pola.length;
+  const biaya = Array.from({ length: m + 1 }, () => Array(n + 1).fill(Infinity));
+  const asal = Array.from({ length: m + 1 }, () => Array(n + 1).fill(null));
+  biaya[0][0] = 0;
+  for (let i = 0; i <= m; i++) {
+    for (let j = 0; j <= n; j++) {
+      const b = biaya[i][j];
+      if (b === Infinity) continue;
+      if (i < m && j < n) {
+        const [tambah, digit] = biayaIsi(teks[i], pola[j]);
+        if (b + tambah < biaya[i + 1][j + 1]) { biaya[i + 1][j + 1] = b + tambah; asal[i + 1][j + 1] = [i, j, digit]; }
+      }
+      if (i < m) {
+        const tambah = biayaBuang(teks[i], j, n);
+        if (b + tambah < biaya[i + 1][j]) { biaya[i + 1][j] = b + tambah; asal[i + 1][j] = [i, j, null]; }
+      }
+      if (j < n && pola[j] !== null && b + 1 < biaya[i][j + 1]) { // angka yang hilang (hanya bila polanya pasti)
+        biaya[i][j + 1] = b + 1; asal[i][j + 1] = [i, j, pola[j]];
+      }
+    }
+  }
+  if (biaya[m][n] === Infinity) return null;
+  const digit = [];
+  let [i, j] = [m, n];
+  while (i > 0 || j > 0) {
+    const [pi, pj, d] = asal[i][j];
+    if (pj !== j) digit.unshift(d);
+    [i, j] = [pi, pj];
+  }
+  return { nik: digit.join(''), biaya: biaya[m][n] };
+}
+
+// Pilih NIK dari semua bacaan.
+// 1. Bacaan bersih (tepat 16 angka jelas) dipakai APA ADANYA, tanpa diubah sedikit pun.
+// 2. Bacaan yang tidak bersih disejajarkan dengan pola NIK. Kode kecamatan dicoba dari seluruh data, ditambah
+//    pola "dibaca apa adanya" untuk kode lama yang tidak ada di data (mis. 720512). Yang cocok dengan
+//    kabupaten di kepala KTP diutamakan.
 function pilihNik(daftarMentah, petunjuk, wilayah) {
-  const adaKode = (nik) => Boolean(wilayah.kecamatan[nik.slice(0, 6)]);
-  const calon = new Map(); // nik -> jumlah perubahan dari bacaan asli
-  const tambah = (nik, ubah) => { if (!calon.has(nik) || calon.get(nik) > ubah) calon.set(nik, ubah); };
-  let polos = '';
+  const bacaan = daftarMentah.filter(Boolean).map(potongNik).filter((t) => t.length >= 12);
+  if (!bacaan.length) return { nik: '', dikoreksi: false };
 
-  for (const mentah of daftarMentah.filter(Boolean)) {
-    const tanya = (mentah.match(/\?/g) || []).length;
-    // "7" sering terbaca "?" atau "2?": coba "?" dibuang dan "?" = 7
-    for (const [angka, ubahAwal] of [[bacaAngka(mentah, ''), 0], [bacaAngka(mentah, '7'), tanya]]) {
-      if (!polos && ubahAwal === 0) polos = angka;
-      if (angka.length === 16) tambah(angka, ubahAwal);
-      else if (angka.length === 17 || angka.length === 18) {
-        // ada 1-2 karakter sisipan: coba buang
-        for (let i = 0; i < angka.length; i++) {
-          const a = angka.slice(0, i) + angka.slice(i + 1);
-          if (a.length === 16) tambah(a, ubahAwal + 1);
-          else for (let j = i; j < a.length; j++) tambah(a.slice(0, j) + a.slice(j + 1), ubahAwal + 2);
-        }
-      }
-    }
+  const bersih = bacaan.filter((t) => /^\d{16}$/.test(t));
+  if (bersih.length) {
+    const pilih = bersih.find((t) => cocokTglLahir(t, petunjuk.daftarTgl, petunjuk.perempuan) && petunjuk.kabupaten && t.startsWith(petunjuk.kabupaten))
+      || bersih.find((t) => cocokTglLahir(t, petunjuk.daftarTgl, petunjuk.perempuan)) || bersih[0];
+    return { nik: pilih, dikoreksi: false };
   }
 
-  // Kode wilayah yang tidak ada di mana pun = pasti salah baca: coba ganti satu digitnya.
-  // (Kode yang ada tidak diubah, karena pemilik KTP bisa saja pindahan dari kecamatan lain.)
-  for (const [nik, ubah] of [...calon]) {
-    if (adaKode(nik)) continue;
-    for (let i = 0; i < 6; i++) {
-      for (let d = 0; d <= 9; d++) {
-        const a = nik.slice(0, i) + d + nik.slice(i + 1);
-        if (a !== nik && adaKode(a)) tambah(a, ubah + 1);
-      }
-    }
-  }
+  const prov = petunjuk.kabupaten?.slice(0, 2);
+  // Bonus untuk kode yang sesuai kepala KTP (kabupaten / provinsi); pola "apa adanya" sedikit dikurangi
+  const nilai = (nik, biaya, umum, tanpaTgl) => biaya
+    - (petunjuk.kabupaten && nik.startsWith(petunjuk.kabupaten) ? 0.75 : prov && nik.startsWith(prov) ? 0.4 : 0)
+    + (umum ? 0.25 : 0) + (tanpaTgl && petunjuk.daftarTgl.length ? 1 : 0);
+  const prioritas = (nik) => (nik.startsWith(petunjuk.kecamatan || '#') ? 0 : nik.startsWith(petunjuk.kabupaten || '#') ? 1 : 2);
+  const daftarKodeTgl = [...new Set(petunjuk.daftarTgl.flatMap((t) => (petunjuk.perempuan === null ? [kodeTanggal(t, false), kodeTanggal(t, true)] : [kodeTanggal(t, petunjuk.perempuan)])))];
+  daftarKodeTgl.push(null); // tanggal di NIK dibaca apa adanya (agar NIK yang tanggalnya beda tetap terbaca & diberi peringatan)
 
-  const nilai = (nik, ubah) => {
-    let n = -ubah;
-    if (adaKode(nik)) n += 4;
-    if (petunjuk.kabupaten && nik.startsWith(petunjuk.kabupaten)) n += 2;
-    if (petunjuk.kecamatan && nik.startsWith(petunjuk.kecamatan)) n += 2;
-    if (cocokTglLahir(nik, petunjuk.daftarTgl, petunjuk.perempuan)) n += 4;
-    else if (tanggalWajar(nik)) n += 1;
-    return n;
-  };
-
-  let terbaik = null;
+  let pola = null;
   let seri = false;
-  for (const [nik, ubah] of calon) {
-    const n = nilai(nik, ubah);
-    if (!terbaik || n > terbaik.n || (n === terbaik.n && ubah < terbaik.ubah)) { terbaik = { nik, ubah, n }; seri = false; }
-    else if (n === terbaik.n && ubah === terbaik.ubah && nik !== terbaik.nik) seri = true;
+  const banding = (h) => {
+    if (!h || !/^\d{16}$/.test(h.nik) || h.biaya > 3.5) return;
+    if (!pola || h.skor < pola.skor - 1e-9 || (Math.abs(h.skor - pola.skor) < 1e-9 && h.prioritas < pola.prioritas)) { pola = h; seri = false; }
+    else if (Math.abs(h.skor - pola.skor) < 1e-9 && h.prioritas === pola.prioritas && h.nik !== pola.nik) seri = true;
+  };
+  // Pola tanpa data kecamatan: kabupaten dari kepala KTP + kecamatan bebas (kode lama, mis. 720512), dan bebas penuh
+  const polaUmum = [...(petunjuk.kabupaten ? [`${petunjuk.kabupaten}__`] : []), null];
+  for (const teks of bacaan) {
+    for (const kodeKec of polaUmum) {
+      for (const kodeTgl of daftarKodeTgl) {
+        const h = sejajarkanNik(teks, kodeKec, kodeTgl);
+        if (h) banding({ ...h, skor: nilai(h.nik, h.biaya, true, kodeTgl === null), prioritas: prioritas(h.nik) });
+      }
+    }
+    const urut = Object.keys(wilayah.kecamatan).map((kode) => [biayaAwal(teks, kode), kode]).sort((a, b) => a[0] - b[0]);
+    for (const [awal, kode] of urut) {
+      if (pola && awal - 0.75 > pola.skor) break; // sisa kode pasti lebih buruk
+      for (const kodeTgl of daftarKodeTgl) {
+        const h = sejajarkanNik(teks, kode, kodeTgl);
+        if (h) banding({ ...h, skor: nilai(h.nik, h.biaya, false, kodeTgl === null), prioritas: prioritas(h.nik) });
+      }
+    }
   }
-  if (!terbaik || (seri && terbaik.ubah > 0)) return { nik: polos.slice(0, 16), dikoreksi: false, kodeAda: adaKode(polos) };
-  return { nik: terbaik.nik, dikoreksi: terbaik.ubah > 0, kodeAda: adaKode(terbaik.nik) };
+  if (pola && !seri) return { nik: pola.nik, dikoreksi: true };
+
+  // Tidak bisa dipulihkan dengan yakin: tampilkan bacaan apa adanya (akan diberi peringatan)
+  const terdekat = bacaan.map(bacaLangsung).sort((a, b) => Math.abs(a.length - 16) - Math.abs(b.length - 16))[0];
+  return { nik: terdekat.slice(0, 16), dikoreksi: false };
+}
+
+// ---------- Nama ----------
+
+const NAMA_DEPAN_MENEMPEL = /^(MUHAMMAD|MUHAMAD|MOHAMMAD|MOHAMAD|MOCHAMMAD|MOCHAMAD|MUCHAMMAD|MUCHAMAD|MOHAMMED|MUHAMMED)(?=[A-Z]{3})/;
+function pilihNama(bacaan) {
+  const daftar = bacaan.map((b) => b.nama).filter(Boolean);
+  if (!daftar.length) return '';
+  // Bacaan lain dengan huruf sama tapi spasinya lebih lengkap ("MOHAMMADTAUFIK" vs "MOHAMMAD TAUFIK")
+  let nama = daftar[0];
+  for (const lain of daftar) {
+    if (kunci(lain) === kunci(nama) && lain.split(' ').length > nama.split(' ').length) nama = lain;
+  }
+  nama = nama.replace(NAMA_DEPAN_MENEMPEL, '$1 ');
+  const gelar = bacaan.map((b) => b.gelar).find(Boolean);
+  return gelar ? `${nama}, ${gelar}` : nama;
 }
 
 const pertama = (bacaan, kunciBacaan) => bacaan.map((b) => b[kunciBacaan]).find((v) => v !== '' && v !== null && v !== undefined);
@@ -239,6 +438,8 @@ const pertama = (bacaan, kunciBacaan) => bacaan.map((b) => b[kunciBacaan]).find(
 // Gabungkan satu atau beberapa bacaan KTP (mis. gambar dipotong & gambar utuh) menjadi isian form
 export function tetapkan(bacaan, wilayah) {
   const koreksi = [];
+  const catatan = [];
+  const peringatan = [];
   const catat = (nama, hasilCocok) => {
     if (hasilCocok && hasilCocok.jarak > 0) koreksi.push(`${nama} ${rapikan(hasilCocok.dibaca)} → ${hasilCocok.nama}`);
   };
@@ -261,10 +462,10 @@ export function tetapkan(bacaan, wilayah) {
     const teksDesa = [...bacaan.map((b) => b.desa), ...bacaan.map((b) => b.desaAlamat)];
     const daftarDesa = (kodeKec) => (wilayah.desa[kodeKec] || []).map((n) => ({ nama: n.replace(/^\*/, ''), kelurahan: n.startsWith('*'), kec: kodeKec }));
     let desa = null;
-    if (kec) desa = cocokkan(teksDesa, daftarDesa(kec.kode));
+    if (kec) desa = cocokkanDesa(teksDesa, daftarDesa(kec.kode));
     else {
       // Kecamatan tidak terbaca: cari desanya di seluruh kabupaten, lalu ambil kecamatannya
-      desa = cocokkan(teksDesa, daftarKec.flatMap((k) => daftarDesa(k.kode)));
+      desa = cocokkanDesa(teksDesa, daftarKec.flatMap((k) => daftarDesa(k.kode)));
       if (desa && !desa.kembar) kec = { kode: desa.kec, nama: wilayah.kecamatan[desa.kec], jarak: 0 };
       else desa = null;
     }
@@ -275,26 +476,38 @@ export function tetapkan(bacaan, wilayah) {
   let { kec, desa, adaDataDesa } = kodeKab ? cariKecDesa(kodeKab) : {};
 
   // 3. NIK
-  let nik = pilihNik(bacaan.map((b) => b.nikMentah), { kabupaten: kodeKab, kecamatan: kec?.kode, daftarTgl, perempuan }, wilayah);
-  if (!kodeKab && nik.kodeAda) {
+  const petunjukNik = () => ({ kabupaten: kodeKab, kecamatan: kec?.kode, daftarTgl, perempuan });
+  let nik = pilihNik(bacaan.map((b) => b.nikMentah), petunjukNik(), wilayah);
+  if (!kodeKab && wilayah.kecamatan[nik.nik.slice(0, 6)]) {
     // Kepala KTP tidak terbaca: pakai kabupaten dari kode NIK sebagai petunjuk
     kodeKab = nik.nik.slice(0, 4);
     ({ kec, desa, adaDataDesa } = cariKecDesa(kodeKab));
     if (kec) kab = { kode: kodeKab, nama: wilayah.kabupaten[kodeKab] };
-    nik = pilihNik(bacaan.map((b) => b.nikMentah), { kabupaten: kodeKab, kecamatan: kec?.kode, daftarTgl, perempuan }, wilayah);
+    nik = pilihNik(bacaan.map((b) => b.nikMentah), petunjukNik(), wilayah);
   }
   if (perempuan === null && /^\d{16}$/.test(nik.nik)) perempuan = Number(nik.nik.slice(6, 8)) > 40;
 
   catat('Kabupaten', kabCocok);
   catat('Kecamatan', kec);
-  catat('Desa', desa);
-  if (nik.dikoreksi) koreksi.push('NIK (disesuaikan dengan kode wilayah & tanggal lahir)');
+  catat(desa?.kelurahan ? 'Kelurahan' : 'Desa', desa);
+  if (nik.dikoreksi) koreksi.push('NIK (angka yang tidak terbaca jelas dilengkapi sesuai pola NIK; angka yang jelas tidak diubah)');
 
-  let peringatanNik = '';
+  let nikBermasalah = false;
   if (nik.nik) {
-    if (!/^\d{16}$/.test(nik.nik)) peringatanNik = 'NIK harus 16 digit.';
-    else if (daftarTgl.length && !cocokTglLahir(nik.nik, daftarTgl, perempuan)) peringatanNik = 'NIK tidak cocok dengan tanggal lahir di KTP.';
-    else if (!nik.kodeAda) peringatanNik = '6 digit awal NIK bukan kode wilayah yang dikenal. Periksa NIK.';
+    const kodeNik = nik.nik.slice(0, 6);
+    // Catatan: kode kecamatan yang tidak ada di data BUKAN tanda salah (NIK bisa memakai kode lama, mis. 720512)
+    if (!/^\d{16}$/.test(nik.nik)) peringatan.push('NIK tidak terbaca lengkap (harus 16 digit). Ketik NIK dari KTP.');
+    else if (daftarTgl.length && !cocokTglLahir(nik.nik, daftarTgl, perempuan)) peringatan.push('NIK tidak cocok dengan tanggal lahir di KTP. Periksa NIK.');
+    else if (!wilayah.provinsi[kodeNik.slice(0, 2)]) {
+      const provKtp = kodeKab && wilayah.provinsi[kodeKab.slice(0, 2)] ? ` (kemungkinan seharusnya ${kodeKab.slice(0, 2)}, ${wilayah.provinsi[kodeKab.slice(0, 2)]})` : '';
+      peringatan.push(`2 angka awal NIK (${kodeNik.slice(0, 2)}) bukan kode provinsi${provKtp}. Cocokkan NIK dengan KTP.`);
+    }
+    else if (!wilayah.kabupaten[kodeNik.slice(0, 4)]) peringatan.push(`4 angka awal NIK (${kodeNik.slice(0, 4)}) bukan kode kabupaten/kota. Kemungkinan salah baca, cocokkan NIK dengan KTP.`);
+    else if (!daftarTgl.length && nik.dikoreksi) peringatan.push('Tanggal lahir tidak terbaca, jadi NIK hasil perbaikan belum bisa dicek. Cocokkan NIK dengan KTP.');
+    else if (kec && wilayah.kecamatan[kodeNik] && kodeNik !== kec.kode) {
+      catatan.push(`NIK berkode Kec. ${wilayah.kecamatan[kodeNik]}, alamat di Kec. ${kec.nama} (wajar bila pindahan/pemekaran). Cocokkan 6 digit awal NIK dengan KTP.`);
+    }
+    nikBermasalah = peringatan.length > 0;
   }
 
   const teksMentah = (k) => rapikan(pertama(bacaan, k) || '');
@@ -318,11 +531,17 @@ export function tetapkan(bacaan, wilayah) {
   else if (petunjukKtp) kelurahan = petunjukKtp === 'KEL.';
   else kelurahan = isiKec.length === 0 && kabupaten.startsWith('KOTA ');
   if (desa && petunjukKtp && (petunjukKtp === 'KEL.') !== desa.kelurahan) {
-    koreksi.push(`${desa.nama} tercatat ${desa.kelurahan ? 'kelurahan' : 'desa'} di data resmi (di KTP terbaca ${petunjukKtp === 'KEL.' ? 'kelurahan' : 'desa'})`);
+    catatan.push(`${desa.nama} tercatat ${desa.kelurahan ? 'kelurahan' : 'desa'} di data resmi (di KTP terbaca ${petunjukKtp === 'KEL.' ? 'kelurahan' : 'desa'}).`);
   }
+  const jenis = kelurahan ? 'Kelurahan' : 'Desa';
+  if (desa?.ragu) peringatan.push(`Nomor ${jenis.toLowerCase()} kurang jelas terbaca: terisi ${desa.nama}, pilihan lain ${desa.varian.filter((v) => v !== desa.nama).join(' / ')}. Cocokkan dengan KTP.`);
+  if (!desa && adaDataDesa && namaDesa) peringatan.push(`${jenis} "${namaDesa}" tidak ada di data Kec. ${kec.nama}. Periksa alamat.`);
+
+  const nama = pilihNama(bacaan);
+  if (nama && !nama.includes(',') && bacaan.some((b) => b.namaBergelar)) catatan.push('Nama di KTP diikuti gelar yang tidak terbaca. Tambahkan bila perlu.');
 
   return {
-    nama: pertama(bacaan, 'nama') || '',
+    nama,
     nik: nik.nik,
     desa: namaDesa,
     kelurahan,
@@ -330,11 +549,13 @@ export function tetapkan(bacaan, wilayah) {
     kabupaten,
     tglLahir: daftarTgl[0] || '',
     perempuan,
-    peringatanNik,
+    peringatan,
     koreksi,
+    catatan,
     // Yakin = semua isian terbaca, NIK cocok dengan tanggal lahir & semuanya cocok dengan data wilayah;
     // bila tidak, foto dibaca sekali lagi
-    yakin: Boolean(pertama(bacaan, 'nama') && nik.nik && daftarTgl.length && !peringatanNik && kab && kec && (desa || (!adaDataDesa && desaMentah))),
+    yakin: Boolean(nama && nik.nik && daftarTgl.length && !nikBermasalah && kab && kec
+      && (desa ? !desa.ragu : !adaDataDesa && desaMentah)),
   };
 }
 

@@ -420,7 +420,7 @@ export default function NotaPage() {
   };
 
   const inputClass = "ui-input";
-  const tableInputClass = "w-full h-10 px-2.5 bg-transparent border border-transparent rounded-md outline-none transition-colors text-stone-800 placeholder:text-stone-400 hover:border-stone-200 focus:border-brand focus:bg-white focus:ring-3 focus:ring-brand/10";
+  const tableInputClass = "w-full h-10 px-2.5 bg-transparent border border-transparent rounded-md outline-none transition-colors text-stone-800 placeholder:text-stone-400 hover:border-stone-200 focus:border-stone-900 focus:bg-white focus:ring-3 focus:ring-brand/45";
 
   return (
     <>

@@ -184,7 +184,7 @@ export default function AkunPanel() {
                       aria-expanded={menuPeranTerbuka}
                       onClick={() => setMenuPeranTerbuka(!menuPeranTerbuka)}
                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMenuPeranTerbuka(!menuPeranTerbuka); } }}
-                      className={`ui-input flex items-center justify-between cursor-pointer select-none ${menuPeranTerbuka ? 'border-brand ring-3 ring-brand/10' : ''}`}
+                      className={`ui-input flex items-center justify-between cursor-pointer select-none ${menuPeranTerbuka ? 'border-stone-900 ring-3 ring-brand/45' : ''}`}
                     >
                       <span className="text-stone-900 font-medium">{labelPeran(form.role)}</span>
                       <ChevronDown className={`w-4 h-4 text-stone-500 transition-transform duration-200 flex-shrink-0 ${menuPeranTerbuka ? 'rotate-180' : ''}`} />

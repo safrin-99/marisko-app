@@ -191,7 +191,7 @@ export default function SettingsPage() {
               <div className="mt-4 flex flex-wrap gap-2">
                 <div className="flex-[3_1_12rem] relative group">
                   <input type="file" accept="image/png, image/jpeg" onChange={(e) => handleFileUpload(e, 'logo')} disabled={isUploadingLogo} aria-label="Upload Logo Baru" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-10" />
-                  <div className={`w-full h-11 px-4 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold whitespace-nowrap transition-colors group-focus-within:ring-3 group-focus-within:ring-brand/20 ${isUploadingLogo ? 'bg-stone-100 text-stone-500' : 'bg-brand text-brand-fg group-hover:bg-brand-hover'}`}>
+                  <div className={`w-full h-11 px-4 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold whitespace-nowrap transition-colors group-focus-within:ring-3 group-focus-within:ring-brand/45 ${isUploadingLogo ? 'bg-stone-100 text-stone-500' : 'bg-brand text-brand-fg group-hover:bg-brand-hover'}`}>
                     {isUploadingLogo ? <><RefreshCw className="w-4 h-4 animate-spin" /> Mengunggah...</> : <><UploadCloud className="w-4 h-4" /> Upload Logo Baru</>}
                   </div>
                 </div>
@@ -212,7 +212,7 @@ export default function SettingsPage() {
               <div className="mt-4 flex flex-wrap gap-2">
                 <div className="flex-[3_1_12rem] relative group">
                   <input type="file" accept="image/png, image/jpeg" onChange={(e) => handleFileUpload(e, 'ttd')} disabled={isUploadingTtd} aria-label="Upload TTD Baru" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-10" />
-                  <div className={`w-full h-11 px-4 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold whitespace-nowrap transition-colors group-focus-within:ring-3 group-focus-within:ring-brand/20 ${isUploadingTtd ? 'bg-stone-100 text-stone-500' : 'bg-brand text-brand-fg group-hover:bg-brand-hover'}`}>
+                  <div className={`w-full h-11 px-4 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold whitespace-nowrap transition-colors group-focus-within:ring-3 group-focus-within:ring-brand/45 ${isUploadingTtd ? 'bg-stone-100 text-stone-500' : 'bg-brand text-brand-fg group-hover:bg-brand-hover'}`}>
                     {isUploadingTtd ? <><RefreshCw className="w-4 h-4 animate-spin" /> Mengunggah...</> : <><UploadCloud className="w-4 h-4" /> Upload TTD Baru</>}
                   </div>
                 </div>

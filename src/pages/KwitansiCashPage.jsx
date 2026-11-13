@@ -441,7 +441,7 @@ export default function KwitansiCashPage() {
                     {isDropdownOpen && (
                       <div className="absolute z-50 w-full mt-1.5 bg-white border border-stone-200 rounded-lg shadow-lg max-h-72 flex flex-col overflow-hidden">
                         <div className="p-2 border-b border-stone-200 bg-stone-50">
-                          <input autoFocus type="text" className="w-full h-9 px-3 bg-white border border-stone-300 rounded-md text-sm outline-none focus:border-brand" placeholder="Ketik Nama/No BASTK..." value={dropdownSearch} onChange={(e) => setDropdownSearch(e.target.value)} />
+                          <input autoFocus type="text" className="w-full h-9 px-3 bg-white border border-stone-300 rounded-md text-sm outline-none focus:border-stone-900" placeholder="Ketik Nama/No BASTK..." value={dropdownSearch} onChange={(e) => setDropdownSearch(e.target.value)} />
                         </div>
                         <div className="overflow-y-auto p-1 ui-scroll-thin">
                           <div className="px-3 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50 rounded-md cursor-pointer transition-colors" onClick={() => handleSelectBastk('')}><X className="w-4 h-4 inline mr-2" /> Batal / Kosongkan Pilihan</div>

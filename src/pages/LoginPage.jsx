@@ -72,13 +72,13 @@ export default function LoginPage() {
       <div className="w-full max-w-4xl bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row relative z-10 animate-page-in motion-reduce:animate-none">
 
           {/* SISI KIRI - BRANDING */}
-          <div className="w-full md:w-1/2 bg-brand p-10 lg:p-12 flex-col justify-center relative overflow-hidden hidden md:flex">
+          <div className="w-full md:w-1/2 bg-stone-900 p-10 lg:p-12 flex-col justify-center relative overflow-hidden hidden md:flex">
 
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-brand font-bold text-xl mb-8">M</div>
+              <div className="w-12 h-12 bg-brand rounded-xl flex items-center justify-center text-brand-fg font-bold text-xl mb-8">M</div>
 
-              <h1 className="text-3xl lg:text-[34px] font-semibold text-brand-fg tracking-tight leading-tight">
-                  Sistem HRIS & <br/><span className="text-brand-fg">Keuangan</span>
+              <h1 className="text-3xl lg:text-[34px] font-semibold text-white tracking-tight leading-tight">
+                  Sistem HRIS & <br/><span className="inline-block mt-1 px-2 rounded-lg bg-brand text-brand-fg">Keuangan</span>
               </h1>
 
               <p className="text-stone-300 mt-4 text-[15px] leading-relaxed max-w-sm">
@@ -149,7 +149,7 @@ export default function LoginPage() {
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
-                        className="text-stone-500 hover:text-stone-900 hover:bg-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/20 p-2 rounded-md transition-colors"
+                        className="text-stone-500 hover:text-stone-900 hover:bg-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/45 p-2 rounded-md transition-colors"
                       >
                         {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                       </button>

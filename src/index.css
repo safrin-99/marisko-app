@@ -1,17 +1,33 @@
 @import "tailwindcss";
 
 /* =========================================================================
-   MARISKO — Sistem desain "Netral Dokumen"
+   MARISKO — Sistem desain
    Satu tempat untuk warna, font, dan gaya komponen.
+   Palet: Gray #2B2D31 · Silver #D9DADC · Yellow #FFC93C
    Untuk mengganti warna aksen seluruh aplikasi, ubah --color-brand saja.
    ========================================================================= */
 @theme {
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  --color-brand: #1c1917;
-  --color-brand-hover: #0c0a09;
-  --color-brand-fg: #ffffff;
+  /* Skala abu "stone" (dipakai di semua halaman) diganti abu dingin yang serasi dengan Gray & Silver */
+  --color-stone-50: #f7f7f8;
+  --color-stone-100: #eeeff0;
+  --color-stone-200: #d9dadc; /* Silver: garis & batas */
+  --color-stone-300: #c4c6c9;
+  --color-stone-400: #9a9da2;
+  --color-stone-500: #6e7177;
+  --color-stone-600: #55585e;
+  --color-stone-700: #404247;
+  --color-stone-800: #34363b;
+  --color-stone-900: #2b2d31; /* Gray: teks utama & menu samping */
+  --color-stone-950: #1f2023;
+
+  /* Yellow: tombol utama & menu aktif. Tulisan di atas kuning WAJIB gelap (kontras 9:1);
+     kuning tidak boleh dipakai untuk tulisan di atas putih (kontras hanya 1,5:1). */
+  --color-brand: #ffc93c;
+  --color-brand-hover: #f5b919;
+  --color-brand-fg: #2b2d31;
 
   /* Animasi popup & halaman (dipakai lewat kelas animate-*) */
   --animate-overlay-in: overlay-in 200ms ease-out both;
@@ -47,12 +63,12 @@
 
   /* ---------- Formulir ---------- */
   .ui-label { @apply block mb-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-stone-600; }
-  .ui-input { @apply w-full h-11 px-3 bg-white border border-stone-300 rounded-lg text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-500 focus:border-brand focus:ring-3 focus:ring-brand/10; }
-  .ui-input-number { @apply w-full h-11 px-3 bg-white border border-stone-300 rounded-lg font-mono text-base font-semibold text-right text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-brand focus:ring-3 focus:ring-brand/10; }
+  .ui-input { @apply w-full h-11 px-3 bg-white border border-stone-300 rounded-lg text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-500 focus:border-stone-900 focus:ring-3 focus:ring-brand/45; }
+  .ui-input-number { @apply w-full h-11 px-3 bg-white border border-stone-300 rounded-lg font-mono text-base font-semibold text-right text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-stone-900 focus:ring-3 focus:ring-brand/45; }
   .ui-input-readonly { @apply w-full h-11 px-3 bg-stone-100 border border-stone-200 rounded-lg font-mono text-base font-semibold text-right text-stone-700 outline-none cursor-not-allowed; }
-  .ui-input-emphasis { @apply w-full h-11 px-3 bg-white border-2 border-brand rounded-lg font-mono text-base font-semibold text-right text-stone-900 outline-none focus:ring-3 focus:ring-brand/10; }
-  .ui-search { @apply w-full h-9 pl-9 pr-3 bg-white border border-stone-300 rounded-lg text-[13px] text-stone-900 outline-none transition-colors placeholder:text-stone-500 focus:border-brand focus:ring-3 focus:ring-brand/10; }
-  .ui-filter-date { @apply w-full h-9 px-2.5 bg-white border border-stone-300 rounded-lg text-[13px] text-stone-900 outline-none transition-colors focus:border-brand focus:ring-3 focus:ring-brand/10; }
+  .ui-input-emphasis { @apply w-full h-11 px-3 bg-white border-2 border-stone-900 rounded-lg font-mono text-base font-semibold text-right text-stone-900 outline-none focus:ring-3 focus:ring-brand/45; }
+  .ui-search { @apply w-full h-9 pl-9 pr-3 bg-white border border-stone-300 rounded-lg text-[13px] text-stone-900 outline-none transition-colors placeholder:text-stone-500 focus:border-stone-900 focus:ring-3 focus:ring-brand/45; }
+  .ui-filter-date { @apply w-full h-9 px-2.5 bg-white border border-stone-300 rounded-lg text-[13px] text-stone-900 outline-none transition-colors focus:border-stone-900 focus:ring-3 focus:ring-brand/45; }
   .ui-filter-label { @apply text-xs font-medium text-stone-600 whitespace-nowrap; }
 
   /* ---------- Dropdown kustom ---------- */
@@ -120,7 +136,10 @@
   /* ---------- Scrollbar tipis ---------- */
   .ui-scroll-thin { scrollbar-width: thin; scrollbar-color: var(--color-stone-300) transparent; }
 
-  /* ---------- Navigasi samping ---------- */
-  .ui-nav-link { @apply flex items-center gap-2.5 h-9 px-2.5 rounded-lg border border-transparent text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100 hover:text-stone-900; }
-  .ui-nav-link-active { @apply flex items-center gap-2.5 h-9 px-2.5 rounded-lg border border-stone-200 bg-white text-sm font-semibold text-stone-900 shadow-xs; }
+  /* ---------- Navigasi samping (latar Gray gelap) ---------- */
+  .ui-nav-caption { @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-stone-400; }
+  .ui-nav-link { @apply flex items-center gap-2.5 h-9 px-2.5 rounded-lg border border-transparent text-sm font-medium text-stone-300 transition-colors hover:bg-white/8 hover:text-white; }
+  .ui-nav-link-active { @apply flex items-center gap-2.5 h-9 px-2.5 rounded-lg border border-brand bg-brand text-sm font-semibold text-brand-fg shadow-xs; }
+  .ui-nav-btn { @apply inline-flex items-center justify-center gap-2 rounded-lg border border-stone-700 text-sm font-semibold text-stone-300 transition-colors hover:bg-white/8 hover:text-white; }
+  .ui-nav-icon { @apply inline-flex items-center justify-center w-9 h-9 flex-shrink-0 rounded-lg text-stone-300 transition-colors hover:bg-white/10 hover:text-white; }
 }

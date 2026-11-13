@@ -518,7 +518,7 @@ export default function CutiPage() {
                   <div><label className={labelClass}>No. Registrasi / Cuti</label><input type="text" value={noCuti} onChange={(e)=>setNoCuti(e.target.value)} required placeholder="Contoh: CT/101/2026" className={inputClass} /></div>
                   <div className="relative">
                     <label className={labelClass}>Jenis Cuti / Izin</label>
-                    <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className={`${inputClass} flex items-center justify-between cursor-pointer select-none ${isDropdownOpen ? 'border-brand ring-3 ring-brand/10' : ''}`}>
+                    <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className={`${inputClass} flex items-center justify-between cursor-pointer select-none ${isDropdownOpen ? 'border-stone-900 ring-3 ring-brand/45' : ''}`}>
                       <span className={jenisCuti ? 'text-stone-900 font-medium' : 'text-stone-500'}>{jenisCuti ? opsiCuti.find(o => o.value === jenisCuti)?.label : '-- Pilih Kategori Cuti --'}</span>
                       <ChevronDown className={`w-4 h-4 text-stone-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </div>

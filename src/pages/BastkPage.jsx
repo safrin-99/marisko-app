@@ -540,7 +540,7 @@ export default function BastkPage() {
 
                   <div className="relative">
                     <label className={labelClass}>Jenis Pembiayaan</label>
-                    <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className={`${inputClass} flex items-center justify-between cursor-pointer select-none ${isDropdownOpen ? 'border-brand ring-3 ring-brand/10' : ''}`}>
+                    <div onClick={() => setIsDropdownOpen(!isDropdownOpen)} className={`${inputClass} flex items-center justify-between cursor-pointer select-none ${isDropdownOpen ? 'border-stone-900 ring-3 ring-brand/45' : ''}`}>
                       <span className={jenisPembiayaan ? 'text-stone-900 font-medium' : 'text-stone-500 truncate pr-2'}>{jenisPembiayaan ? opsiPembiayaan.find(o => o.value === jenisPembiayaan)?.label : '-- Pilih Pembiayaan --'}</span>
                       <ChevronDown className={`w-4 h-4 text-stone-500 transition-transform duration-200 flex-shrink-0 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </div>

@@ -107,20 +107,20 @@ export default function Layout({ children }) {
         />
       )}
 
-      <div className={`fixed inset-y-0 left-0 z-[100] w-64 h-screen bg-stone-50 border-r border-stone-200 flex flex-col flex-shrink-0 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'}`}>
+      <div className={`fixed inset-y-0 left-0 z-[100] w-64 h-screen bg-stone-900 border-r border-stone-800 flex flex-col flex-shrink-0 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'}`}>
 
         <div className="h-16 px-5 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center">
             <div className="w-9 h-9 bg-brand rounded-lg flex items-center justify-center mr-3 text-brand-fg font-bold text-lg">M</div>
             <div>
-              <h1 className="text-[15px] font-bold text-stone-900 tracking-tight leading-tight">MARISKO.APP</h1>
-              <p className="text-[11px] font-medium text-stone-600 uppercase tracking-[0.06em] mt-0.5">CV. Marisko Perkasa</p>
+              <h1 className="text-[15px] font-bold text-white tracking-tight leading-tight">MARISKO.APP</h1>
+              <p className="text-[11px] font-medium text-stone-400 uppercase tracking-[0.06em] mt-0.5">CV. Marisko Perkasa</p>
             </div>
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
             aria-label="Tutup menu"
-            className="lg:hidden ui-btn-icon border-transparent bg-transparent -mr-2"
+            className="lg:hidden ui-nav-icon -mr-2"
           >
             <X className="w-5 h-5" />
           </button>
@@ -130,7 +130,7 @@ export default function Layout({ children }) {
           <nav className="flex flex-col gap-5">
             {menuSections.map((section, idx) => (
               <div key={idx}>
-                <div className="px-2.5 mb-1.5 ui-caption">
+                <div className="px-2.5 mb-1.5 ui-nav-caption">
                   {section.title}
                 </div>
                 <div className="flex flex-col gap-0.5">
@@ -146,7 +146,7 @@ export default function Layout({ children }) {
                         aria-current={isActive ? 'page' : undefined}
                         className={isActive ? 'ui-nav-link-active' : 'ui-nav-link'}
                       >
-                        <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-stone-900' : 'text-stone-500'}`} />
+                        <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-brand-fg' : 'text-stone-400'}`} />
                         <span>{item.label}</span>
                       </Link>
                     );
@@ -157,31 +157,31 @@ export default function Layout({ children }) {
           </nav>
         </div>
 
-        <div className="flex-shrink-0 p-3 border-t border-stone-200 flex flex-col gap-2.5">
-          <button onClick={() => setShowLogoutModal(true)} className="ui-btn-secondary w-full h-10 hover:text-red-700">
+        <div className="flex-shrink-0 p-3 border-t border-stone-800 flex flex-col gap-2.5">
+          <button onClick={() => setShowLogoutModal(true)} className="ui-nav-btn w-full h-10">
             <LogOut className="w-4 h-4" />
             <span>Keluar Aplikasi</span>
           </button>
 
           <div className="text-center">
-             <p className="text-[11px] font-medium text-stone-600 uppercase tracking-[0.06em]">© 2026 CV. Marisko Perkasa</p>
+             <p className="text-[11px] font-medium text-stone-400 uppercase tracking-[0.06em]">© 2026 CV. Marisko Perkasa</p>
           </div>
         </div>
       </div>
 
       <main className="flex-1 h-screen overflow-hidden relative flex flex-col bg-white">
 
-        <div className="lg:hidden flex items-center justify-between h-14 px-4 bg-white border-b border-stone-200 flex-shrink-0 z-40">
+        <div className="lg:hidden flex items-center justify-between h-14 px-4 bg-stone-900 border-b border-stone-800 flex-shrink-0 z-40">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center mr-2.5 text-brand-fg font-bold text-base">M</div>
             <div>
-              <h1 className="text-sm font-bold text-stone-900 tracking-tight leading-none">MARISKO.APP</h1>
+              <h1 className="text-sm font-bold text-white tracking-tight leading-none">MARISKO.APP</h1>
             </div>
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(true)}
             aria-label="Buka menu"
-            className="ui-btn-icon border-transparent bg-transparent -mr-2"
+            className="ui-nav-icon -mr-2"
           >
             <Menu className="w-5 h-5" />
           </button>

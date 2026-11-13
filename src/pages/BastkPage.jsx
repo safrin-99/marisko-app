@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 // SAKTI: Menambahkan Search pada import lucide-react
-import { FileText, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, Search, ScanLine, Info } from 'lucide-react';
+import { FileText, Edit, Trash2, RefreshCw, Clock, ChevronDown, X, CheckCircle2, AlertCircle, Printer, Search, ScanLine, Info, ClipboardPaste } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getLogosSignedUrl } from '../lib/storage';
 import { scanKtp, susunAlamat } from '../lib/bacaKtp';
@@ -62,6 +62,8 @@ export default function BastkPage() {
   const [alamat, setAlamat] = useState('');
   // SAKTI: Scan KTP -> isi otomatis Nama, NIK & Alamat (dibaca di browser, foto tidak disimpan)
   const [scanKtpStatus, setScanKtpStatus] = useState({ proses: false, persen: 0, sukses: '', koreksi: '', catatan: [], peringatan: [] });
+  const sedangScanKtp = useRef(false);
+  const prosesFotoKtpRef = useRef(null);
   const [tipeKendaraan, setTipeKendaraan] = useState('');
   const [tahunCc, setTahunCc] = useState('');
   const [noRangka, setNoRangka] = useState('');
@@ -121,17 +123,18 @@ export default function BastkPage() {
     setNoSurat((prev) => (prev === '' || prev === usulanSebelumnya ? usulan : prev));
   };
 
-  const handleScanKtp = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+  const gagalScanKtp = (pesan) => setScanKtpStatus({ proses: false, persen: 0, sukses: '', koreksi: '', catatan: [], peringatan: [pesan] });
+
+  const prosesFotoKtp = async (file) => {
+    if (sedangScanKtp.current) return;
     if (!file.type.startsWith('image/')) {
-      setScanKtpStatus({ proses: false, persen: 0, sukses: '', koreksi: '', catatan: [], peringatan: ['File harus berupa foto (JPG/PNG).'] });
+      gagalScanKtp('File harus berupa foto (JPG/PNG).');
       return;
     }
+    sedangScanKtp.current = true;
     setScanKtpStatus({ proses: true, persen: 0, sukses: '', koreksi: '', catatan: [], peringatan: [] });
     try {
-      const hasil = await scanKtp(file, (p) => setScanKtpStatus((s) => ({ ...s, persen: Math.round(p * 100) })));
+      const hasil = await scanKtp(file, (p, keBaca) => setScanKtpStatus((s) => ({ ...s, persen: Math.round(p * 100), keBaca })));
       const alamatKtp = susunAlamat(hasil);
       const terisi = [];
       const peringatan = [];
@@ -149,7 +152,48 @@ export default function BastkPage() {
         peringatan: terisi.length ? peringatan : ['KTP tidak terbaca. Foto ulang lebih dekat, lurus, terang, dan tidak buram.'],
       });
     } catch {
-      setScanKtpStatus({ proses: false, persen: 0, sukses: '', koreksi: '', catatan: [], peringatan: [navigator.onLine ? 'Gagal membaca KTP. Coba lagi.' : 'Tidak ada koneksi internet (dibutuhkan saat scan pertama kali).'] });
+      gagalScanKtp(navigator.onLine ? 'Gagal membaca KTP. Coba lagi.' : 'Tidak ada koneksi internet (dibutuhkan saat scan pertama kali).');
+    } finally {
+      sedangScanKtp.current = false;
+    }
+  };
+  // Simpan versi terbaru untuk dipakai penangkap Ctrl+V di bawah
+  useEffect(() => { prosesFotoKtpRef.current = prosesFotoKtp; });
+
+  const handleScanKtp = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file) prosesFotoKtp(file);
+  };
+
+  // SAKTI: Foto KTP bisa langsung ditempel dari WhatsApp (klik kanan foto -> Salin), tanpa download dulu.
+  // Ctrl+V di halaman ini langsung memulai scan; tempel teks biasa tidak terpengaruh.
+  useEffect(() => {
+    const tempel = (e) => {
+      const item = [...(e.clipboardData?.items || [])].find((i) => i.kind === 'file' && i.type.startsWith('image/'));
+      if (!item) return;
+      e.preventDefault();
+      prosesFotoKtpRef.current(item.getAsFile());
+    };
+    document.addEventListener('paste', tempel);
+    return () => document.removeEventListener('paste', tempel);
+  }, []);
+
+  // Tombol "Tempel dari WA": baca gambar yang terakhir disalin (browser meminta izin sekali)
+  const handleTempelKtp = async () => {
+    try {
+      if (!navigator.clipboard?.read) throw new Error('tidak didukung');
+      for (const item of await navigator.clipboard.read()) {
+        const tipe = item.types.find((t) => t.startsWith('image/'));
+        if (tipe) {
+          const blob = await item.getType(tipe);
+          prosesFotoKtp(new File([blob], 'ktp-tempel.png', { type: tipe }));
+          return;
+        }
+      }
+      gagalScanKtp('Belum ada foto yang disalin. Di WhatsApp: klik kanan foto KTP → Salin, lalu klik "Tempel dari WA" (atau tekan Ctrl+V).');
+    } catch {
+      gagalScanKtp('Browser belum mengizinkan membaca foto yang disalin. Tekan Ctrl+V di halaman ini, atau izinkan akses papan klip saat diminta.');
     }
   };
 
@@ -467,13 +511,20 @@ export default function BastkPage() {
               <section>
                 <h3 className="ui-section-title"><span className="ui-step">1</span>Informasi Surat & Konsumen</h3>
                 <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
-                  <label className={`ui-btn-sm relative cursor-pointer ${scanKtpStatus.proses ? 'opacity-60 pointer-events-none' : ''}`}>
-                    <input type="file" accept="image/*" onChange={handleScanKtp} disabled={scanKtpStatus.proses} aria-label="Scan KTP" className="absolute inset-0 opacity-0 cursor-pointer" />
-                    {scanKtpStatus.proses
-                      ? <><RefreshCw className="w-4 h-4 animate-spin" /> Membaca KTP... {scanKtpStatus.persen}%</>
-                      : <><ScanLine className="w-4 h-4" /> Scan KTP</>}
-                  </label>
-                  <p className="text-xs text-stone-500">Upload foto KTP untuk mengisi Nama, NIK &amp; Alamat otomatis. Foto tidak disimpan.</p>
+                  <div className="flex gap-2">
+                    <label className={`ui-btn-sm relative cursor-pointer ${scanKtpStatus.proses ? 'opacity-60 pointer-events-none' : ''}`}>
+                      <input type="file" accept="image/*" onChange={handleScanKtp} disabled={scanKtpStatus.proses} aria-label="Scan KTP" className="absolute inset-0 opacity-0 cursor-pointer" />
+                      {scanKtpStatus.proses
+                        ? <><RefreshCw className="w-4 h-4 animate-spin" /> Membaca KTP{scanKtpStatus.keBaca > 1 ? ` (baca ke-${scanKtpStatus.keBaca})` : ''}... {scanKtpStatus.persen}%</>
+                        : <><ScanLine className="w-4 h-4" /> Scan KTP</>}
+                    </label>
+                    {!scanKtpStatus.proses && (
+                      <button type="button" onClick={handleTempelKtp} className="ui-btn-sm">
+                        <ClipboardPaste className="w-4 h-4" /> Tempel dari WA
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xs text-stone-500">Upload foto KTP, atau salin foto KTP di WhatsApp (klik kanan → Salin) lalu tekan <b>Ctrl+V</b> di halaman ini. Nama, NIK &amp; Alamat terisi otomatis. Foto tidak disimpan.</p>
                 </div>
                 {(scanKtpStatus.sukses || scanKtpStatus.peringatan.length > 0) && (
                   <div className="mb-4 space-y-2">

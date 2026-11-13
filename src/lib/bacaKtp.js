@@ -76,6 +76,7 @@ function pisahLabel(baris) {
       if (j <= batas && j < terdekat) { cocok = kunciLabel; terdekat = j; }
     }
     if (!cocok && /LAHIR/.test(label)) cocok = 'lahir';
+    if (!cocok && /^[A-Z]{1,4}\/?DESA$/.test(label.replace(/[^A-Z/]/g, ''))) cocok = 'desa'; // "Kaif/Desa", "KelDesa"
     if (cocok) return { label: cocok, isi: isi.replace(/^[\s:.—|"“”'-]+/, '') };
   }
   return null;
@@ -449,8 +450,11 @@ function pilihNik(daftarMentah, petunjuk, wilayah) {
     return { nik: terdekat.slice(0, 16), dikoreksi: false };
   }
   const pilih = terbaikPerBacaan.reduce((a, b) => (lebihBaik(b, a) ? b : a));
-  const lain = terbaikPerBacaan.find((k) => k.nik !== pilih.nik && k.konsisten);
-  return { ...pilih, berbeda: pilih.konsisten && lain ? lain.nik : '' };
+  // Bacaan lain yang juga masuk akal, atau yang hanya beda di 4 angka nomor urut (bagian yang tidak bisa dicek)
+  const lain = terbaikPerBacaan.find((k) => k.nik !== pilih.nik && (k.konsisten || k.nik.slice(0, 12) === pilih.nik.slice(0, 12)));
+  // dukungan = berapa kali bacaan menghasilkan NIK yang sama (NIK yang baru terbaca sekali dibaca ulang dulu)
+  const dukungan = terbaikPerBacaan.filter((k) => k.nik === pilih.nik).length;
+  return { ...pilih, berbeda: pilih.konsisten && lain ? lain.nik : '', dukungan };
 }
 
 // ---------- Nama ----------
@@ -528,7 +532,9 @@ export function tetapkan(bacaan, wilayah) {
   catat('Kabupaten', kabCocok);
   catat('Kecamatan', kec);
   catat(desa?.kelurahan ? 'Kelurahan' : 'Desa', desa);
-  if (nik.berbeda) peringatan.push(`NIK terbaca berbeda pada dua kali baca (${nik.nik} / ${nik.berbeda}). Terisi ${nik.nik}, cocokkan dengan KTP.`);
+  if (nik.berbeda && nik.berbeda.slice(0, 12) === nik.nik.slice(0, 12)) {
+    peringatan.push(`4 angka terakhir NIK terbaca berbeda (${nik.nik.slice(12)} / ${nik.berbeda.slice(12)}), mungkin angkanya aus/kurang jelas. Terisi ${nik.nik.slice(12)}, cocokkan dengan KTP.`);
+  } else if (nik.berbeda) peringatan.push(`NIK terbaca berbeda pada dua kali baca (${nik.nik} / ${nik.berbeda}). Terisi ${nik.nik}, cocokkan dengan KTP.`);
   if (nik.provinsiDiganti) koreksi.push(`NIK: 2 angka awal terbaca ${nik.provinsiDiganti} (tidak ada provinsi berkode ${nik.provinsiDiganti}), diganti ${nik.nik.slice(0, 2)} sesuai kepala KTP`);
   else if (nik.dikoreksi) koreksi.push('NIK (angka yang tidak terbaca jelas dilengkapi sesuai pola NIK; angka yang jelas tidak diubah)');
 
@@ -596,7 +602,7 @@ export function tetapkan(bacaan, wilayah) {
     // Yakin = semua isian terbaca, NIK cocok dengan tanggal lahir & semuanya cocok dengan data wilayah;
     // bila tidak, foto dibaca sekali lagi
     // NIK yang diperbaiki / berbeda kecamatan dengan alamat selalu dibandingkan dengan bacaan kedua
-    yakin: Boolean(nama && nik.nik && daftarTgl.length && !nikBermasalah && !nik.dikoreksi && kab && kec && nik.nik.startsWith(kec.kode)
+    yakin: Boolean(nama && nik.nik && nik.dukungan >= 2 && daftarTgl.length && !nikBermasalah && !nik.dikoreksi && kab && kec && nik.nik.startsWith(kec.kode)
       && (desa ? !desa.ragu : !adaDataDesa && desaMentah)),
   };
 }
@@ -641,7 +647,7 @@ export function cariKartu(px, w, h) {
 
 // Siapkan gambar: kartu KTP dipotong dari latar (bila perlu), abu-abu + kontras, diperbesar;
 // versi "potong" membuang sisi kanan kartu (pas foto)
-export async function siapkanGambar(file, potong) {
+export async function siapkanGambar(file, potong, buangBiru = false) {
   const bitmap = await createImageBitmap(file);
   let kartu = { x: 0, y: 0, w: bitmap.width, h: bitmap.height };
   const skalaUji = Math.min(1, 320 / bitmap.width);
@@ -666,7 +672,9 @@ export async function siapkanGambar(file, potong) {
   const gambar = ctx.getImageData(0, 0, kanvas.width, kanvas.height);
   const px = gambar.data;
   for (let i = 0; i < px.length; i += 4) {
-    const abu = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+    let abu = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+    // Garis pengaman KTP berwarna biru, tulisan hitam netral: piksel kebiruan dibuat terang agar garisnya hilang
+    if (buangBiru) abu += 2.5 * Math.max(0, px[i + 2] - px[i] - 8);
     const nilai = Math.max(0, Math.min(255, (abu - 128) * 1.8 + 141));
     px[i] = px[i + 1] = px[i + 2] = nilai;
   }
@@ -674,20 +682,27 @@ export async function siapkanGambar(file, potong) {
   return kanvas;
 }
 
-export async function scanKtp(file, onProgress) {
+// Urutan pembacaan: [potong pas foto?, buang garis biru?]. Berhenti begitu hasilnya meyakinkan.
+// 1) dipotong biasa, 2) dipotong + buang garis biru (KTP dengan garis pengaman tebal), 3) gambar utuh.
+export const URUTAN_BACA = [[true, false], [true, true], [false, false]];
+
+export async function scanKtp(file, onProgress, urutan = URUTAN_BACA) {
   const [{ createWorker }, { default: wilayah }] = await Promise.all([import('tesseract.js'), import('./wilayahKtp.json')]);
+  let keBaca = 1;
   const worker = await createWorker('ind', 1, {
-    logger: (m) => { if (m.status === 'recognizing text' && onProgress) onProgress(m.progress); },
+    logger: (m) => { if (m.status === 'recognizing text' && onProgress) onProgress(m.progress, keBaca); },
   });
   try {
     // rotateAuto: luruskan otomatis foto yang sedikit miring
-    const baca = async (potong) => uraiKtp((await worker.recognize(await siapkanGambar(file, potong), { rotateAuto: true })).data.text);
-    const bacaan = [await baca(true)];
-    let hasil = tetapkan(bacaan, wilayah);
-    // Bila ada isian yang belum terbaca / belum cocok dengan data wilayah, baca ulang gambar utuh
-    if (!hasil.yakin) {
-      bacaan.push(await baca(false));
+    const baca = async ([potong, buangBiru]) => uraiKtp((await worker.recognize(await siapkanGambar(file, potong, buangBiru), { rotateAuto: true })).data.text);
+    const bacaan = [];
+    let hasil = null;
+    // Bila ada isian yang belum terbaca / belum cocok dengan data wilayah, baca ulang dengan cara berikutnya
+    for (const [i, cara] of urutan.entries()) {
+      keBaca = i + 1;
+      bacaan.push(await baca(cara));
       hasil = tetapkan(bacaan, wilayah);
+      if (hasil.yakin) break;
     }
     return hasil;
   } finally {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, BookOpen, CalendarDays, Receipt, Banknote, ClipboardSignature, ScrollText, Settings, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, FileText, BookOpen, CalendarDays, Receipt, Banknote, ClipboardSignature, ScrollText, Settings, LogOut, Menu, X, SquarePen, FolderOpen } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { signOutLocal } from '../lib/auth';
 
@@ -58,6 +58,13 @@ export default function Layout({ children }) {
           { path: '/kwitansi-cash', icon: Banknote, label: 'Kwitansi Cash' },
           { path: '/kwitansi-indent', icon: ClipboardSignature, label: 'Kwitansi Indent' },
           { path: '/nota', icon: ScrollText, label: 'Nota & Laporan' }
+        ]
+      },
+      {
+        title: "Modul Penjualan",
+        items: [
+          { path: '/penjualan/input-spa', icon: SquarePen, label: 'Input SPA' },
+          { path: '/penjualan/data-spa', icon: FolderOpen, label: 'Data SPA' }
         ]
       }
     );

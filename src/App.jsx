@@ -17,6 +17,8 @@ import KwitansiCashPage from './pages/KwitansiCashPage';
 import KwitansiIndentPage from './pages/KwitansiIndentPage';
 import NotaPage from './pages/NotaPage';
 import SettingsPage from './pages/SettingsPage';
+import InputSpaPage from './pages/InputSpaPage';
+import DataSpaPage from './pages/DataSpaPage';
 
 // Komponen Sakti untuk Memblokir Akses (Protected Route)
 // Berbasis sesi Supabase Auth: mengisi localStorage secara manual tidak membuka halaman.
@@ -145,6 +147,10 @@ export default function App() {
                 <Route path="/kwitansi-cash" element={<NonKaryawanRoute><KwitansiCashPage /></NonKaryawanRoute>} />
                 <Route path="/kwitansi-indent" element={<NonKaryawanRoute><KwitansiIndentPage /></NonKaryawanRoute>} />
                 <Route path="/nota" element={<NonKaryawanRoute><NotaPage /></NonKaryawanRoute>} />
+
+                {/* Modul Penjualan (SPA): akses sama dengan BASTK */}
+                <Route path="/penjualan/input-spa" element={<NonKaryawanRoute><InputSpaPage /></NonKaryawanRoute>} />
+                <Route path="/penjualan/data-spa" element={<NonKaryawanRoute><DataSpaPage /></NonKaryawanRoute>} />
 
                 {/* ROUTING SISTEM */}
                 <Route path="/settings" element={<AdminRoute><SettingsPage /></AdminRoute>} />

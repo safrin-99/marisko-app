@@ -6,12 +6,11 @@ import { supabase } from '../lib/supabase';
 import { getLogosSignedUrl } from '../lib/storage';
 import { scanKtp, susunAlamat } from '../lib/bacaKtp';
 import { jsPDF } from "jspdf";
+import { DAFTAR_KATEGORI, OPSI_PEMBIAYAAN } from '../lib/pilihanBastk';
 
 // SAKTI: Penomoran BASTK berurutan per kategori, format: <nomor>/<kode>/<bulan romawi>/<tahun>, mis. 1416/MP/BL/X/2026
 const BULAN_ROMAWI = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 const POLA_NOMOR = /^\s*(\d+)\/(.+)\/(?:I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)\/\d{4}\s*$/;
-
-const DAFTAR_KATEGORI = ['BASTK INDUK', 'BASTK POS BUOL', 'BASTK POS LAKEA'];
 
 // Nomor yang sudah terpakai di dokumen kertas (di luar aplikasi), agar usulan nomor melanjutkan dari sana
 const NOMOR_TERPAKAI_DI_LUAR_APLIKASI = { 'BASTK POS BUOL': 1415 };
@@ -80,12 +79,7 @@ export default function BastkPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  const opsiPembiayaan = [
-    { value: 'CASH', label: 'CASH (MARISKO PERKASA)' },
-    { value: 'ADIRA', label: 'PT. ADIRA MULTI FINANCE' },
-    { value: 'FIF', label: 'PT. FEDERAL INTERNATIONAL FINANCE' },
-    { value: 'MANDALA', label: 'PT. 1204 ADIRA SYARIEF MANSYUR' }
-  ];
+  const opsiPembiayaan = OPSI_PEMBIAYAAN;
 
   useEffect(() => {
     fetchSettingsImages();

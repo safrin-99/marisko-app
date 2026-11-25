@@ -39,21 +39,62 @@ const dariBaris = (r) => ({
   namaSales: r.nama_sales || '', keterangan: r.keterangan || 'ADMINISTRASI LENGKAP',
 });
 
+// Pembungkus: menyimpan modal & kategori terakhir. Form di bawahnya dipasang ulang setiap pindah
+// antara "data baru" dan "edit", sehingga isian lama tidak pernah terbawa ke data baru.
 export default function InputSpaPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const idEdit = searchParams.get('id');
+  const [kategoriTerakhir, setKategoriTerakhir] = useState('BASTK INDUK');
+  const [modal, setModal] = useState(MODAL_TUTUP);
+  const tutupModal = () => setModal(MODAL_TUTUP);
 
-  const [form, setForm] = useState(FORM_KOSONG);
+  const renderModal = () => {
+    if (!modal.isOpen) return null;
+    return createPortal(
+      <div className="ui-overlay">
+        <div className="absolute inset-0" onClick={tutupModal}></div>
+        <div className="ui-modal">
+          <div className="flex flex-col items-center text-center">
+            {modal.type === 'success' ? (
+              <div className="ui-modal-icon-success"><CheckCircle2 className="w-6 h-6" /></div>
+            ) : (
+              <div className="ui-modal-icon-danger"><AlertCircle className="w-6 h-6" /></div>
+            )}
+            <h3 className="ui-modal-title">{modal.title}</h3>
+            <p className="ui-modal-text">{modal.message}</p>
+            <div className="flex w-full gap-3 justify-center">
+              {modal.type === 'success' ? (
+                <><button onClick={tutupModal} className="ui-btn-secondary flex-1">Tutup</button><button onClick={() => { tutupModal(); navigate('/penjualan/data-spa'); }} className="ui-btn-primary flex-1"><FolderOpen className="w-4 h-4" /> Lihat Data SPA</button></>
+              ) : (
+                <button onClick={tutupModal} className="ui-btn-primary w-full">Mengerti</button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+  };
+
+  return (
+    <>
+      {renderModal()}
+      <FormSpa key={idEdit || 'baru'} idEdit={idEdit} kategoriAwal={kategoriTerakhir} simpanKategori={setKategoriTerakhir} tampilkanModal={setModal} />
+    </>
+  );
+}
+
+function FormSpa({ idEdit, kategoriAwal, simpanKategori, tampilkanModal }) {
+  const navigate = useNavigate();
+  const [form, setForm] = useState(() => ({ ...FORM_KOSONG, kategori: kategoriAwal }));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mencariBastk, setMencariBastk] = useState(false);
   const [infoBastk, setInfoBastk] = useState(null); // { jenis: 'sukses' | 'gagal', pesan }
-  const [modal, setModal] = useState(MODAL_TUTUP);
 
   const isEditing = Boolean(idEdit);
   const ubah = (kolom) => (e) => setForm((f) => ({ ...f, [kolom]: e.target.value }));
   const ubahAngka = (kolom) => (e) => setForm((f) => ({ ...f, [kolom]: parseNumber(e.target.value) }));
-  const tutupModal = () => setModal(MODAL_TUTUP);
 
   // Mode edit: buka data SPA yang dipilih di halaman Data SPA
   useEffect(() => {
@@ -63,13 +104,13 @@ export default function InputSpaPage() {
       const { data, error } = await supabase.from('spa_penjualan').select('*').eq('id', idEdit).maybeSingle();
       if (batal) return;
       if (error || !data) {
-        setModal({ isOpen: true, type: 'error', title: 'Data Tidak Ditemukan', message: 'Data SPA yang ingin diedit tidak ditemukan. Muat ulang halaman Data SPA lalu coba lagi.' });
+        tampilkanModal({ isOpen: true, type: 'error', title: 'Data Tidak Ditemukan', message: 'Data SPA yang ingin diedit tidak ditemukan. Muat ulang halaman Data SPA lalu coba lagi.' });
         return;
       }
       setForm(dariBaris(data));
     })();
     return () => { batal = true; };
-  }, [idEdit]);
+  }, [idEdit, tampilkanModal]);
 
   const ambilDariBastk = async () => {
     const nomor = form.noBastk.trim();
@@ -118,14 +159,14 @@ export default function InputSpaPage() {
   };
 
   const resetForm = () => {
-    setForm(FORM_KOSONG);
+    setForm((f) => ({ ...FORM_KOSONG, kategori: f.kategori }));
     setInfoBastk(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.kategori || !form.noBastk.trim() || !form.tanggalBastk || !form.leasing || !form.pemohon.trim()) {
-      setModal({ isOpen: true, type: 'error', title: 'Data Belum Lengkap!', message: 'Mohon isi Kategori, No BASTK, Tanggal BASTK, Leasing, dan Pemohon sebelum menyimpan.' });
+      tampilkanModal({ isOpen: true, type: 'error', title: 'Data Belum Lengkap!', message: 'Mohon isi Kategori, No BASTK, Tanggal BASTK, Leasing, dan Pemohon sebelum menyimpan.' });
       return;
     }
 
@@ -143,58 +184,37 @@ export default function InputSpaPage() {
 
     setIsSubmitting(true);
     try {
+      if (!data.bastk_id) {
+        const { data: cocok } = await supabase.from('bastk_history').select('id').eq('kategori', data.kategori).eq('noSurat', data.no_bastk).limit(1);
+        if (cocok?.length) data.bastk_id = cocok[0].id;
+      }
       if (isEditing) {
         const { data: updated, error } = await supabase.from('spa_penjualan').update(data).eq('id', idEdit).select();
         if (error) throw error;
         if (!updated || updated.length === 0) throw new Error('Data tidak ditemukan di database. Muat ulang halaman lalu coba lagi.');
-        setModal({ isOpen: true, type: 'success', title: 'Data Diperbarui!', message: `Data SPA BASTK ${data.no_bastk} berhasil diperbarui.` });
+        simpanKategori(data.kategori);
+        tampilkanModal({ isOpen: true, type: 'success', title: 'Berhasil Diupdate!', message: `Data SPA BASTK ${data.no_bastk} berhasil diperbarui.` });
+        // Keluar dari mode edit: form kembali kosong untuk data baru
+        navigate('/penjualan/input-spa', { replace: true });
       } else {
         const { error } = await supabase.from('spa_penjualan').insert([data]);
         if (error) throw error;
-        setModal({ isOpen: true, type: 'success', title: 'Berhasil Disimpan!', message: `Data SPA BASTK ${data.no_bastk} berhasil disimpan.` });
+        simpanKategori(data.kategori);
+        tampilkanModal({ isOpen: true, type: 'success', title: 'Berhasil Disimpan!', message: `Data SPA BASTK ${data.no_bastk} berhasil disimpan.` });
         resetForm();
       }
     } catch (err) {
       // Indeks unik di database: satu BASTK hanya boleh punya satu SPA
-      if (err?.code === '23505') setModal({ isOpen: true, type: 'error', title: 'Peringatan Duplikasi!', message: `BASTK ${data.no_bastk} sudah punya data SPA. Tidak boleh ada data ganda!` });
-      else setModal({ isOpen: true, type: 'error', title: 'Kesalahan Sistem', message: 'Terjadi kegagalan saat menghubungi server database.' });
+      if (err?.code === '23505') tampilkanModal({ isOpen: true, type: 'error', title: 'Peringatan Duplikasi!', message: `BASTK ${data.no_bastk} sudah punya data SPA. Tidak boleh ada data ganda!` });
+      else tampilkanModal({ isOpen: true, type: 'error', title: 'Kesalahan Sistem', message: 'Terjadi kegagalan saat menghubungi server database.' });
     }
     setIsSubmitting(false);
-  };
-
-  const renderModal = () => {
-    if (!modal.isOpen) return null;
-    return createPortal(
-      <div className="ui-overlay">
-        <div className="absolute inset-0" onClick={tutupModal}></div>
-        <div className="ui-modal">
-          <div className="flex flex-col items-center text-center">
-            {modal.type === 'success' ? (
-              <div className="ui-modal-icon-success"><CheckCircle2 className="w-6 h-6" /></div>
-            ) : (
-              <div className="ui-modal-icon-danger"><AlertCircle className="w-6 h-6" /></div>
-            )}
-            <h3 className="ui-modal-title">{modal.title}</h3>
-            <p className="ui-modal-text">{modal.message}</p>
-            <div className="flex w-full gap-3 justify-center">
-              {modal.type === 'success' ? (
-                <><button onClick={tutupModal} className="ui-btn-secondary flex-1">Tutup</button><button onClick={() => { tutupModal(); navigate('/penjualan/data-spa'); }} className="ui-btn-primary flex-1"><FolderOpen className="w-4 h-4" /> Lihat Data SPA</button></>
-              ) : (
-                <button onClick={tutupModal} className="ui-btn-primary w-full">Mengerti</button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>,
-      document.body
-    );
   };
 
   const keteranganTerpilih = KETERANGAN.find((k) => k.value === form.keterangan);
 
   return (
     <>
-      {renderModal()}
       {isSubmitting && createPortal(
         <div className="ui-overlay z-[99998]">
           <div className="ui-modal max-w-sm flex flex-col items-center text-center">
@@ -226,9 +246,11 @@ export default function InputSpaPage() {
               <section>
                 <h3 className="ui-section-title"><span className="ui-step">1</span>Informasi BASTK</h3>
                 <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
-                  <button type="button" onClick={ambilDariBastk} disabled={mencariBastk} className={`ui-btn-sm ${mencariBastk ? 'opacity-60 pointer-events-none' : ''}`}>
-                    {mencariBastk ? <><RefreshCw className="w-4 h-4 animate-spin" /> Mencari BASTK...</> : <><FileSearch className="w-4 h-4" /> Ambil dari BASTK</>}
-                  </button>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={ambilDariBastk} disabled={mencariBastk} className={`ui-btn-sm ${mencariBastk ? 'opacity-60 pointer-events-none' : ''}`}>
+                      {mencariBastk ? <><RefreshCw className="w-4 h-4 animate-spin" /> Mencari BASTK...</> : <><FileSearch className="w-4 h-4" /> Ambil dari BASTK</>}
+                    </button>
+                  </div>
                   <p className="text-xs text-stone-500">Pilih kategori dan isi No BASTK, lalu tekan <b>Ambil dari BASTK</b> (atau Enter). Pemohon, leasing, tanggal &amp; data motor terisi otomatis.</p>
                 </div>
                 {infoBastk && (
@@ -238,10 +260,10 @@ export default function InputSpaPage() {
                       : <div className="ui-alert-danger"><AlertCircle className="w-4 h-4 flex-shrink-0" /> {infoBastk.pesan}</div>}
                   </div>
                 )}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
                   <div><label className="ui-label">Kategori</label><PilihanDropdown value={form.kategori} onChange={(v) => setForm((f) => ({ ...f, kategori: v, bastkId: null }))} options={OPSI_KATEGORI} placeholder="Pilih Kategori..." /></div>
                   <div>
-                    <label className="ui-label">No BASTK</label>
+                    <label className="ui-label">No. BASTK</label>
                     <input type="text" value={form.noBastk} onChange={(e) => setForm((f) => ({ ...f, noBastk: e.target.value, bastkId: null }))} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); ambilDariBastk(); } }} required placeholder="Contoh: 6975" className="ui-input" />
                   </div>
                   <div><label className="ui-label">Tanggal BASTK</label><input type="date" value={form.tanggalBastk} onChange={ubah('tanggalBastk')} required className="ui-input" /></div>
@@ -254,8 +276,8 @@ export default function InputSpaPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-4">
                   <div><label className="ui-label">Pemohon *</label><input type="text" value={form.pemohon} onChange={ubah('pemohon')} required placeholder="Nama pemohon" className="ui-input" /></div>
                   <div><label className="ui-label">Nama STNK</label><input type="text" value={form.namaStnk} onChange={ubah('namaStnk')} placeholder="Otomatis dari pemohon" className="ui-input" /></div>
-                  <div><label className="ui-label">No HP 1</label><input type="tel" value={form.noHp1} onChange={ubah('noHp1')} placeholder="08xxxxxxxxxx" className="ui-input" /></div>
-                  <div><label className="ui-label">No HP 2 (Opsional)</label><input type="tel" value={form.noHp2} onChange={ubah('noHp2')} placeholder="Opsional" className="ui-input" /></div>
+                  <div><label className="ui-label">No. HP 1</label><input type="tel" value={form.noHp1} onChange={ubah('noHp1')} placeholder="08xxxxxxxxxx" className="ui-input" /></div>
+                  <div><label className="ui-label">No. HP 2 (Opsional)</label><input type="tel" value={form.noHp2} onChange={ubah('noHp2')} placeholder="Opsional" className="ui-input" /></div>
                   <div className="md:col-span-2"><label className="ui-label">Pekerjaan Nama STNK</label><input type="text" value={form.pekerjaan} onChange={ubah('pekerjaan')} placeholder="Ketik manual pekerjaan..." className="ui-input" /></div>
                 </div>
               </section>
@@ -272,11 +294,11 @@ export default function InputSpaPage() {
                 <h3 className="ui-section-title"><span className="ui-step">4</span>Data Unit Motor</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-4">
                   <div><label className="ui-label">Jenis Motor</label><input type="text" value={form.jenisMotor} onChange={ubah('jenisMotor')} placeholder="Contoh: Scoopy" className="ui-input" /></div>
-                  <div><label className="ui-label">No Rangka</label><input type="text" value={form.noRangka} onChange={ubah('noRangka')} placeholder="Nomor rangka" className="ui-input" /></div>
-                  <div><label className="ui-label">No Mesin</label><input type="text" value={form.noMesin} onChange={ubah('noMesin')} placeholder="Nomor mesin" className="ui-input" /></div>
+                  <div><label className="ui-label">No. Rangka</label><input type="text" value={form.noRangka} onChange={ubah('noRangka')} placeholder="Nomor rangka" className="ui-input" /></div>
+                  <div><label className="ui-label">No. Mesin</label><input type="text" value={form.noMesin} onChange={ubah('noMesin')} placeholder="Nomor mesin" className="ui-input" /></div>
                   <div><label className="ui-label">Type</label><input type="text" value={form.typeMotor} onChange={ubah('typeMotor')} placeholder="Type motor" className="ui-input" /></div>
                   <div><label className="ui-label">Warna</label><input type="text" value={form.warna} onChange={ubah('warna')} placeholder="Warna motor" className="ui-input" /></div>
-                  <div><label className="ui-label">Unit</label><input type="text" inputMode="numeric" value={form.unit} onChange={ubahAngka('unit')} placeholder="1" className="ui-input-number" /></div>
+                  <div><label className="ui-label">Unit</label><input type="text" inputMode="numeric" value={form.unit === 0 ? '' : form.unit} onChange={ubahAngka('unit')} placeholder="1" className="ui-input-number" /></div>
                 </div>
               </section>
 
@@ -286,7 +308,7 @@ export default function InputSpaPage() {
                   <div><label className="ui-label">OTR (Rp)</label><input type="text" inputMode="numeric" value={form.otr === 0 ? '' : formatRupiah(form.otr)} onChange={ubahAngka('otr')} placeholder="0" className="ui-input-number" /></div>
                   <div><label className="ui-label">DP Stor (Rp)</label><input type="text" inputMode="numeric" value={form.dpStor === 0 ? '' : formatRupiah(form.dpStor)} onChange={ubahAngka('dpStor')} placeholder="0" className="ui-input-emphasis" /></div>
                   <div><label className="ui-label">DP Gross (Rp)</label><input type="text" inputMode="numeric" value={form.dpGross === 0 ? '' : formatRupiah(form.dpGross)} onChange={ubahAngka('dpGross')} placeholder="0" className="ui-input-number" /></div>
-                  <div><label className="ui-label">Jangka Waktu (Bulan)</label><input type="text" inputMode="numeric" value={form.tenor === 0 ? '' : form.tenor} onChange={ubahAngka('tenor')} placeholder="Contoh: 35" className="ui-input-number" /></div>
+                  <div><label className="ui-label">Tenor (Bulan)</label><input type="text" inputMode="numeric" value={form.tenor === 0 ? '' : form.tenor} onChange={ubahAngka('tenor')} placeholder="Contoh: 35" className="ui-input-number" /></div>
                   <div><label className="ui-label">Angsuran (Rp)</label><input type="text" inputMode="numeric" value={form.angsuran === 0 ? '' : formatRupiah(form.angsuran)} onChange={ubahAngka('angsuran')} placeholder="0" className="ui-input-number" /></div>
                   <div><label className="ui-label">Subsidi (Rp)</label><input type="text" inputMode="numeric" value={form.subsidi === 0 ? '' : formatRupiah(form.subsidi)} onChange={ubahAngka('subsidi')} placeholder="0" className="ui-input-number" /></div>
                 </div>

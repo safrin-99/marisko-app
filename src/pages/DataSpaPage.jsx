@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { FolderOpen, Table2, RefreshCw, Search, X, Edit, Trash2, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -12,7 +12,6 @@ import PilihanDropdown from '../components/PilihanDropdown';
 const PER_HALAMAN = 50;
 const MODAL_TUTUP = { isOpen: false, type: '', title: '', message: '', actionData: null };
 const KOLOM = ['No. BASTK', 'Tanggal BASTK', 'Leasing', 'Pemohon', 'Nama STNK', 'No. HP 1', 'No. HP 2', 'Pekerjaan', 'Desa/Kelurahan', 'Kecamatan', 'Unit', 'Jenis Motor', 'No. Rangka', 'No. Mesin', 'Type', 'Warna', 'OTR', 'DP Stor', 'DP Gross', 'Tenor', 'Angsuran', 'Subsidi', 'Sales', 'Keterangan'];
-const KOLOM_UANG = ['OTR', 'DP Stor', 'DP Gross', 'Angsuran', 'Subsidi'];
 const BADGE_KETERANGAN = { 'ADMINISTRASI LENGKAP': 'ui-badge-success', 'MOTOROYAKU BELUM ADA': 'ui-badge-warning' };
 
 const formatTanggal = (tgl) => {
@@ -35,6 +34,7 @@ export default function DataSpaPage() {
   const [cari, setCari] = useState('');
   const [pilihan, setPilihan] = useState({ leasing: [], sales: [] });
   const [modal, setModal] = useState(MODAL_TUTUP);
+  const permintaanTerakhir = useRef(0);
   const tutupModal = () => setModal(MODAL_TUTUP);
 
   // Pencarian dijalankan sesaat setelah berhenti mengetik
@@ -53,6 +53,7 @@ export default function DataSpaPage() {
   };
 
   const muatData = async () => {
+    const ke = ++permintaanTerakhir.current;
     setIsLoading(true);
     setGagal(false);
     let query = supabase
@@ -67,6 +68,7 @@ export default function DataSpaPage() {
     const kunci = cari.replace(/[,()%*\\]/g, ' ').trim();
     if (kunci) query = query.or(`pemohon.ilike.%${kunci}%,no_bastk.ilike.%${kunci}%,nama_stnk.ilike.%${kunci}%`);
     const { data, count, error } = await query;
+    if (ke !== permintaanTerakhir.current) return;
     if (error) {
       setGagal(true);
       setRows([]);
@@ -94,7 +96,8 @@ export default function DataSpaPage() {
     tutupModal();
     // Hapus tepat satu baris (berdasarkan id) dan pastikan database benar-benar menghapusnya
     const { data: deleted, error } = await supabase.from('spa_penjualan').delete().eq('id', row.id).select();
-    segarkan();
+    if (!error && deleted?.length && rows.length === 1 && halaman > 0) { setHalaman((h) => h - 1); muatPilihan(); }
+    else segarkan();
     if (error || !deleted || deleted.length === 0) {
       setModal({ isOpen: true, type: 'error', title: 'Gagal Menghapus', message: `Data SPA BASTK ${row.no_bastk} belum terhapus. Periksa koneksi internet lalu coba lagi.`, actionData: null });
       return;
@@ -155,10 +158,10 @@ export default function DataSpaPage() {
           </button>
         </div>
 
-        <div className="ui-card overflow-hidden">
+        <div className="ui-card">
           <div className="ui-card-header">
             <h3 className="ui-card-title shrink-0"><Table2 className="w-4 h-4 text-stone-500" /> Daftar SPA Tersimpan</h3>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-end gap-2 w-full sm:w-auto min-w-0">
               <PilihanDropdown ukuran="filter" value={leasing} onChange={(v) => { setLeasing(v); setHalaman(0); }} options={opsiLeasing} placeholder="Semua Leasing" className="w-full sm:w-48" />
               <PilihanDropdown ukuran="filter" value={sales} onChange={(v) => { setSales(v); setHalaman(0); }} options={opsiSales} placeholder="Semua Sales" className="w-full sm:w-40" />
               <div className="relative w-full sm:w-56">
@@ -177,12 +180,13 @@ export default function DataSpaPage() {
             <table className="ui-table whitespace-nowrap">
               <thead className="ui-thead">
                 <tr>
-                  {KOLOM.map((k) => <th key={k} className={`ui-th ${KOLOM_UANG.includes(k) || k === 'Unit' || k === 'Tenor' ? 'text-right' : ''}`}>{k}</th>)}
-                  <th className="ui-th text-right">Aksi</th>
+                  {KOLOM.map((k) => <th key={k} className={`ui-th ${k === 'Unit' ? 'text-right' : ''}`}>{k}</th>)}
+                  {/* Aksi menempel di kanan agar Edit/Del terlihat tanpa menggeser 24 kolom */}
+                  <th className="ui-th text-right sticky right-0 z-10 bg-stone-50 shadow-[inset_1px_-1px_0_var(--color-stone-200)]">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
-                {isLoading && rows.length === 0 ? (
+                {isLoading ? (
                   <tr><td colSpan={KOLOM.length + 1} className="ui-empty"><RefreshCw className="w-6 h-6 animate-spin mx-auto mb-3 text-stone-400" /> Memuat data...</td></tr>
                 ) : gagal ? (
                   <tr><td colSpan={KOLOM.length + 1} className="ui-empty"><AlertCircle className="w-6 h-6 mx-auto mb-3 text-red-700" /> Gagal terhubung ke server database.</td></tr>
@@ -207,15 +211,15 @@ export default function DataSpaPage() {
                       <td className="ui-td font-mono">{row.no_mesin || '-'}</td>
                       <td className="ui-td">{row.type_motor || '-'}</td>
                       <td className="ui-td">{row.warna || '-'}</td>
-                      <td className="ui-td font-mono text-right text-stone-900">{rupiah(row.otr)}</td>
-                      <td className="ui-td font-mono text-right font-semibold text-stone-900">{rupiah(row.dp_stor)}</td>
-                      <td className="ui-td font-mono text-right text-stone-900">{rupiah(row.dp_gross)}</td>
-                      <td className="ui-td font-mono text-right">{row.tenor ? `${row.tenor} bln` : '-'}</td>
-                      <td className="ui-td font-mono text-right text-stone-900">{rupiah(row.angsuran)}</td>
-                      <td className="ui-td font-mono text-right text-stone-900">{rupiah(row.subsidi)}</td>
+                      <td className="ui-td font-mono font-semibold text-stone-900">{rupiah(row.otr)}</td>
+                      <td className="ui-td font-mono font-semibold text-stone-900">{rupiah(row.dp_stor)}</td>
+                      <td className="ui-td font-mono font-semibold text-stone-900">{rupiah(row.dp_gross)}</td>
+                      <td className="ui-td font-mono">{row.tenor ? `${row.tenor} bln` : '-'}</td>
+                      <td className="ui-td font-mono font-semibold text-stone-900">{rupiah(row.angsuran)}</td>
+                      <td className="ui-td font-mono font-semibold text-stone-900">{rupiah(row.subsidi)}</td>
                       <td className="ui-td">{row.nama_sales || '-'}</td>
                       <td className="ui-td">{row.keterangan ? <span className={BADGE_KETERANGAN[row.keterangan] || 'ui-badge-neutral'}>{row.keterangan}</span> : '-'}</td>
-                      <td className="ui-td">
+                      <td className="ui-td sticky right-0 bg-white shadow-[inset_1px_0_0_var(--color-stone-200)]">
                         <div className="flex items-center justify-end gap-1">
                           <button onClick={() => navigate(`/penjualan/input-spa?id=${row.id}`)} className="ui-action">
                             <Edit className="w-3.5 h-3.5" /> Edit

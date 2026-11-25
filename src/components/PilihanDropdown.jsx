@@ -13,14 +13,14 @@ export default function PilihanDropdown({ value, onChange, options, placeholder,
   return (
     <div className={`relative ${className}`}>
       <div onClick={() => setTerbuka(!terbuka)} className={`${pemicu} ${terbuka ? 'border-stone-900 ring-3 ring-brand/45' : ''}`}>
-        <span className={terpilih ? 'text-stone-900 font-medium truncate' : 'text-stone-500 truncate pr-2'}>{terpilih ? terpilih.label : placeholder}</span>
+        <span className={terpilih ? 'text-stone-900 font-medium truncate pr-2' : 'text-stone-500 truncate pr-2'}>{terpilih ? terpilih.label : placeholder}</span>
         <ChevronDown className={`w-4 h-4 text-stone-500 transition-transform duration-200 flex-shrink-0 ${terbuka ? 'rotate-180' : ''}`} />
       </div>
       {terbuka && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setTerbuka(false)}></div>
           {/* Daftar panjang (mis. nama sales) bisa digulir */}
-          <div className="ui-menu max-h-64 overflow-y-auto ui-scroll-thin">
+          <div className={`ui-menu max-h-64 overflow-y-auto ui-scroll-thin ${ukuran === 'filter' ? 'w-max min-w-full right-0 whitespace-nowrap' : ''}`}>
             {options.map((opt) => (
               <div key={opt.value} onClick={() => { onChange(opt.value); setTerbuka(false); }} className={value === opt.value ? 'ui-menu-item-active' : 'ui-menu-item'}>{opt.label}</div>
             ))}

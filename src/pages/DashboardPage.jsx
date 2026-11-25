@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FileText, Receipt, Banknote, Activity, ArrowUpRight, ScrollText, RefreshCw, AlertCircle, CalendarDays, ClipboardSignature, BarChart3, TrendingUp, TrendingDown, CheckCircle, XCircle, Clock, Zap } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
@@ -18,17 +18,22 @@ const KARTU = [
 const kurangiGerak = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const formatAngka = (n) => Number(n || 0).toLocaleString('id-ID');
 
-// Angka menghitung naik dari 0 ke nilai akhirnya (langsung nilai akhir bila "kurangi gerak")
+// Angka bergerak dari nilai yang sedang tampil ke nilai barunya: dari 0 saat halaman dibuka,
+// dari angka lama saat Refresh (langsung nilai akhir bila "kurangi gerak")
 function useHitungNaik(target) {
   const [nilai, setNilai] = useState(0);
+  const terakhir = useRef(0);
   useEffect(() => {
-    if (kurangiGerak()) return undefined;
+    if (kurangiGerak()) { terakhir.current = target; return undefined; }
+    const dari = terakhir.current;
     let mulai = null;
     let id;
     const langkah = (waktu) => {
       if (mulai === null) mulai = waktu;
       const p = Math.min(1, (waktu - mulai) / 900);
-      setNilai(Math.round(target * (1 - (1 - p) ** 3)));
+      const v = Math.round(dari + (target - dari) * (1 - (1 - p) ** 3));
+      terakhir.current = v;
+      setNilai(v);
       if (p < 1) id = requestAnimationFrame(langkah);
     };
     id = requestAnimationFrame(langkah);
@@ -82,7 +87,7 @@ function KartuAngka({ label, icon, total, bulanIni, pembanding, labelPembanding,
   );
 }
 
-function GrafikTren({ bulan, isLoading, gagal, catatanBulanIni }) {
+function GrafikTren({ bulan, isLoading, catatanBulanIni }) {
   // Batang tumbuh dari bawah setelah data tiba (langsung penuh bila "kurangi gerak")
   const [tumbuh, setTumbuh] = useState(false);
   useEffect(() => {
@@ -110,11 +115,6 @@ function GrafikTren({ bulan, isLoading, gagal, catatanBulanIni }) {
         <div className="flex flex-col items-center justify-center text-stone-500 py-10">
           <RefreshCw className="w-6 h-6 animate-spin mb-3 text-stone-400" />
           <p className="text-sm">Memuat data...</p>
-        </div>
-      ) : gagal ? (
-        <div className="flex flex-col items-center justify-center text-stone-500 py-10">
-          <AlertCircle className="w-6 h-6 mb-3 text-stone-400" />
-          <p className="text-sm">Data belum bisa dimuat.</p>
         </div>
       ) : kosong ? (
         <div className="flex flex-col items-center justify-center text-stone-500 py-10">
@@ -262,6 +262,7 @@ export default function DashboardPage() {
   const bulanIni = bulanan[bulanan.length - 1] || {};
   // Blok "Memuat data..." hanya saat pertama dibuka; saat Refresh isi lama tetap tampil agar halaman tidak melompat
   const muatAwal = isLoading && bulanan.length === 0;
+  // Saat gagal, pesan muncul sekali di atas dan daerah data tidak ditampilkan (seperti AkunPanel mengganti isinya)
   const gagal = !isLoading && Boolean(errorMsg);
 
   return (
@@ -274,12 +275,17 @@ export default function DashboardPage() {
 
       {errorMsg && (
         <div className="ui-alert-danger">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" /> {errorMsg}
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span className="flex-1">{errorMsg}</span>
+          <button onClick={fetchDashboardData} disabled={isLoading} className="ui-btn-sm">
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+          </button>
         </div>
       )}
 
-      {/* KARTU ANGKA */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+      {!gagal && (<>
+      {/* KARTU ANGKA — 2 kolom sampai layar lebar (xl) agar label & selisih tidak turun baris di laptop 1024px */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-6">
         {KARTU.map((k) => (
           <KartuAngka
             key={k.kunci}
@@ -290,18 +296,20 @@ export default function DashboardPage() {
             pembanding={pembanding[k.kunci] || 0}
             labelPembanding={pembanding.label}
             seriBastk={k.kunci === 'bastk'}
-            tanpaData={muatAwal || gagal}
+            tanpaData={muatAwal}
           />
         ))}
       </div>
 
       {/* GRAFIK TREN */}
-      <GrafikTren bulan={bulanan} isLoading={muatAwal} gagal={gagal} catatanBulanIni={pembanding.catatan} />
+      <GrafikTren bulan={bulanan} isLoading={muatAwal} catatanBulanIni={pembanding.catatan} />
+      </>)}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
 
         {/* AKTIVITAS TERBARU */}
-        <div className="lg:col-span-2 ui-card flex flex-col overflow-hidden">
+        {!gagal && (
+        <div className="xl:col-span-2 ui-card flex flex-col overflow-hidden">
           <div className="ui-card-header">
             <h3 className="ui-card-title"><Activity className="w-4 h-4 text-stone-500" /> Live Data Terbaru</h3>
             <button onClick={fetchDashboardData} disabled={isLoading} className="ui-btn-sm">
@@ -314,11 +322,6 @@ export default function DashboardPage() {
               <div className="flex flex-col items-center justify-center text-stone-500 py-10">
                 <RefreshCw className="w-6 h-6 animate-spin mb-3 text-stone-400" />
                 <p className="text-sm">Memuat data...</p>
-              </div>
-            ) : gagal ? (
-              <div className="flex flex-col items-center justify-center text-stone-500 py-10">
-                <AlertCircle className="w-6 h-6 mb-3 text-stone-400" />
-                <p className="text-sm">Data belum bisa dimuat.</p>
               </div>
             ) : recentActivities.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-stone-500 py-10">
@@ -344,7 +347,7 @@ export default function DashboardPage() {
                         <div className="min-w-0">
                           <h4 className="font-semibold text-sm text-stone-900 truncate">{act.customer}</h4>
                           <div className="ui-meta flex-wrap">
-                            <span className="font-semibold text-stone-700 uppercase tracking-[0.03em]">{act.type}</span><span className="hidden sm:inline">•</span><span className="truncate">{timeAgo(act.time)}</span>
+                            <span className="w-full sm:w-auto font-semibold text-stone-700 uppercase tracking-[0.03em]">{act.type}</span><span className="hidden sm:inline">•</span><span className="truncate">{timeAgo(act.time)}</span>
                           </div>
                         </div>
                       </div>
@@ -361,6 +364,7 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
+        )}
 
         {/* AKSES CEPAT */}
         <div className="ui-card flex flex-col overflow-hidden">
@@ -369,11 +373,11 @@ export default function DashboardPage() {
             <h3 className="ui-card-title"><Zap className="w-4 h-4 text-stone-500" /> Akses Cepat</h3>
           </div>
 
-          <div className="p-3 flex flex-col gap-1">
+          <div className="p-3 grid gap-1 md:grid-cols-2 xl:grid-cols-1">
 
             {/* SAKTI: HANYA ADMIN YANG BISA MELIHAT DAN MENGKLIK BASTK */}
             {userRole !== 'KARYAWAN' && (
-              <Link to="/bastk" className="w-full flex items-center justify-between h-11 px-3 mb-1.5 bg-brand hover:bg-brand-hover text-brand-fg rounded-lg transition-colors group/btn">
+              <Link to="/bastk" className="md:col-span-2 xl:col-span-1 w-full flex items-center justify-between h-11 px-3 mb-1.5 bg-brand hover:bg-brand-hover text-brand-fg rounded-lg transition-colors group/btn">
                 <div className="flex items-center gap-2.5">
                   <FileText className="w-4 h-4" />
                   <span className="font-semibold text-sm">Buat BASTK Baru</span>

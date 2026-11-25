@@ -173,8 +173,8 @@ export default function DashboardPage() {
   const userRole = localStorage.getItem('adminRole')?.toUpperCase() || '';
 
   const fetchDashboardData = async () => {
+    // Pesan gagal sengaja tidak dihapus di sini: tetap tampil (dengan tombol berputar) selama mencoba lagi
     setIsLoading(true);
-    setErrorMsg('');
 
     if (!navigator.onLine) {
       setErrorMsg('Tidak ada koneksi internet. Periksa koneksi lalu coba lagi.');
@@ -239,6 +239,7 @@ export default function DashboardPage() {
         return { label: r.label, ...per, kwitansi: per.kredit + per.cash + per.indent };
       }));
       setRecentActivities(activities);
+      setErrorMsg('');
     } catch (e) {
       console.error('Gagal load data dashboard', e);
       setErrorMsg('Gagal terhubung ke server database.');
@@ -263,7 +264,7 @@ export default function DashboardPage() {
   // Blok "Memuat data..." hanya saat pertama dibuka; saat Refresh isi lama tetap tampil agar halaman tidak melompat
   const muatAwal = isLoading && bulanan.length === 0;
   // Saat gagal, pesan muncul sekali di atas dan daerah data tidak ditampilkan (seperti AkunPanel mengganti isinya)
-  const gagal = !isLoading && Boolean(errorMsg);
+  const gagal = Boolean(errorMsg);
 
   return (
     <div className="max-w-6xl mx-auto pb-12 space-y-6">
@@ -367,17 +368,17 @@ export default function DashboardPage() {
         )}
 
         {/* AKSES CEPAT */}
-        <div className="ui-card flex flex-col overflow-hidden">
+        <div className="xl:col-start-3 ui-card flex flex-col overflow-hidden">
 
           <div className="ui-card-header">
             <h3 className="ui-card-title"><Zap className="w-4 h-4 text-stone-500" /> Akses Cepat</h3>
           </div>
 
-          <div className="p-3 grid gap-1 md:grid-cols-2 xl:grid-cols-1">
+          <div className="p-3 flex flex-col gap-1">
 
             {/* SAKTI: HANYA ADMIN YANG BISA MELIHAT DAN MENGKLIK BASTK */}
             {userRole !== 'KARYAWAN' && (
-              <Link to="/bastk" className="md:col-span-2 xl:col-span-1 w-full flex items-center justify-between h-11 px-3 mb-1.5 bg-brand hover:bg-brand-hover text-brand-fg rounded-lg transition-colors group/btn">
+              <Link to="/bastk" className="w-full flex items-center justify-between h-11 px-3 mb-1.5 bg-brand hover:bg-brand-hover text-brand-fg rounded-lg transition-colors group/btn">
                 <div className="flex items-center gap-2.5">
                   <FileText className="w-4 h-4" />
                   <span className="font-semibold text-sm">Buat BASTK Baru</span>

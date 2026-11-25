@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Receipt, Banknote, Activity, ArrowUpRight, ScrollText, RefreshCw, AlertCircle, CalendarDays, ClipboardSignature, BarChart3, TrendingUp, TrendingDown, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { FileText, Receipt, Banknote, Activity, ArrowUpRight, ScrollText, RefreshCw, AlertCircle, CalendarDays, ClipboardSignature, BarChart3, TrendingUp, TrendingDown, CheckCircle, XCircle, Clock, Zap } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
 
@@ -44,33 +44,31 @@ function TitikLive() {
         <span className="absolute inline-flex w-full h-full rounded-full bg-green-700 opacity-60 animate-ping motion-reduce:animate-none"></span>
         <span className="relative inline-flex w-2 h-2 rounded-full bg-green-700"></span>
       </span>
-      <span className="hidden sm:inline">Live DB</span>
+      <span>Live DB</span>
     </span>
   );
 }
 
 // bulanIni = tanggal 1 s.d. hari ini; pembanding = tanggal yang sama di bulan lalu (adil untuk bulan yang masih berjalan)
-function KartuAngka({ label, icon, total, bulanIni, pembanding, labelPembanding, seriBastk, isLoading }) {
+function KartuAngka({ label, icon, total, bulanIni, pembanding, labelPembanding, seriBastk, tanpaData }) {
   const Icon = icon;
-  const tampil = useHitungNaik(isLoading ? 0 : total);
+  const tampil = useHitungNaik(tanpaData ? 0 : total);
   const persen = pembanding > 0 ? Math.round(((bulanIni - pembanding) / pembanding) * 100) : null;
   return (
     <div className="ui-card p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-2">
-        {/* Di HP label turun ke bawah ikon agar tidak terpotong */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2.5 min-w-0">
-          {/* Warna ikon = warna batangnya di grafik tren (kuning BASTK, abu gelap kwitansi) */}
-          <span className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${seriBastk ? 'bg-brand text-brand-fg' : 'bg-stone-900 text-white'}`}>
-            <Icon className="w-4 h-4" />
-          </span>
-          <p className="text-[13px] font-medium text-stone-600 sm:truncate">{label}</p>
-        </div>
-        <span className="h-9 inline-flex items-center"><TitikLive /></span>
+      <div className="flex items-center justify-between gap-2">
+        {/* Warna ikon = warna batangnya di grafik tren (kuning BASTK, abu gelap kwitansi) */}
+        <span className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${seriBastk ? 'bg-brand text-brand-fg' : 'bg-stone-900 text-white'}`}>
+          <Icon className="w-4 h-4" />
+        </span>
+        <TitikLive />
       </div>
-      <p className="mt-4 text-2xl sm:text-3xl font-semibold tracking-tight text-stone-900 tabular-nums">{isLoading ? '-' : formatAngka(tampil)}</p>
+      {/* Label di bawah ikon agar tidak terpotong di layar HP maupun laptop */}
+      <p className="mt-2 text-[13px] font-medium text-stone-600">{label}</p>
+      <p className="mt-3 text-2xl sm:text-3xl font-semibold tracking-tight text-stone-900 tabular-nums">{tanpaData ? '-' : formatAngka(tampil)}</p>
       <div className="mt-2 flex flex-col gap-1 text-xs text-stone-500">
-        <span className="tabular-nums">{isLoading ? '\u00a0' : `${formatAngka(bulanIni)} bulan ini`}</span>
-        {!isLoading && persen !== null && (
+        <span className="tabular-nums">{tanpaData ? '\u00a0' : `${formatAngka(bulanIni)} bulan ini`}</span>
+        {!tanpaData && persen !== null && (
           <span className="inline-flex flex-wrap items-center gap-1.5">
             <span className={persen > 0 ? 'ui-badge-success' : persen < 0 ? 'ui-badge-danger' : 'ui-badge-neutral'} title={`${labelPembanding}: ${formatAngka(pembanding)}`}>
               {persen > 0 ? <TrendingUp className="w-3 h-3" /> : persen < 0 ? <TrendingDown className="w-3 h-3" /> : null}
@@ -84,7 +82,7 @@ function KartuAngka({ label, icon, total, bulanIni, pembanding, labelPembanding,
   );
 }
 
-function GrafikTren({ bulan, isLoading, catatanBulanIni }) {
+function GrafikTren({ bulan, isLoading, gagal, catatanBulanIni }) {
   // Batang tumbuh dari bawah setelah data tiba (langsung penuh bila "kurangi gerak")
   const [tumbuh, setTumbuh] = useState(false);
   useEffect(() => {
@@ -95,7 +93,7 @@ function GrafikTren({ bulan, isLoading, catatanBulanIni }) {
 
   const tertinggi = Math.max(1, ...bulan.flatMap((b) => [b.bastk, b.kwitansi]));
   const kosong = bulan.every((b) => !b.bastk && !b.kwitansi);
-  const ringkasan = bulan.map((b) => `${b.label}: ${b.bastk} BASTK, ${b.kwitansi} kwitansi`).join('; ');
+  const ringkasan = bulan.map((b) => `${b.label}: ${formatAngka(b.bastk)} BASTK, ${formatAngka(b.kwitansi)} kwitansi`).join('; ');
   const tinggi = (nilai) => `${tumbuh ? Math.max(nilai ? 4 : 0, (nilai / tertinggi) * 85) : 0}%`;
 
   return (
@@ -113,6 +111,11 @@ function GrafikTren({ bulan, isLoading, catatanBulanIni }) {
           <RefreshCw className="w-6 h-6 animate-spin mb-3 text-stone-400" />
           <p className="text-sm">Memuat data...</p>
         </div>
+      ) : gagal ? (
+        <div className="flex flex-col items-center justify-center text-stone-500 py-10">
+          <AlertCircle className="w-6 h-6 mb-3 text-stone-400" />
+          <p className="text-sm">Data belum bisa dimuat.</p>
+        </div>
       ) : kosong ? (
         <div className="flex flex-col items-center justify-center text-stone-500 py-10">
           <BarChart3 className="w-6 h-6 mb-3 text-stone-400" />
@@ -125,7 +128,11 @@ function GrafikTren({ bulan, isLoading, catatanBulanIni }) {
               <div key={b.label} className="flex h-44 items-end justify-center gap-1 sm:gap-1.5">
                 {[{ nilai: b.bastk, warna: 'bg-brand' }, { nilai: b.kwitansi, warna: 'bg-stone-900' }].map((seri, j) => (
                   <div key={j} className="flex h-full w-3.5 sm:w-6 flex-col items-center justify-end">
-                    <span className={`mb-1 text-[11px] font-semibold tabular-nums text-stone-600 transition-opacity duration-500 motion-reduce:transition-none ${tumbuh ? 'opacity-100' : 'opacity-0'}`}>{seri.nilai}</span>
+                    {/* Angka muncul setelah batangnya hampir penuh, bukan melayang di sumbu */}
+                    <span
+                      className={`mb-1 text-[11px] font-semibold tabular-nums text-stone-600 transition-opacity duration-500 motion-reduce:transition-none ${tumbuh ? 'opacity-100' : 'opacity-0'}`}
+                      style={{ transitionDelay: `${i * 70 + j * 35 + 500}ms` }}
+                    >{formatAngka(seri.nilai)}</span>
                     <div
                       className={`w-full rounded-t-md ${seri.warna} transition-[height] duration-700 ease-out motion-reduce:transition-none`}
                       style={{ height: tinggi(seri.nilai), transitionDelay: `${i * 70 + j * 35}ms` }}
@@ -135,12 +142,12 @@ function GrafikTren({ bulan, isLoading, catatanBulanIni }) {
               </div>
             ))}
           </div>
-          <div className="mt-2 grid grid-cols-6 gap-2 sm:gap-4 border-t border-stone-200 pt-2">
+          <div aria-hidden="true" className="mt-2 grid grid-cols-6 gap-2 sm:gap-4 border-t border-stone-200 pt-2">
             {bulan.map((b, i) => (
               <p key={b.label} className={`text-center text-xs ${i === bulan.length - 1 ? 'font-semibold text-stone-900' : 'text-stone-500'}`}>{b.label}</p>
             ))}
           </div>
-          <p className="mt-3 text-xs text-stone-500">{catatanBulanIni}</p>
+          <p className="mt-3 text-xs text-stone-500">Kwitansi = gabungan Kredit, Cash, dan Indent. {catatanBulanIni}</p>
         </div>
       )}
     </div>
@@ -253,6 +260,9 @@ export default function DashboardPage() {
   };
 
   const bulanIni = bulanan[bulanan.length - 1] || {};
+  // Blok "Memuat data..." hanya saat pertama dibuka; saat Refresh isi lama tetap tampil agar halaman tidak melompat
+  const muatAwal = isLoading && bulanan.length === 0;
+  const gagal = !isLoading && Boolean(errorMsg);
 
   return (
     <div className="max-w-6xl mx-auto pb-12 space-y-6">
@@ -269,7 +279,7 @@ export default function DashboardPage() {
       )}
 
       {/* KARTU ANGKA */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {KARTU.map((k) => (
           <KartuAngka
             key={k.kunci}
@@ -280,13 +290,13 @@ export default function DashboardPage() {
             pembanding={pembanding[k.kunci] || 0}
             labelPembanding={pembanding.label}
             seriBastk={k.kunci === 'bastk'}
-            isLoading={isLoading}
+            tanpaData={muatAwal || gagal}
           />
         ))}
       </div>
 
       {/* GRAFIK TREN */}
-      <GrafikTren bulan={bulanan} isLoading={isLoading} catatanBulanIni={pembanding.catatan} />
+      <GrafikTren bulan={bulanan} isLoading={muatAwal} gagal={gagal} catatanBulanIni={pembanding.catatan} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
@@ -295,15 +305,20 @@ export default function DashboardPage() {
           <div className="ui-card-header">
             <h3 className="ui-card-title"><Activity className="w-4 h-4 text-stone-500" /> Live Data Terbaru</h3>
             <button onClick={fetchDashboardData} disabled={isLoading} className="ui-btn-sm">
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
             </button>
           </div>
 
           <div className="flex-1">
-            {isLoading ? (
+            {muatAwal ? (
               <div className="flex flex-col items-center justify-center text-stone-500 py-10">
                 <RefreshCw className="w-6 h-6 animate-spin mb-3 text-stone-400" />
                 <p className="text-sm">Memuat data...</p>
+              </div>
+            ) : gagal ? (
+              <div className="flex flex-col items-center justify-center text-stone-500 py-10">
+                <AlertCircle className="w-6 h-6 mb-3 text-stone-400" />
+                <p className="text-sm">Data belum bisa dimuat.</p>
               </div>
             ) : recentActivities.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-stone-500 py-10">
@@ -351,7 +366,7 @@ export default function DashboardPage() {
         <div className="ui-card flex flex-col overflow-hidden">
 
           <div className="ui-card-header">
-            <h3 className="ui-card-title">Akses Cepat</h3>
+            <h3 className="ui-card-title"><Zap className="w-4 h-4 text-stone-500" /> Akses Cepat</h3>
           </div>
 
           <div className="p-3 flex flex-col gap-1">
